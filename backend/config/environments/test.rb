@@ -47,4 +47,7 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # テスト環境ではHostAuthorizationミドルウェアを削除する
+  config.middleware.delete ActionDispatch::HostAuthorization
 end
