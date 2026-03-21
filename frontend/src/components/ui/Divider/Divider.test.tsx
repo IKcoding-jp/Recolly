@@ -1,22 +1,21 @@
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { Divider } from './Divider'
 
 describe('Divider', () => {
   it('hr要素がレンダリングされる', () => {
-    const { container } = render(<Divider />)
-    const hr = container.querySelector('hr')
-    expect(hr).toBeInTheDocument()
+    render(<Divider />)
+    expect(screen.getByRole('separator')).toBeInTheDocument()
   })
 
   it('デフォルトのCSSクラスが適用される', () => {
-    const { container } = render(<Divider />)
-    const hr = container.querySelector('hr')
-    expect(hr?.className).toContain('divider')
+    render(<Divider />)
+    const hr = screen.getByRole('separator')
+    expect(hr.className).toContain('divider')
   })
 
   it('追加のclassNameが結合される', () => {
-    const { container } = render(<Divider className="extra" />)
-    const hr = container.querySelector('hr')
-    expect(hr?.className).toContain('extra')
+    render(<Divider className="extra" />)
+    const hr = screen.getByRole('separator')
+    expect(hr.className).toContain('extra')
   })
 })

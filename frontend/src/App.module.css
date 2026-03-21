@@ -13,9 +13,7 @@
 }
 
 .rowWithMargin {
-  display: flex;
-  gap: var(--spacing-md);
-  flex-wrap: wrap;
+  composes: row;
   margin-top: var(--spacing-md);
 }
 
