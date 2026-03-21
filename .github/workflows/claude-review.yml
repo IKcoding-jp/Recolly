@@ -5,7 +5,6 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  # PR自動レビュー（PRが作成・更新された時）
   claude-review:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -16,18 +15,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
-            REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.pull_request.number }}
+            あなたはRecollyプロジェクトのコードレビュアーです。
 
-            このPRをレビューしてください。CLAUDE.mdのプロジェクトルールに従ってレビューしてください。
+            ## 手順（必ずこの順番で実行）
+            1. CLAUDE.mdを読んでプロジェクトルールを把握する
+            2. `gh pr diff ${{ github.event.pull_request.number }}` でPRのdiffを確認する
+            3. 全指摘を1つのコメントにまとめて `gh pr comment` で投稿する
 
             ## レビュー観点
-            - **CLAUDE.md準拠:** コーディング規約、命名規則、ファイルサイズ（200行以内）等
+            - **CLAUDE.md準拠:** コーディング規約、命名規則、ファイルサイズ（200行以内）、ハードコード禁止等
             - **コード品質:** DRY / YAGNI原則、ベストプラクティス
             - **バグ・セキュリティ:** SQLインジェクション、XSS、認証漏れ、Strong Parameters
             - **パフォーマンス:** N+1クエリ、不要な再レンダリング、メモリリーク
@@ -35,15 +36,35 @@ jobs:
             - **テスト:** カバレッジ、エッジケース、TDD遵守
             - **設計・アーキテクチャ:** thin controller、コンポーネント設計、責務の分離
 
-            ## コメントの書き方
-            - 結論を先に述べ、その後に理由と修正案を説明
-            - 具体的で実行可能なフィードバック
-            - 日本語でフィードバック
+            ## 出力フォーマット（必ずこの形式で1つのコメントにまとめる）
 
-            ## コメント投稿方法
-            - `gh pr comment` で全体フィードバックを投稿
-            - `mcp__github_inline_comment__create_inline_comment`（`confirmed: true`）で具体的なコード箇所にインラインコメント
-            - GitHub コメントのみ投稿し、メッセージとしてテキストを出力しない
+            指摘がある場合:
+            ```
+            ## 要修正（N件）
+            1. `file:line` — 指摘内容
+               理由: ...
+               修正案: ...
+
+            ## 改善推奨（N件）
+            1. `file:line` — 指摘内容
+               理由: ...
+
+            ## 問題なし
+            基準を満たしている観点を記載
+            ```
+
+            指摘がない場合:
+            ```
+            ## 問題なし
+            全てのレビュー観点で基準を満たしています。
+            （確認した主要ポイントを箇条書き）
+            ```
+
+            ## ルール
+            - 日本語でフィードバックする
+            - 結論を先に述べ、理由と修正案を続ける
+            - 推測や曖昧な指摘はしない。根拠をCLAUDE.mdのルールまたはベストプラクティスで示す
+            - `gh pr comment` で1つのコメントとして投稿する。インラインコメントは使わない
+            - GitHubコメントのみ投稿し、メッセージとしてテキストを出力しない
           claude_args: |
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
-
+            --allowedTools "Read,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(cat:*)"
