@@ -41,4 +41,63 @@ describe('recordsApi', () => {
       expect(result.record.status).toBe('plan_to_watch')
     })
   })
+
+  describe('getAll', () => {
+    it('正常系: 記録一覧を取得', async () => {
+      const data = {
+        records: [{ id: 1, status: 'watching', work: { id: 1, title: 'テスト' } }],
+      }
+      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(data) })
+      const result = await recordsApi.getAll()
+      expect(result.records).toHaveLength(1)
+    })
+
+    it('フィルタパラメータ付きで呼び出せる', async () => {
+      const data = { records: [] }
+      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(data) })
+      await recordsApi.getAll({ status: 'watching', mediaType: 'anime' })
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('status=watching'),
+        expect.any(Object),
+      )
+    })
+  })
+
+  describe('getOne', () => {
+    it('正常系: 記録詳細を取得', async () => {
+      const data = { record: { id: 1, status: 'watching', rating: 7 } }
+      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(data) })
+      const result = await recordsApi.getOne(1)
+      expect(result.record.rating).toBe(7)
+    })
+  })
+
+  describe('update', () => {
+    it('正常系: 記録を更新', async () => {
+      const data = { record: { id: 1, status: 'completed', rating: 9 } }
+      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(data) })
+      const result = await recordsApi.update(1, { status: 'completed', rating: 9 })
+      expect(result.record.status).toBe('completed')
+    })
+  })
+
+  describe('remove', () => {
+    it('正常系: 記録を削除', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
+      await recordsApi.remove(1)
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/records/1'),
+        expect.objectContaining({ method: 'DELETE' }),
+      )
+    })
+  })
+
+  describe('createFromWorkId（拡張）', () => {
+    it('ステータスと評価を指定して記録を作成', async () => {
+      const data = { record: { id: 1, status: 'watching', rating: 7 } }
+      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(data) })
+      const result = await recordsApi.createFromWorkId(10, { status: 'watching', rating: 7 })
+      expect(result.record.status).toBe('watching')
+    })
+  })
 })
