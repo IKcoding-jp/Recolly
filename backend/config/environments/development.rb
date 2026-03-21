@@ -23,8 +23,8 @@ Rails.application.configure do
     config.action_controller.perform_caching = false
   end
 
-  # Change to :null_store to avoid any caching.
-  config.cache_store = :memory_store
+  # 検索結果キャッシュにRedisを使用（ADR-0008）
+  config.cache_store = :redis_cache_store, { url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0") }
 
   # letter_opener_webでメールをブラウザプレビュー（パスワードリセット用）
   config.action_mailer.delivery_method = :letter_opener_web

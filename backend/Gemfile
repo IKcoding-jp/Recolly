@@ -12,6 +12,12 @@ gem 'puma', '>= 5.0'
 # 認証ライブラリ（ADR-0007）
 gem 'devise'
 
+# HTTPクライアント（外部API通信用、ADR-0009）
+gem 'faraday'
+
+# Redis（検索キャッシュ用、ADR-0008）
+gem 'redis'
+
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
 
@@ -49,6 +55,8 @@ group :development, :test do
 
   # Testing framework
   gem 'rspec-rails', '~> 7.0'
+
+  gem 'webmock'
 end
 
 group :development do
