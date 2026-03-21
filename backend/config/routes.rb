@@ -16,6 +16,13 @@ Rails.application.routes.draw do
       # 認証済みユーザー情報取得
       resource :current_user, only: [:show], controller: "current_user"
 
+      # 作品検索・手動登録
+      resources :works, only: [:create] do
+        collection do
+          get :search
+        end
+      end
+
       get "health", to: "health#show"
     end
   end
