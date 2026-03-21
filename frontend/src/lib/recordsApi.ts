@@ -1,11 +1,45 @@
-import type { RecordResponse, SearchResult } from './types'
+import type { RecordResponse, RecordsListResponse, SearchResult, RecordStatus } from './types'
 import { request } from './api'
 
+type RecordCreateOptions = {
+  status?: RecordStatus
+  rating?: number
+}
+
+type RecordUpdateParams = {
+  status?: RecordStatus
+  rating?: number | null
+  current_episode?: number
+  started_at?: string | null
+  completed_at?: string | null
+}
+
+type RecordFilterParams = {
+  status?: RecordStatus
+  mediaType?: string
+  workId?: number
+  sort?: string
+}
+
 export const recordsApi = {
-  createFromWorkId(workId: number): Promise<RecordResponse> {
+  getAll(filters?: RecordFilterParams): Promise<RecordsListResponse> {
+    const params = new URLSearchParams()
+    if (filters?.status) params.set('status', filters.status)
+    if (filters?.mediaType) params.set('media_type', filters.mediaType)
+    if (filters?.workId) params.set('work_id', String(filters.workId))
+    if (filters?.sort) params.set('sort', filters.sort)
+    const query = params.toString()
+    return request<RecordsListResponse>(`/records${query ? `?${query}` : ''}`)
+  },
+
+  getOne(id: number): Promise<RecordResponse> {
+    return request<RecordResponse>(`/records/${id}`)
+  },
+
+  createFromWorkId(workId: number, options?: RecordCreateOptions): Promise<RecordResponse> {
     return request<RecordResponse>('/records', {
       method: 'POST',
-      body: JSON.stringify({ record: { work_id: workId } }),
+      body: JSON.stringify({ record: { work_id: workId, ...options } }),
     })
   },
 
@@ -20,10 +54,22 @@ export const recordsApi = {
       | 'external_api_id'
       | 'external_api_source'
     >,
+    options?: RecordCreateOptions,
   ): Promise<RecordResponse> {
     return request<RecordResponse>('/records', {
       method: 'POST',
-      body: JSON.stringify({ record: { work_data: workData } }),
+      body: JSON.stringify({ record: { work_data: workData, ...options } }),
     })
+  },
+
+  update(id: number, params: RecordUpdateParams): Promise<RecordResponse> {
+    return request<RecordResponse>(`/records/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ record: params }),
+    })
+  },
+
+  remove(id: number): Promise<void> {
+    return request<void>(`/records/${id}`, { method: 'DELETE' })
   },
 }

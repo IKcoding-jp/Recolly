@@ -127,7 +127,7 @@ recolly/
 | user_id | FK → Users | |
 | work_id | FK → Works | |
 | status | enum | watching / completed / on_hold / dropped / plan_to_watch |
-| rating | integer | 1〜5の★評価 |
+| rating | integer | 1〜10の評価 |
 | current_episode | integer | 現在の話数 |
 | rewatch_count | integer | 再視聴回数 |
 | started_at | date | 視聴/読書開始日 |

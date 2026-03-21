@@ -24,8 +24,18 @@ RSpec.describe Record, type: :model do
       expect(duplicate.errors[:work_id]).to be_present
     end
 
-    it 'rating は 1〜5 の範囲' do
-      record = described_class.new(user: user, work: work, rating: 6)
+    it 'rating は 1〜10 の範囲' do
+      record = described_class.new(user: user, work: work, rating: 11)
+      expect(record).not_to be_valid
+    end
+
+    it 'rating が 10 で有効' do
+      record = described_class.new(user: user, work: work, rating: 10)
+      expect(record).to be_valid
+    end
+
+    it 'rating が 0 で無効' do
+      record = described_class.new(user: user, work: work, rating: 0)
       expect(record).not_to be_valid
     end
 
@@ -33,12 +43,110 @@ RSpec.describe Record, type: :model do
       record = described_class.new(user: user, work: work, rating: nil)
       expect(record).to be_valid
     end
+
+    describe 'current_episode のバリデーション' do
+      let(:work_with_episodes) { Work.create!(title: '進撃の巨人Final', media_type: 'anime', total_episodes: 75) }
+
+      it 'current_episode が total_episodes を超えると無効' do
+        record = described_class.new(user: user, work: work_with_episodes, current_episode: 76)
+        expect(record).not_to be_valid
+        expect(record.errors[:current_episode]).to be_present
+      end
+
+      it 'current_episode が total_episodes と同値なら有効' do
+        record = described_class.new(user: user, work: work_with_episodes, current_episode: 75)
+        expect(record).to be_valid
+      end
+
+      it 'total_episodes が nil の作品では上限チェックをスキップ' do
+        work_no_episodes = Work.create!(title: '映画B', media_type: 'movie')
+        record = described_class.new(user: user, work: work_no_episodes, current_episode: 999)
+        expect(record).to be_valid
+      end
+
+      it 'current_episode が負の値で無効' do
+        record = described_class.new(user: user, work: work_with_episodes, current_episode: -1)
+        expect(record).not_to be_valid
+      end
+    end
   end
 
   describe 'enum' do
     it 'status の全値が定義されている' do
       expected = %w[watching completed on_hold dropped plan_to_watch]
       expect(described_class.statuses.keys).to match_array(expected)
+    end
+  end
+
+  describe '自動処理コールバック' do
+    let(:work_with_episodes) { Work.create!(title: '進撃の巨人Final', media_type: 'anime', total_episodes: 75) }
+
+    describe 'status → watching' do
+      it 'started_at が未設定なら今日をセット' do
+        record = described_class.create!(user: user, work: work_with_episodes, status: :watching)
+        expect(record.started_at).to eq(Date.current)
+      end
+
+      it 'started_at が設定済みなら変更しない' do
+        past_date = Date.new(2026, 1, 1)
+        record = described_class.create!(user: user, work: work_with_episodes, status: :watching, started_at: past_date)
+        expect(record.started_at).to eq(past_date)
+      end
+    end
+
+    describe 'status → completed' do
+      it 'completed_at を今日にセット' do
+        record = described_class.create!(user: user, work: work_with_episodes, status: :completed)
+        expect(record.completed_at).to eq(Date.current)
+      end
+
+      it 'current_episode を total_episodes に揃える' do
+        record = described_class.create!(user: user, work: work_with_episodes, status: :completed)
+        expect(record.current_episode).to eq(75)
+      end
+
+      it 'total_episodes が nil の作品では current_episode を変更しない' do
+        work_no_episodes = Work.create!(title: '映画A', media_type: 'movie')
+        record = described_class.create!(user: user, work: work_no_episodes, status: :completed, current_episode: 0)
+        expect(record.current_episode).to eq(0)
+      end
+
+      it '新規記録を completed で作成すると started_at も今日にセット' do
+        record = described_class.create!(user: user, work: work_with_episodes, status: :completed)
+        expect(record.started_at).to eq(Date.current)
+        expect(record.completed_at).to eq(Date.current)
+      end
+    end
+
+    describe 'status → plan_to_watch' do
+      it 'started_at, completed_at をクリアし current_episode を 0 に、rating を nil にリセット' do
+        record = described_class.create!(user: user, work: work_with_episodes,
+                                         status: :watching, rating: 8, current_episode: 30)
+        record.update!(status: :plan_to_watch)
+        expect(record.started_at).to be_nil
+        expect(record.completed_at).to be_nil
+        expect(record.current_episode).to eq(0)
+        expect(record.rating).to be_nil
+      end
+    end
+
+    describe 'current_episode が total_episodes に到達' do
+      it 'status を completed に自動変更' do
+        record = described_class.create!(user: user, work: work_with_episodes,
+                                         status: :watching, current_episode: 74)
+        record.update!(current_episode: 75)
+        expect(record.status).to eq('completed')
+        expect(record.completed_at).to eq(Date.current)
+      end
+    end
+
+    describe 'started_at と completed_at の整合性' do
+      it 'started_at が completed_at より後なら無効' do
+        record = described_class.new(user: user, work: work,
+                                     started_at: Date.new(2026, 3, 20),
+                                     completed_at: Date.new(2026, 3, 10))
+        expect(record).not_to be_valid
+      end
     end
   end
 
