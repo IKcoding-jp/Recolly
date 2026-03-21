@@ -55,14 +55,14 @@ recolly/
 1. ローカルで実装 + テスト + コミット
 2. `git push` + PR作成
 3. **Claude Code Review が自動でPRをレビュー**（GitHub Actions）
-4. 指摘事項を解消（PR上で `@claude` メンションによる修正も可）
+4. 指摘事項を解消（ローカルのClaude Codeで修正）
 5. CI全パス + レビュー指摘解消 → マージ
 
 ### ルール
 
 - 全PRにClaude Code Reviewを必須とする（CI経由で自動実行）
 - レビュー指摘を全て解消してからマージする
-- `@claude` でPR上から直接修正を依頼できる
+- レビュー指摘の修正はローカルのClaude Codeで行い、再pushする
 
 ### レビュー観点
 

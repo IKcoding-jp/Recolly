@@ -1,0 +1,26 @@
+/* ショーケースページ用レイアウト（開発中の確認用） */
+
+.showcase {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+}
+
+.row {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.rowWithMargin {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  margin-top: var(--spacing-md);
+}
+
+.genreBadge {
+  color: var(--color-bg-white);
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: var(--font-size-label);
+}

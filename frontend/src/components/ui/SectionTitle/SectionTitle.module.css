@@ -1,0 +1,9 @@
+.sectionTitle {
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text);
+  margin-bottom: var(--spacing-lg);
+}
