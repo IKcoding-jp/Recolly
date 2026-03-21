@@ -50,9 +50,9 @@ export function useLibrary() {
     if (rawStatus === null) return
 
     let cancelled = false
-    setState((prev) => ({ ...prev, isLoading: true, error: null }))
 
     const fetchRecords = async () => {
+      setState((prev) => ({ ...prev, isLoading: true, error: null }))
       try {
         const res = await recordsApi.getAll({
           status: status ?? undefined,
