@@ -22,8 +22,8 @@ Devise.setup do |config|
   # テスト環境ではパスワードハッシュ化の計算回数を最小にして高速化
   config.stretches = Rails.env.test? ? 1 : 12
 
-  # メールアドレス変更時に再確認を求める
-  config.reconfirmable = true
+  # :confirmable モジュールを追加した際に有効化する
+  # config.reconfirmable = true
 
   # ログアウト時に全てのremember meトークンを無効化
   config.expire_all_remember_me_on_sign_out = true

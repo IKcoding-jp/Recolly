@@ -37,12 +37,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await authApi.logout()
     } catch (error) {
-      // ログアウトAPIが失敗してもローカル状態はクリアする
+      // 401以外のエラー（ネットワーク断等）はログに残す
       if (!(error instanceof ApiError && error.status === 401)) {
-        throw error
+        console.error('Logout error:', error)
       }
+    } finally {
+      // APIが失敗してもローカル状態は必ずクリアする
+      setUser(null)
     }
-    setUser(null)
   }, [])
 
   const value = useMemo(

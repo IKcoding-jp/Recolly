@@ -21,6 +21,12 @@ export function SignUpPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
+
+    if (password !== passwordConfirmation) {
+      setError('パスワードが一致しません')
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
