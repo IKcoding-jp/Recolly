@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { useAuth } from './contexts/useAuth'
 import { ProtectedRoute } from './components/ProtectedRoute/ProtectedRoute'
+import { NavBar } from './components/ui/NavBar/NavBar'
 import { LoginPage } from './pages/LoginPage/LoginPage'
 import { SignUpPage } from './pages/SignUpPage/SignUpPage'
 import { DashboardPage } from './pages/DashboardPage/DashboardPage'
@@ -18,6 +19,20 @@ function RootRedirect() {
   return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
 }
 
+// 認証済みページ共通レイアウト（NavBar + コンテンツ）
+function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
+  const { user, logout } = useAuth()
+
+  if (!user) return null
+
+  return (
+    <>
+      <NavBar user={user} onLogout={() => void logout()} />
+      {children}
+    </>
+  )
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -30,7 +45,9 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardPage />
+                <AuthenticatedLayout>
+                  <DashboardPage />
+                </AuthenticatedLayout>
               </ProtectedRoute>
             }
           />
@@ -38,7 +55,9 @@ function App() {
             path="/search"
             element={
               <ProtectedRoute>
-                <SearchPage />
+                <AuthenticatedLayout>
+                  <SearchPage />
+                </AuthenticatedLayout>
               </ProtectedRoute>
             }
           />
@@ -46,7 +65,9 @@ function App() {
             path="/library"
             element={
               <ProtectedRoute>
-                <LibraryPage />
+                <AuthenticatedLayout>
+                  <LibraryPage />
+                </AuthenticatedLayout>
               </ProtectedRoute>
             }
           />
@@ -54,7 +75,9 @@ function App() {
             path="/works/:id"
             element={
               <ProtectedRoute>
-                <WorkDetailPage />
+                <AuthenticatedLayout>
+                  <WorkDetailPage />
+                </AuthenticatedLayout>
               </ProtectedRoute>
             }
           />
