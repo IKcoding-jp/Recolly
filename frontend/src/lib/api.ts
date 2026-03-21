@@ -3,7 +3,7 @@ import type { AuthResponse, ErrorResponse } from './types'
 const API_BASE = '/api/v1'
 
 // 共通のfetchラッパー（credentials: 'include' でCookieを自動送信）
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     ...options,
     credentials: 'include',
