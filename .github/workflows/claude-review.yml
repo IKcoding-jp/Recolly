@@ -2,17 +2,37 @@ name: Claude Code Review
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, ready_for_review, reopened]
   issue_comment:
     types: [created]
   pull_request_review_comment:
     types: [created]
 
 jobs:
-  review:
-    # PRイベント、または @claude メンションで起動
+  # PR自動レビュー（PRが作成・更新された時）
+  claude-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
+          plugins: 'code-review@claude-code-plugins'
+          prompt: |
+            /code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}
+
+  # @claude メンション対応（コメントで呼び出された時）
+  claude-assist:
     if: |
-      github.event_name == 'pull_request' ||
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude'))
     runs-on: ubuntu-latest
@@ -21,35 +41,14 @@ jobs:
       pull-requests: write
       issues: write
       id-token: write
+      actions: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - uses: anthropics/claude-code-action@v1
         with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           trigger_phrase: "@claude"
-          use_sticky_comment: true
-          classify_inline_comments: true
-          prompt: |
-            あなたはRecollyプロジェクトのコードレビュアーです。CLAUDE.mdのガイドラインに従ってレビュー・作業してください。
-
-            ## PRレビュー時
-
-            以下の観点でレビューしてください：
-
-            - **CLAUDE.md準拠:** プロジェクトルール（コーディング規約、命名規則、ファイルサイズ200行以内等）に従っているか
-            - **コード品質:** ベストプラクティスに沿っているか、DRY/YAGNI原則は守られているか
-            - **バグ・セキュリティ:** SQLインジェクション、XSS、認証漏れ、Strong Parametersの使用等
-            - **パフォーマンス:** N+1クエリ、不要な再レンダリング、メモリリーク等の懸念がないか
-            - **保守性・可読性:** 変数名は適切か、コメントは「なぜ」を説明しているか、ファイル分割は適切か
-            - **テスト:** テストは十分か、エッジケースは考慮されているか、TDDが守られているか
-            - **設計・アーキテクチャ:** thin controller原則、コンポーネント設計、責務の分離は適切か
-
-            コメントの書き方：
-            - 結論を先に述べ、その後に理由と修正案を説明
-            - 修正方針が明確な場合はsuggestionを積極的に利用
-            - ポジティブなフィードバックは全体のまとめに集約
-            - 日本語でフィードバック
-            - 具体的で実行可能なフィードバック
-
-            ## @claude メンション時（修正依頼）
-
-            CLAUDE.mdのコーディングガイドラインに従い、指示された修正を実施してください。必要に応じてテストも更新してください。
+          additional_permissions: |
+            actions: read
