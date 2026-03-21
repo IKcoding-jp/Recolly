@@ -118,6 +118,16 @@ RSpec.describe 'Api::V1::Records', type: :request do
         json = response.parsed_body
         expect(json['records'].length).to eq(1)
       end
+
+      it 'デフォルトで updated_at 降順にソートされる' do
+        Record.create!(user: user, work: existing_work, status: :watching)
+        another_work = Work.create!(title: '別作品', media_type: 'movie')
+        record2 = Record.create!(user: user, work: another_work, status: :completed)
+
+        get '/api/v1/records'
+        json = response.parsed_body
+        expect(json['records'][0]['id']).to eq(record2.id)
+      end
     end
 
     context '未認証' do
@@ -146,6 +156,14 @@ RSpec.describe 'Api::V1::Records', type: :request do
         record = Record.create!(user: other_user, work: existing_work)
         get "/api/v1/records/#{record.id}", as: :json
         expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context '未認証' do
+      it '401を返す' do
+        record = Record.create!(user: user, work: existing_work)
+        get "/api/v1/records/#{record.id}", as: :json
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end
@@ -188,6 +206,25 @@ RSpec.describe 'Api::V1::Records', type: :request do
         patch "/api/v1/records/#{record.id}", params: { record: { rating: 15 } }, as: :json
         expect(response).to have_http_status(:unprocessable_content)
       end
+
+      it '開始日と完了日を更新できる' do
+        record = Record.create!(user: user, work: existing_work, status: :watching)
+        patch "/api/v1/records/#{record.id}", params: {
+          record: { started_at: '2026-01-01', completed_at: '2026-03-01' }
+        }, as: :json
+        expect(response).to have_http_status(:ok)
+        json = response.parsed_body
+        expect(json['record']['started_at']).to eq('2026-01-01')
+        expect(json['record']['completed_at']).to eq('2026-03-01')
+      end
+    end
+
+    context '未認証' do
+      it '401を返す' do
+        record = Record.create!(user: user, work: existing_work)
+        patch "/api/v1/records/#{record.id}", params: { record: { status: 'watching' } }, as: :json
+        expect(response).to have_http_status(:unauthorized)
+      end
     end
   end
 
@@ -208,6 +245,14 @@ RSpec.describe 'Api::V1::Records', type: :request do
         record = Record.create!(user: other_user, work: existing_work)
         delete "/api/v1/records/#{record.id}", as: :json
         expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context '未認証' do
+      it '401を返す' do
+        record = Record.create!(user: user, work: existing_work)
+        delete "/api/v1/records/#{record.id}", as: :json
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end
