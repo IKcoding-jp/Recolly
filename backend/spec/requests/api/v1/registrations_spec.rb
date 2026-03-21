@@ -16,9 +16,9 @@ RSpec.describe 'Api::V1::Registrations', type: :request do
     end
 
     context '正常系' do
-      it '有効なパラメータで登録成功（200）' do
+      it '有効なパラメータで登録成功（201）' do
         post user_registration_path, params: valid_params, as: :json
-        expect(response).to have_http_status(:ok)
+        expect(response).to have_http_status(:created)
       end
 
       it 'レスポンスにユーザー情報が含まれる' do

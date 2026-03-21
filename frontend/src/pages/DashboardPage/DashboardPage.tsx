@@ -15,7 +15,7 @@ export function DashboardPage() {
       <Typography variant="body">ようこそ、{user?.username} さん</Typography>
       <Typography variant="meta">{user?.email}</Typography>
       <div style={{ marginTop: 'var(--spacing-lg)' }}>
-        <Button variant="secondary" onClick={logout}>
+        <Button variant="secondary" onClick={() => void logout()}>
           ログアウト
         </Button>
       </div>

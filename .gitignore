@@ -44,3 +44,9 @@ coverage/
 
 # Docker
 docker-compose.override.yml
+
+# Lefthook（ローカル環境固有の設定）
+lefthook-local.yml
+
+# Issue作成時の一時ファイル
+.tmp-issue-body.md

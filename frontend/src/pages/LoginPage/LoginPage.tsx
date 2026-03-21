@@ -6,7 +6,7 @@ import { ApiError } from '../../lib/api'
 import { Typography } from '../../components/ui/Typography/Typography'
 import { Button } from '../../components/ui/Button/Button'
 import { Divider } from '../../components/ui/Divider/Divider'
-import styles from './LoginPage.module.css'
+import styles from '../../styles/authForm.module.css'
 
 export function LoginPage() {
   const [email, setEmail] = useState('')

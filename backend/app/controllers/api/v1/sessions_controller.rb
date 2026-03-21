@@ -21,12 +21,6 @@ module Api
           render json: { error: 'ログインが必要です' }, status: :unauthorized
         end
       end
-
-      private
-
-      def user_json(user)
-        user.as_json(only: %i[id username email avatar_url bio created_at])
-      end
     end
   end
 end
