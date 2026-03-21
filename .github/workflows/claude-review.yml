@@ -22,4 +22,64 @@ jobs:
       issues: write
       id-token: write
     steps:
+      - uses: actions/checkout@v4
       - uses: anthropics/claude-code-action@v1
+        with:
+          trigger_phrase: "@claude"
+          timeout_minutes: "30"
+          allowed_tools: "Bash(cd backend && bundle exec rubocop {file}),Bash(cd frontend && npx eslint {file}),Bash(cd backend && bundle exec rspec {file}),Bash(cd frontend && npx vitest run {file}),mcp__github__create_pending_pull_request_review,mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__get_pull_request_diff"
+          review_comment: |
+            このPRをレビューし、GitHubのレビュー機能を使ってインラインコメントでフィードバックしてください。
+
+            ## レビュー手順
+
+            1. `mcp__github__create_pending_pull_request_review` で保留中のレビューを開始
+            2. `mcp__github__get_pull_request_diff` で変更内容と行番号を把握
+            3. 改善点や懸念事項がある行に `mcp__github__add_pull_request_review_comment_to_pending_review` でインラインコメントを追加。修正方針が明確な場合はsuggestionを積極的に利用
+            4. `mcp__github__submit_pending_pull_request_review` でイベントタイプを「COMMENT」に設定し、全体のまとめコメントと共にレビューを提出（※「REQUEST_CHANGES」は使わない）
+
+            ## コメントの書き方
+
+            **インラインコメントの構成:**
+            - **結論を先に:** 指摘内容の要点を一行で簡潔に述べる
+            - **理由と提案:** 判断理由や背景、具体的な修正案を説明
+            - **指摘中心:** 修正提案、バグの可能性、可読性の問題など具体的な改善点に焦点
+
+            **ポジティブなフィードバック:**
+            - インラインでは特に優れた設計や独創的な実装など特筆すべき点に限定
+            - 全体的に良かった点はレビュー提出時のまとめコメントに集約
+
+            ## レビューの観点
+
+            以下の点に注目してレビューしてください：
+
+            - **CLAUDE.md準拠:** プロジェクトルール（コーディング規約、命名規則、ファイルサイズ制限等）に従っているか
+            - **コード品質:** ベストプラクティスに沿っているか、DRY/YAGNI原則は守られているか
+            - **バグ・セキュリティ:** SQLインジェクション、XSS、認証漏れ等のリスクがないか
+            - **パフォーマンス:** N+1クエリ、不要な再レンダリング、メモリリーク等の懸念がないか
+            - **保守性・可読性:** 変数名は適切か、コメントは必要十分か、ファイル分割は適切か
+            - **テスト:** テストは十分か、エッジケースは考慮されているか
+            - **設計・アーキテクチャ:** thin controller原則、コンポーネント設計、責務の分離は適切か
+
+            ## その他
+
+            - 日本語でフィードバックしてください
+            - 具体的で実行可能なフィードバックをしてください
+            - レビューは必ず「COMMENT」タイプで提出し、PRをブロックしないでください
+          direct_prompt: |
+            CLAUDE.mdのガイドラインに従って作業してください。
+
+            **レビュー依頼の場合:**
+            PRをレビューし、GitHubのレビュー機能でインラインコメントを使ってフィードバックしてください。
+
+            1. `mcp__github__create_pending_pull_request_review` でレビューを開始
+            2. `mcp__github__get_pull_request_diff` で変更内容を把握
+            3. 改善点がある行に `mcp__github__add_pull_request_review_comment_to_pending_review` でコメント追加（suggestionも積極活用）
+            4. `mcp__github__submit_pending_pull_request_review` でCOMMENTタイプでレビューを提出
+
+            レビュー観点: CLAUDE.md準拠、コード品質、バグ・セキュリティ、パフォーマンス、保守性、テスト、設計
+
+            **修正依頼の場合:**
+            指示された修正を実施してください。CLAUDE.mdのコーディングガイドラインに従い、必要に応じてテストも更新してください。
+
+            日本語で対応してください。
