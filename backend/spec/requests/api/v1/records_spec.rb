@@ -151,6 +151,11 @@ RSpec.describe 'Api::V1::Records', type: :request do
         expect(json['record']['work']['title']).to eq('既存作品')
       end
 
+      it '存在しないIDには404を返す' do
+        get '/api/v1/records/999999', as: :json
+        expect(response).to have_http_status(:not_found)
+      end
+
       it '他ユーザーの記録には403を返す' do
         other_user = User.create!(username: 'other', email: 'other@example.com', password: 'password123')
         record = Record.create!(user: other_user, work: existing_work)

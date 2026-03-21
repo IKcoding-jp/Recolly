@@ -6,7 +6,13 @@ class ApplicationController < ActionController::API
 
   respond_to :json
 
+  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
+
   private
+
+  def record_not_found
+    render json: { error: 'リソースが見つかりません' }, status: :not_found
+  end
 
   # 未認証ユーザーへの401レスポンス（deviseのデフォルトリダイレクトを上書き）
   def authenticate_user!
