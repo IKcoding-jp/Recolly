@@ -46,6 +46,11 @@ module Api
         else
           Work.create!(data)
         end
+      rescue ActiveRecord::RecordNotUnique
+        # 並行リクエストによるレースコンディション時は既存レコードを返す
+        Work.find_by!(external_api_id: data[:external_api_id], external_api_source: data[:external_api_source])
+      rescue ActiveRecord::RecordInvalid
+        nil
       end
     end
   end

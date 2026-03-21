@@ -5,7 +5,6 @@ module ExternalApis
     IGDB_URL = 'https://api.igdb.com/v4'
     TWITCH_TOKEN_URL = 'https://id.twitch.tv/oauth2/token'
     IMAGE_BASE_URL = 'https://images.igdb.com/igdb/image/upload/t_cover_big'
-    # キャッシュキーにクライアントIDを含めて複数環境での衝突を防ぐ
     TOKEN_CACHE_KEY = 'igdb_access_token'
     SEARCH_FIELDS = [
       'name', 'summary', 'cover.image_id', 'platforms.name',
@@ -52,13 +51,16 @@ module ExternalApis
 
     def access_token
       Rails.cache.fetch(TOKEN_CACHE_KEY, expires_in: 50.days) do
-        params = {
+        token_connection = Faraday.new { |f| f.response :json }
+        response = token_connection.post(TWITCH_TOKEN_URL, {
           client_id: ENV.fetch('IGDB_CLIENT_ID'),
           client_secret: ENV.fetch('IGDB_CLIENT_SECRET'),
           grant_type: 'client_credentials'
-        }
-        response = Faraday.post(TWITCH_TOKEN_URL, params)
-        JSON.parse(response.body)['access_token']
+        })
+        token = response.body['access_token']
+        raise "Twitch OAuthトークン取得失敗: #{response.body}" unless token
+
+        token
       end
     end
 

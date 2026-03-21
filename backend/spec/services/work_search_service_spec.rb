@@ -61,6 +61,14 @@ RSpec.describe WorkSearchService, type: :service do
   end
 
   describe 'キャッシュ' do
+    # キャッシュ動作テストではメモリストアを使用（test環境のデフォルトは:null_store）
+    around do |example|
+      original_store = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+      example.run
+      Rails.cache = original_store
+    end
+
     it '同じクエリの2回目はキャッシュから返す（APIを再呼び出ししない）' do
       service.search('テスト')
       results = service.search('テスト')
