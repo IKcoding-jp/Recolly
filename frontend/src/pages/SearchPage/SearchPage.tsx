@@ -1,15 +1,25 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import type { SearchResult, MediaType } from '../../lib/types'
+import type { SearchResult, MediaType, RecordStatus } from '../../lib/types'
 import { worksApi } from '../../lib/worksApi'
 import { recordsApi } from '../../lib/recordsApi'
 import { ApiError } from '../../lib/api'
 import { WorkCard } from '../../components/WorkCard/WorkCard'
 import { ManualWorkForm } from '../../components/ManualWorkForm/ManualWorkForm'
+import { RecordModal } from '../../components/RecordModal/RecordModal'
 import { Typography } from '../../components/ui/Typography/Typography'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import { Button } from '../../components/ui/Button/Button'
 import styles from './SearchPage.module.css'
+
+const MEDIA_TYPE_LABELS: Record<MediaType, string> = {
+  anime: 'アニメ',
+  movie: '映画',
+  drama: 'ドラマ',
+  book: '本',
+  manga: '漫画',
+  game: 'ゲーム',
+}
 
 type GenreFilter = MediaType | 'all'
 
@@ -33,6 +43,7 @@ export function SearchPage() {
   const [hasSearched, setHasSearched] = useState(false)
   const [error, setError] = useState('')
   const [showManualForm, setShowManualForm] = useState(false)
+  const [modalWork, setModalWork] = useState<SearchResult | null>(null)
 
   const handleSearch = async (e: FormEvent) => {
     e.preventDefault()
@@ -57,13 +68,18 @@ export function SearchPage() {
     }
   }
 
-  const handleRecord = async (work: SearchResult) => {
-    const workKey = `${work.external_api_source}:${work.external_api_id}`
-    setLoadingId(workKey)
+  const handleOpenModal = (work: SearchResult) => {
+    setModalWork(work)
+  }
 
+  const handleConfirmRecord = async (data: { status: RecordStatus; rating: number | null }) => {
+    if (!modalWork) return
+    const workKey = `${modalWork.external_api_source}:${modalWork.external_api_id}`
+    setLoadingId(workKey)
     try {
-      await recordsApi.createFromSearchResult(work)
+      await recordsApi.createFromSearchResult(modalWork, data)
       setRecordedIds((prev) => new Set(prev).add(workKey))
+      setModalWork(null)
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message)
@@ -144,7 +160,7 @@ export function SearchPage() {
                 <WorkCard
                   key={workKey}
                   work={work}
-                  onRecord={handleRecord}
+                  onRecord={handleOpenModal}
                   isRecorded={recordedIds.has(workKey)}
                   isLoading={loadingId === workKey}
                 />
@@ -161,6 +177,15 @@ export function SearchPage() {
           {showManualForm && <ManualWorkForm onSubmit={handleManualSubmit} />}
         </div>
       </div>
+
+      <RecordModal
+        isOpen={modalWork !== null}
+        title={modalWork?.title ?? ''}
+        mediaType={modalWork ? MEDIA_TYPE_LABELS[modalWork.media_type] : ''}
+        onConfirm={handleConfirmRecord}
+        onCancel={() => setModalWork(null)}
+        isLoading={loadingId !== null}
+      />
     </div>
   )
 }
