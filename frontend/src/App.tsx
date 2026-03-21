@@ -7,6 +7,7 @@ import { SignUpPage } from './pages/SignUpPage/SignUpPage'
 import { DashboardPage } from './pages/DashboardPage/DashboardPage'
 import { SearchPage } from './pages/SearchPage/SearchPage'
 import { WorkDetailPage } from './pages/WorkDetailPage/WorkDetailPage'
+import { LibraryPage } from './pages/LibraryPage/LibraryPage'
 
 // 認証済みならダッシュボードへ、未認証ならログインページへ
 function RootRedirect() {
@@ -38,6 +39,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <SearchPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/library"
+            element={
+              <ProtectedRoute>
+                <LibraryPage />
               </ProtectedRoute>
             }
           />
