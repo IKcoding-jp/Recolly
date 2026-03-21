@@ -96,6 +96,20 @@ docs: API仕様書を更新
 refactor: 認証ロジックを整理
 ```
 
+## マージ戦略
+
+- PRの性質に応じてマージ方法を使い分ける
+  - 機能追加・ADR付きの大きめPR → Merge commit（開発プロセスの履歴を残す）
+  - バグ修正・リファクタ・ドキュメント修正など小さいPR → Squash and merge（履歴をきれいに保つ）
+- Rebase and mergeは使用しない
+- mainへの直接プッシュは禁止。必ずPRを経由する
+
+## PRルール
+
+- PRタイトルはConventional Commits形式（例: feat: ○○, fix: ○○, docs: ○○）
+- Squash時のコミットメッセージはPRタイトルをそのまま使う
+- 1PRの変更は原則1つの関心事に絞る
+
 ## コーディング規約
 
 ### 共通
