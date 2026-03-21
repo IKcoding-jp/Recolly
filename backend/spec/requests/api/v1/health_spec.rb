@@ -11,5 +11,10 @@ RSpec.describe 'ヘルスチェックAPI', type: :request do
       get '/api/v1/health'
       expect(response.parsed_body['status']).to eq('ok')
     end
+
+    it 'timestampを返す' do
+      get '/api/v1/health'
+      expect(response.parsed_body['timestamp']).to be_present
+    end
   end
 end
