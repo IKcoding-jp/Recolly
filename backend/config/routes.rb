@@ -23,6 +23,9 @@ Rails.application.routes.draw do
         end
       end
 
+      # 記録（ライブラリ追加）
+      resources :records, only: [:create]
+
       get "health", to: "health#show"
     end
   end
