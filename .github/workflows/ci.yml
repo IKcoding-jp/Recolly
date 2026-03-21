@@ -51,7 +51,7 @@ jobs:
           DB_HOST: localhost
           DB_USERNAME: postgres
           DB_PASSWORD: postgres
-        run: bundle exec rails db:test:prepare
+        run: bundle exec rails db:create db:schema:load
       - name: Run tests
         env:
           RAILS_ENV: test
