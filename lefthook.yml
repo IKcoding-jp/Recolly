@@ -4,19 +4,19 @@ pre-commit:
     rubocop:
       root: backend/
       glob: "*.rb"
-      run: bundle exec rubocop --force-exclusion {staged_files}
+      run: docker compose exec -T backend bundle exec rubocop --force-exclusion {staged_files}
     eslint:
       root: frontend/
       glob: "*.{ts,tsx}"
-      run: npx eslint {staged_files}
+      run: docker compose exec -T frontend npx eslint {staged_files}
     prettier:
       root: frontend/
       glob: "*.{ts,tsx,css,json}"
-      run: npx prettier --check {staged_files}
+      run: docker compose exec -T frontend npx prettier --check {staged_files}
 
 pre-push:
   commands:
     rspec:
-      run: cd backend && bundle exec rspec
+      run: docker compose run --rm -e RAILS_ENV=test backend bundle exec rspec
     vitest:
-      run: cd frontend && npm test
+      run: docker compose run --rm frontend npm test
