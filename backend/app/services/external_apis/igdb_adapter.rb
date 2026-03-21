@@ -7,8 +7,8 @@ module ExternalApis
     IMAGE_BASE_URL = 'https://images.igdb.com/igdb/image/upload/t_cover_big'
     # キャッシュキーにクライアントIDを含めて複数環境での衝突を防ぐ
     TOKEN_CACHE_KEY = 'igdb_access_token'
-    SEARCH_FIELDS = 'name,summary,cover.image_id,platforms.name,genres.name,first_release_date,' \
-                     'alternative_names.name,alternative_names.comment'
+    SEARCH_FIELDS = 'name,summary,cover.image_id,platforms.name,genres.name,' \
+      'first_release_date,alternative_names.name,alternative_names.comment'
 
     def media_types
       %w[game]
@@ -62,7 +62,10 @@ module ExternalApis
     # alternative_namesから日本語タイトルを探す
     def japanese_title(item)
       alt_names = item['alternative_names'] || []
-      jp = alt_names.find { |a| a['comment']&.match?(/Japanese title/i) && a['name']&.match?(/[\p{Hiragana}\p{Katakana}\p{Han}]/) }
+      jp = alt_names.find do |a|
+        a['comment']&.match?(/Japanese title/i) &&
+          a['name']&.match?(/[\p{Hiragana}\p{Katakana}\p{Han}]/)
+      end
       jp&.dig('name')
     end
 
