@@ -76,3 +76,8 @@ export interface WorkResponse {
 export interface RecordResponse {
   record: UserRecord
 }
+
+// 記録一覧レスポンス
+export interface RecordsListResponse {
+  records: UserRecord[]
+}

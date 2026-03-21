@@ -24,7 +24,7 @@ Rails.application.routes.draw do
       end
 
       # 記録（ライブラリ追加）
-      resources :records, only: [:create]
+      resources :records, only: %i[index show create update destroy]
 
       get "health", to: "health#show"
     end

@@ -1,0 +1,42 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.buttons {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.button {
+  width: 2rem;
+  height: 2rem;
+  border: var(--border-width) var(--border-style) var(--color-border-light);
+  border-radius: 4px;
+  background: var(--color-bg-white);
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.button:hover {
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.button.active {
+  background: var(--color-text);
+  color: var(--color-bg-white);
+  border-color: var(--color-text);
+}
+
+.display {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
