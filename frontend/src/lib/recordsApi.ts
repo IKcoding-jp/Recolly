@@ -19,6 +19,8 @@ type RecordFilterParams = {
   mediaType?: string
   workId?: number
   sort?: string
+  page?: number
+  perPage?: number
 }
 
 export const recordsApi = {
@@ -28,6 +30,8 @@ export const recordsApi = {
     if (filters?.mediaType) params.set('media_type', filters.mediaType)
     if (filters?.workId) params.set('work_id', String(filters.workId))
     if (filters?.sort) params.set('sort', filters.sort)
+    if (filters?.page) params.set('page', String(filters.page))
+    if (filters?.perPage) params.set('per_page', String(filters.perPage))
     const query = params.toString()
     return request<RecordsListResponse>(`/records${query ? `?${query}` : ''}`)
   },

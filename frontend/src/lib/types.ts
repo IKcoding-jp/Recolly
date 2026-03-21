@@ -77,7 +77,16 @@ export interface RecordResponse {
   record: UserRecord
 }
 
+// ページネーション情報
+export interface PaginationMeta {
+  current_page: number
+  total_pages: number
+  total_count: number
+  per_page: number
+}
+
 // 記録一覧レスポンス
 export interface RecordsListResponse {
   records: UserRecord[]
+  meta?: PaginationMeta
 }
