@@ -43,9 +43,7 @@ describe('useLibrary', () => {
   it('status=all の場合はフィルタなしでAPIを呼ぶ', async () => {
     renderHook(() => useLibrary(), { wrapper: wrapper(['/library?status=all']) })
     await waitFor(() => {
-      expect(recordsApi.getAll).toHaveBeenCalledWith(
-        expect.objectContaining({ status: undefined }),
-      )
+      expect(recordsApi.getAll).toHaveBeenCalledWith(expect.objectContaining({ status: undefined }))
     })
   })
 

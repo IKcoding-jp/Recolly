@@ -61,10 +61,7 @@ export function RecordListItem({ record }: RecordListItemProps) {
                 {record.current_episode} / {work.total_episodes}話
               </span>
               <div className={styles.progressBar}>
-                <div
-                  className={styles.progressFill}
-                  style={{ width: `${progressPercent}%` }}
-                />
+                <div className={styles.progressFill} style={{ width: `${progressPercent}%` }} />
               </div>
             </div>
           )}
