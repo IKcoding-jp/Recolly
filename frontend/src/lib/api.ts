@@ -43,7 +43,12 @@ export const authApi = {
     })
   },
 
-  signup(username: string, email: string, password: string, passwordConfirmation: string): Promise<AuthResponse> {
+  signup(
+    username: string,
+    email: string,
+    password: string,
+    passwordConfirmation: string,
+  ): Promise<AuthResponse> {
     return request<AuthResponse>('/signup', {
       method: 'POST',
       body: JSON.stringify({

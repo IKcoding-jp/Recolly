@@ -55,7 +55,8 @@ describe('AuthContext', () => {
   it('セッションが有効な場合、isAuthenticatedがtrueになる', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ user: { id: 1, username: 'testuser', email: 'test@example.com' } }),
+      json: () =>
+        Promise.resolve({ user: { id: 1, username: 'testuser', email: 'test@example.com' } }),
     })
 
     renderWithProvider()
@@ -71,7 +72,8 @@ describe('AuthContext', () => {
     // 初回: ログイン済み
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ user: { id: 1, username: 'testuser', email: 'test@example.com' } }),
+      json: () =>
+        Promise.resolve({ user: { id: 1, username: 'testuser', email: 'test@example.com' } }),
     })
 
     renderWithProvider()

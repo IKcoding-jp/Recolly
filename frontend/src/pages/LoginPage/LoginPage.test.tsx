@@ -72,7 +72,9 @@ describe('LoginPage', () => {
     await user.type(screen.getByLabelText('パスワード'), 'wrong')
     await user.click(screen.getByRole('button', { name: 'ログイン' }))
 
-    expect(await screen.findByText('メールアドレスまたはパスワードが正しくありません')).toBeInTheDocument()
+    expect(
+      await screen.findByText('メールアドレスまたはパスワードが正しくありません'),
+    ).toBeInTheDocument()
   })
 
   it('「アカウントを作成」リンクが表示される', async () => {

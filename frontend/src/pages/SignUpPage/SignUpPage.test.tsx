@@ -45,7 +45,8 @@ describe('SignUpPage', () => {
     // 登録API成功
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ user: { id: 1, username: 'newuser', email: 'new@example.com' } }),
+      json: () =>
+        Promise.resolve({ user: { id: 1, username: 'newuser', email: 'new@example.com' } }),
     })
 
     await user.type(await screen.findByLabelText('ユーザー名'), 'newuser')
