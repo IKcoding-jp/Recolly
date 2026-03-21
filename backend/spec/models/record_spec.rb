@@ -43,6 +43,32 @@ RSpec.describe Record, type: :model do
       record = described_class.new(user: user, work: work, rating: nil)
       expect(record).to be_valid
     end
+
+    describe 'current_episode のバリデーション' do
+      let(:work_with_episodes) { Work.create!(title: '進撃の巨人Final', media_type: 'anime', total_episodes: 75) }
+
+      it 'current_episode が total_episodes を超えると無効' do
+        record = described_class.new(user: user, work: work_with_episodes, current_episode: 76)
+        expect(record).not_to be_valid
+        expect(record.errors[:current_episode]).to be_present
+      end
+
+      it 'current_episode が total_episodes と同値なら有効' do
+        record = described_class.new(user: user, work: work_with_episodes, current_episode: 75)
+        expect(record).to be_valid
+      end
+
+      it 'total_episodes が nil の作品では上限チェックをスキップ' do
+        work_no_episodes = Work.create!(title: '映画B', media_type: 'movie')
+        record = described_class.new(user: user, work: work_no_episodes, current_episode: 999)
+        expect(record).to be_valid
+      end
+
+      it 'current_episode が負の値で無効' do
+        record = described_class.new(user: user, work: work_with_episodes, current_episode: -1)
+        expect(record).not_to be_valid
+      end
+    end
   end
 
   describe 'enum' do
