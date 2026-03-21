@@ -39,6 +39,9 @@ coverage/
 # Superpowers (tool artifacts)
 .superpowers/
 
+# Git worktrees
+.worktrees/
+
 # Misc
 *.log
 
