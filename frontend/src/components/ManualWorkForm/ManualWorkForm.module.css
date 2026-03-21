@@ -16,7 +16,7 @@
 .field label {
   font-family: var(--font-body);
   font-size: var(--font-size-label);
-  font-weight: 600;
+  font-weight: var(--font-weight-bold);
   color: var(--color-text);
 }
 
