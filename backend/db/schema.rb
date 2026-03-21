@@ -10,9 +10,25 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_21_080744) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_21_081424) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "records", force: :cascade do |t|
+    t.date "completed_at"
+    t.datetime "created_at", null: false
+    t.integer "current_episode", default: 0
+    t.integer "rating"
+    t.integer "rewatch_count", default: 0
+    t.date "started_at"
+    t.integer "status", default: 4, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.bigint "work_id", null: false
+    t.index ["user_id", "work_id"], name: "index_records_on_user_id_and_work_id", unique: true
+    t.index ["user_id"], name: "index_records_on_user_id"
+    t.index ["work_id"], name: "index_records_on_work_id"
+  end
 
   create_table "users", force: :cascade do |t|
     t.string "avatar_url"
@@ -43,4 +59,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_21_080744) do
     t.datetime "updated_at", null: false
     t.index ["external_api_id", "external_api_source"], name: "index_works_on_external_api_id_and_external_api_source", unique: true, where: "(external_api_id IS NOT NULL)"
   end
+
+  add_foreign_key "records", "users"
+  add_foreign_key "records", "works"
 end
