@@ -10,7 +10,12 @@ module Api
       # GET /api/v1/records
       def index
         records = apply_sort(apply_filters(current_user.records.includes(:work)))
-        render json: { records: records.as_json(include: :work) }
+
+        if pagination_requested?
+          render json: paginated_response(records)
+        else
+          render json: { records: records.as_json(include: :work) }
+        end
       end
 
       # GET /api/v1/records/:id
@@ -48,6 +53,34 @@ module Api
       end
 
       private
+
+      def pagination_requested?
+        params[:page].present? || params[:per_page].present?
+      end
+
+      def paginated_response(records)
+        page = current_page
+        per_page = per_page_limit
+        total_count = records.count
+
+        {
+          records: records.offset((page - 1) * per_page).limit(per_page).as_json(include: :work),
+          meta: pagination_meta(page, per_page, total_count)
+        }
+      end
+
+      def current_page
+        [params.fetch(:page, 1).to_i, 1].max
+      end
+
+      def per_page_limit
+        params.fetch(:per_page, 20).to_i.clamp(1, 100)
+      end
+
+      def pagination_meta(page, per_page, total_count)
+        { current_page: page, total_pages: (total_count.to_f / per_page).ceil,
+          total_count: total_count, per_page: per_page }
+      end
 
       def set_record
         @record = Record.find(params[:id])

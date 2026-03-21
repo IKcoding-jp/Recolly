@@ -119,6 +119,45 @@ RSpec.describe 'Api::V1::Records', type: :request do
         expect(json['records'].length).to eq(1)
       end
 
+      it 'page と per_page でページネーションできる', :aggregate_failures do
+        works = 3.times.map { |i| Work.create!(title: "作品#{i}", media_type: 'anime') }
+        works.each { |w| Record.create!(user: user, work: w, status: :watching) }
+
+        get '/api/v1/records', params: { page: 1, per_page: 2 }
+        expect(response).to have_http_status(:ok)
+        json = response.parsed_body
+        expect(json['records'].length).to eq(2)
+        expect(json['meta']['current_page']).to eq(1)
+        expect(json['meta']['total_pages']).to eq(2)
+        expect(json['meta']['total_count']).to eq(3)
+        expect(json['meta']['per_page']).to eq(2)
+      end
+
+      it '2ページ目を取得できる' do
+        works = 3.times.map { |i| Work.create!(title: "作品#{i}", media_type: 'anime') }
+        works.each { |w| Record.create!(user: user, work: w, status: :watching) }
+
+        get '/api/v1/records', params: { page: 2, per_page: 2 }
+        json = response.parsed_body
+        expect(json['records'].length).to eq(1)
+        expect(json['meta']['current_page']).to eq(2)
+      end
+
+      it 'per_page が100を超える場合は100に制限される' do
+        Record.create!(user: user, work: existing_work, status: :watching)
+        get '/api/v1/records', params: { page: 1, per_page: 200 }
+        json = response.parsed_body
+        expect(json['meta']['per_page']).to eq(100)
+      end
+
+      it 'page/per_page を指定しない場合はmeta なしで全件返す（後方互換）' do
+        Record.create!(user: user, work: existing_work, status: :watching)
+        get '/api/v1/records'
+        json = response.parsed_body
+        expect(json['records'].length).to eq(1)
+        expect(json).not_to have_key('meta')
+      end
+
       it 'デフォルトで updated_at 降順にソートされる' do
         Record.create!(user: user, work: existing_work, status: :watching)
         another_work = Work.create!(title: '別作品', media_type: 'movie')
