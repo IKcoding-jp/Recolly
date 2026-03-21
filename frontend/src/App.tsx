@@ -68,7 +68,7 @@ function App() {
             key={genre}
             style={{
               backgroundColor: `var(--color-${genre})`,
-              color: '#fff',
+              color: 'var(--color-bg-white)',
               padding: '0.25rem 0.75rem',
               fontSize: '0.875rem',
             }}
