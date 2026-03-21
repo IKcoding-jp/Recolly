@@ -33,12 +33,16 @@ recolly/
 
 ## 開発手法
 
-**SDD（仕様駆動開発）+ TDD（テスト駆動開発）**
+**SDD（仕様駆動開発）+ TDD（テスト駆動開発）+ Issue駆動開発**
 
-1. 仕様書を `docs/` に作成
-2. テストを書く（この時点ではテストは失敗する）
-3. テストが通る最小限の実装を書く
-4. リファクタリング
+1. GitHub Issueを作成（ブレインストーミングで要件を明確化 → Working Documents生成）
+2. 仕様書を `docs/` に作成
+3. テストを書く（この時点ではテストは失敗する）
+4. テストが通る最小限の実装を書く
+5. リファクタリング
+
+- Issue作成は `.claude/skills/issue-creator` スキルで行う
+- Working Documentsは `docs/working/` に保存し、`/clear` 後のコンテキスト復元に使う
 
 ## コードレビュー
 
@@ -157,3 +161,14 @@ docker compose run --rm backend bin/rails db:create
 docker compose run --rm backend bin/rails db:migrate
 docker compose run --rm backend bin/rails db:seed
 ```
+
+## 理解負債防止
+
+<!-- AI支援開発では、コードは動くが「なぜ動くか説明できない」状態（理解負債）が蓄積しやすい。
+     この仕組みにより、判断の記録と理解の確認をプロセスに組み込み、負債を防止する。 -->
+
+- 技術選定・設計判断では `.claude/skills/comprehension-guard` スキルに従い、必ずユーザーの承認を得てから実装に進む
+- 説明はプログラミング初学者を前提とする。専門用語は初出時に平易な説明を添える
+- 設計判断は `docs/adr/` にADR（Architecture Decision Record）として記録する
+- 新技術の学習は `docs/learning/` にノートとして蓄積する
+- PR作成前に `.claude/skills/pr-review` スキルで理解度チェックを行う
