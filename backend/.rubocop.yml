@@ -47,7 +47,13 @@ Rails:
 
 # テストでは関連する複数のexpectをまとめて書くことを許可
 RSpec/MultipleExpectations:
-  Max: 3
+  Max: 4
+
+# AniListAdapter等のアクロニムを含むクラスのファイル名はZeitwerkの命名規則（AniList→anilist）に合わせているため
+# active_supportインフレクターを使用してinflections.rbのアクロニム設定を参照させる
+RSpec/SpecFilePathFormat:
+  EnforcedInflector: active_support
+  InflectorPath: "./config/initializers/inflections.rb"
 
 # 日本語のcontext記述を許可（「正常系」「異常系」等）
 RSpec/ContextWording:

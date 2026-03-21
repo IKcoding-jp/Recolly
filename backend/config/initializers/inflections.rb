@@ -10,7 +10,9 @@
 #   inflect.uncountable %w( fish sheep )
 # end
 
-# These inflection rules are supported but not enabled by default:
-# ActiveSupport::Inflector.inflections(:en) do |inflect|
-#   inflect.acronym "RESTful"
-# end
+# 外部APIクライアントのクラス名を正しくCamelCaseに変換するためのアクロニム定義
+# Zeitwerkはこの設定を使用してファイル名 → クラス名のマッピングを行う
+ActiveSupport::Inflector.inflections(:en) do |inflect|
+  inflect.acronym 'AniList'
+  inflect.acronym 'IGDB'
+end
