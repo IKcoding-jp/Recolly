@@ -24,9 +24,15 @@ RUN apt-get update -qq && \
 
 WORKDIR /app
 
+# 非rootユーザーで実行（セキュリティベストプラクティス）
+RUN useradd -r -s /bin/false rails
+
 # ビルドステージからgemとアプリケーションコードをコピー
 COPY --from=builder /usr/local/bundle /usr/local/bundle
 COPY --from=builder /app /app
+
+RUN chown -R rails:rails /app
+USER rails
 
 EXPOSE 3000
 

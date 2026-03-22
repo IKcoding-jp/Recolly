@@ -18,7 +18,11 @@ resource "aws_db_instance" "main" {
   vpc_security_group_ids = [aws_security_group.rds.id]
 
   # シングルAZ（無料枠対応）
-  multi_az = false
+  multi_az            = false
+  publicly_accessible = false
+
+  # ストレージ暗号化（追加コストなし）
+  storage_encrypted = true
 
   # バックアップ設定
   backup_retention_period = 7
