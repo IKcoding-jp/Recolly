@@ -48,7 +48,7 @@ variable "github_org" {
 }
 
 variable "github_repo" {
-  description = "GitHubリポジトリ名（OIDC用）"
+  description = "GitHubリポジトリ名（OIDC用、大文字小文字を区別する）"
   type        = string
-  default     = "recolly"
+  default     = "Recolly"
 }
