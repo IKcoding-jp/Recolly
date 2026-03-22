@@ -14,6 +14,7 @@ RUN bundle config set --local without 'development test' && \
     bundle install --jobs 4
 
 COPY . .
+RUN chmod +x bin/*
 
 # === ランタイムステージ ===
 FROM ruby:3.3-slim
