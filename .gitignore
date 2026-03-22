@@ -54,3 +54,9 @@ lefthook-local.yml
 # Issue作成時の一時ファイル
 .tmp-issue-body.md
 .claude/settings.local.json
+
+# Terraform
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.backup
+infra/*.tfvars

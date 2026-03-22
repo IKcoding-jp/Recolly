@@ -1,0 +1,43 @@
+# backend/Dockerfile.production
+
+# === ビルドステージ ===
+FROM ruby:3.3-slim AS builder
+
+RUN apt-get update -qq && \
+    apt-get install -y build-essential libpq-dev libyaml-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY Gemfile Gemfile.lock ./
+RUN bundle config set --local without 'development test' && \
+    bundle install --jobs 4
+
+COPY . .
+
+# === ランタイムステージ ===
+FROM ruby:3.3-slim
+
+RUN apt-get update -qq && \
+    apt-get install -y libpq-dev libyaml-dev curl && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# 非rootユーザーで実行（セキュリティベストプラクティス）
+RUN useradd -r -s /bin/false rails
+
+# ビルドステージからgemとアプリケーションコードをコピー
+COPY --from=builder /usr/local/bundle /usr/local/bundle
+COPY --from=builder /app /app
+
+RUN chown -R rails:rails /app
+USER rails
+
+EXPOSE 3000
+
+# ヘルスチェック
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
+  CMD curl -f http://localhost:3000/api/v1/health || exit 1
+
+CMD ["bin/rails", "server", "-b", "0.0.0.0"]
