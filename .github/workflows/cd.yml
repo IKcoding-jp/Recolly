@@ -72,14 +72,31 @@ jobs:
           docker build -f backend/Dockerfile.production -t $ECR_REGISTRY/recolly-backend:$IMAGE_TAG backend/
           docker push $ECR_REGISTRY/recolly-backend:$IMAGE_TAG
 
-      - name: Deploy to EC2
-        env:
-          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            bash /home/ec2-user/deploy.sh ${{ env.ECR_REGISTRY }} ${{ env.IMAGE_TAG }}
+      - name: Deploy to EC2 via SSM
+        run: |
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
+            --document-name "AWS-RunShellScript" \
+            --parameters "commands=[\"bash /home/ec2-user/deploy.sh ${{ steps.ecr-login.outputs.registry }} ${{ github.sha }}\"]" \
+            --query "Command.CommandId" \
+            --output text)
+          echo "SSM Command ID: $COMMAND_ID"
+          aws ssm wait command-executed \
+            --command-id "$COMMAND_ID" \
+            --instance-id ${{ secrets.EC2_INSTANCE_ID }} || true
+          STATUS=$(aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id ${{ secrets.EC2_INSTANCE_ID }} \
+            --query "Status" --output text)
+          echo "Status: $STATUS"
+          aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id ${{ secrets.EC2_INSTANCE_ID }} \
+            --query "StandardOutputContent" --output text
+          if [ "$STATUS" != "Success" ]; then
+            aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id ${{ secrets.EC2_INSTANCE_ID }} \
+              --query "StandardErrorContent" --output text
+            exit 1
+          fi
