@@ -42,6 +42,12 @@ resource "aws_iam_role_policy_attachment" "ec2_ecr" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
+# EC2がSSMエージェントとして動作する権限
+resource "aws_iam_role_policy_attachment" "ec2_ssm_managed" {
+  role       = aws_iam_role.ec2.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 # EC2インスタンスプロファイル
 resource "aws_iam_instance_profile" "ec2" {
   name = "${var.project_name}-ec2-instance-profile"
@@ -112,6 +118,12 @@ data "aws_iam_policy_document" "github_actions" {
   # CloudFrontキャッシュクリア権限
   statement {
     actions   = ["cloudfront:CreateInvalidation"]
+    resources = ["*"]
+  }
+
+  # SSM Run Command権限（EC2へのデプロイ用）
+  statement {
+    actions   = ["ssm:SendCommand", "ssm:GetCommandInvocation"]
     resources = ["*"]
   }
 }
