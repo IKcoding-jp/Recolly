@@ -22,7 +22,7 @@ resource "aws_cloudfront_distribution" "main" {
 
   # オリジン2: EC2（Rails API）
   origin {
-    domain_name = aws_eip.api.public_ip
+    domain_name = "ec2-${replace(aws_eip.api.public_ip, ".", "-")}.${var.aws_region}.compute.amazonaws.com"
     origin_id   = "ec2-api"
 
     custom_origin_config {
