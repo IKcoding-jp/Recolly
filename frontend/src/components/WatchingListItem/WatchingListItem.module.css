@@ -1,0 +1,75 @@
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border-light);
+  border-radius: 6px;
+  transition: background var(--transition-fast);
+}
+.row:hover {
+  background: var(--color-bg);
+}
+.link {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  text-decoration: none;
+  color: inherit;
+  flex: 1;
+  min-width: 0;
+}
+.cover {
+  width: 40px;
+  height: 56px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+.coverPlaceholder {
+  width: 40px;
+  height: 56px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.info {
+  min-width: 0;
+}
+.title {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.genre {
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.progress {
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+.actionButton {
+  width: 72px;
+  padding: var(--spacing-xs) 0;
+  background: var(--color-text);
+  color: var(--color-bg-white);
+  border: none;
+  border-radius: 4px;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  text-align: center;
+  flex-shrink: 0;
+  font-family: inherit;
+  transition: opacity var(--transition-fast);
+}
+.actionButton:hover {
+  opacity: 0.8;
+}

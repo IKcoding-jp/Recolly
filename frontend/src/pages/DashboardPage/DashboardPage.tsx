@@ -1,24 +1,29 @@
-import { useAuth } from '../../contexts/useAuth'
-import { Typography } from '../../components/ui/Typography/Typography'
-import { Button } from '../../components/ui/Button/Button'
-import { Divider } from '../../components/ui/Divider/Divider'
+import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
+import { WatchingListItem } from '../../components/WatchingListItem/WatchingListItem'
+import { DashboardEmptyState } from '../../components/DashboardEmptyState/DashboardEmptyState'
+import { useDashboard } from './useDashboard'
+import styles from './DashboardPage.module.css'
 
-// 仮のダッシュボードページ（認証確認用）
-// フェーズ1の後半で正式なダッシュボードに置き換える
 export function DashboardPage() {
-  const { user, logout } = useAuth()
+  const { records, isLoading, error, handleAction } = useDashboard()
 
   return (
-    <div style={{ padding: 'var(--spacing-xl)' }}>
-      <Typography variant="h2">ダッシュボード</Typography>
-      <Divider />
-      <Typography variant="body">ようこそ、{user?.username} さん</Typography>
-      <Typography variant="meta">{user?.email}</Typography>
-      <div style={{ marginTop: 'var(--spacing-lg)' }}>
-        <Button variant="secondary" onClick={() => void logout()}>
-          ログアウト
-        </Button>
-      </div>
+    <div className={styles.container}>
+      <SectionTitle>進行中</SectionTitle>
+      {isLoading && <div className={styles.loading}>読み込み中...</div>}
+      {error && <div className={styles.error}>{error}</div>}
+      {!isLoading && !error && records.length === 0 && <DashboardEmptyState />}
+      {!isLoading && records.length > 0 && (
+        <div className={styles.list}>
+          {records.map((record) => (
+            <WatchingListItem
+              key={record.id}
+              record={record}
+              onAction={() => void handleAction(record)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
