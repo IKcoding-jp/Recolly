@@ -97,11 +97,15 @@
 - [x] ADR 0001〜0011 — `docs/adr/`
 - [x] コードレビュー再発防止策 — PR #17
 
-### インフラ・デプロイ（未着手）
-- [ ] AWS EC2（Railsサーバー）
-- [ ] AWS RDS（PostgreSQL）
-- [ ] AWS S3（画像ストレージ）
-- [ ] AWS CloudFront（CDN配信）
-- [ ] 本番環境の環境変数設定（SECRET_KEY_BASE、DB接続、外部APIキー）
+### インフラ・デプロイ
+- [x] AWS EC2（Railsサーバー）— PR #26, ADR-0012
+- [x] AWS RDS（PostgreSQL）— PR #26
+- [x] AWS S3（フロントエンド配信）— PR #26
+- [x] AWS CloudFront（CDN + リバースプロキシ）— PR #26
+- [x] Terraform（IaC）— PR #26
+- [x] 本番環境の環境変数設定（SSM Parameter Store）— PR #26
+- [x] HTTPS設定（CloudFrontが自動提供）— PR #26
+- [x] 本番用Dockerfile（マルチステージビルド）— PR #26
+- [x] 初回デプロイ完了（https://d1libv2nochxfe.cloudfront.net）
+- [x] GitHub Secrets設定（CI/CD自動デプロイの有効化）
 - [ ] ドメイン取得・DNS設定
-- [ ] HTTPS設定（Let's Encrypt or ACM）
