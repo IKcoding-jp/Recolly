@@ -39,8 +39,16 @@ coverage/
 # Superpowers (tool artifacts)
 .superpowers/
 
+# Serena
+.serena/
+
 # Git worktrees
 .worktrees/
+
+# 認証情報・シークレット
+*.csv
+*.pem
+*.key
 
 # Misc
 *.log
