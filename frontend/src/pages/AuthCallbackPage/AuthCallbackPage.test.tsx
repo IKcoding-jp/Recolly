@@ -64,11 +64,11 @@ describe('AuthCallbackPage', () => {
     })
   })
 
-  it('status=errorでエラーメッセージ付きで/に遷移する', async () => {
+  it('status=errorでエラーメッセージ付きで/loginに遷移する', async () => {
     renderWithRoute('?status=error&message=email_already_registered')
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/', {
+      expect(mockNavigate).toHaveBeenCalledWith('/login', {
         replace: true,
         state: {
           error: 'このメールアドレスは既に登録されています。メールアドレスでログインしてください',
