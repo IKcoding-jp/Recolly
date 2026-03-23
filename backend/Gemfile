@@ -13,10 +13,10 @@ gem 'puma', '>= 5.0'
 gem 'devise'
 
 # OAuth認証（ADR-0013）
-gem "omniauth"
-gem "omniauth-google-oauth2"
-gem "omniauth-twitter2"
-gem "omniauth-rails_csrf_protection"
+gem 'omniauth'
+gem 'omniauth-google-oauth2'
+gem 'omniauth-rails_csrf_protection'
+gem 'omniauth-twitter2'
 
 # HTTPクライアント（外部API通信用、ADR-0009）
 gem 'faraday'
