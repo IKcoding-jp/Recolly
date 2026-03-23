@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/useAuth'
 import { ApiError } from '../../lib/api'
 import { Typography } from '../../components/ui/Typography/Typography'
 import { Button } from '../../components/ui/Button/Button'
 import { Divider } from '../../components/ui/Divider/Divider'
+import { OAuthButtons } from '../../components/OAuthButtons/OAuthButtons'
 import styles from '../../styles/authForm.module.css'
 
 export function LoginPage() {
@@ -15,6 +16,17 @@ export function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // OAuthエラー時のメッセージを表示
+  useEffect(() => {
+    const state = location.state as { error?: string } | null
+    if (state?.error) {
+      setError(state.error)
+      // stateをクリアしてリロード時に再表示されないようにする
+      window.history.replaceState({}, '')
+    }
+  }, [location.state])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -68,6 +80,7 @@ export function LoginPage() {
             {isSubmitting ? 'ログイン中...' : 'ログイン'}
           </Button>
         </form>
+        <OAuthButtons />
         <div className={styles.link}>
           <Link to="/signup">アカウントを作成</Link>
         </div>

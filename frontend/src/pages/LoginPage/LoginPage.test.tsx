@@ -16,6 +16,11 @@ beforeEach(() => {
     status: 401,
     json: () => Promise.resolve({ error: 'ログインが必要です' }),
   })
+  // OAuthButtons用のCSRFトークン取得
+  mockFetch.mockResolvedValueOnce({
+    ok: true,
+    json: () => Promise.resolve({ token: 'test-csrf-token' }),
+  })
 })
 
 function renderLoginPage() {
@@ -80,5 +85,10 @@ describe('LoginPage', () => {
   it('「アカウントを作成」リンクが表示される', async () => {
     renderLoginPage()
     expect(await screen.findByText('アカウントを作成')).toHaveAttribute('href', '/signup')
+  })
+
+  it('OAuthボタンが表示される', async () => {
+    renderLoginPage()
+    expect(await screen.findByText('Googleでログイン')).toBeInTheDocument()
   })
 })

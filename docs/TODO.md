@@ -21,8 +21,8 @@
 
 ### 認証
 - [x] メール + パスワード認証（devise + セッションCookie）— PR #14, ADR-0007
-- [ ] Google OAuth
-- [ ] X（Twitter）OAuth
+- [x] Google OAuth — ADR-0013
+- [x] X（Twitter）OAuth — ADR-0013
 
 ### 作品検索・外部API連携
 - [x] 作品検索ページ（キーワード + ジャンルフィルタ）— PR #19

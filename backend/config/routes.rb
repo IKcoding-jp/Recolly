@@ -8,13 +8,25 @@ Rails.application.routes.draw do
              controllers: {
                sessions: "api/v1/sessions",
                registrations: "api/v1/registrations",
-               passwords: "api/v1/passwords"
+               passwords: "api/v1/passwords",
+               omniauth_callbacks: "api/v1/omniauth_callbacks"
              }
 
   namespace :api do
     namespace :v1 do
       # 認証済みユーザー情報取得
       resource :current_user, only: [:show], controller: "current_user"
+
+      get 'csrf_token', to: 'csrf_tokens#show'
+
+      post 'auth/complete_registration', to: 'oauth_registrations#create'
+
+      resource :account_settings, only: [] do
+        post :link_provider
+        delete :unlink_provider
+        put :set_password
+        put :set_email
+      end
 
       # 作品検索・手動登録
       resources :works, only: [:create] do

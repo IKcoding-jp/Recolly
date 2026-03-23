@@ -6,6 +6,7 @@ import { ApiError } from '../../lib/api'
 import { Typography } from '../../components/ui/Typography/Typography'
 import { Button } from '../../components/ui/Button/Button'
 import { Divider } from '../../components/ui/Divider/Divider'
+import { OAuthButtons } from '../../components/OAuthButtons/OAuthButtons'
 import styles from '../../styles/authForm.module.css'
 
 export function SignUpPage() {
@@ -100,6 +101,7 @@ export function SignUpPage() {
             {isSubmitting ? '登録中...' : 'アカウントを作成'}
           </Button>
         </form>
+        <OAuthButtons />
         <div className={styles.link}>
           <Link to="/login">ログインはこちら</Link>
         </div>

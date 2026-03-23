@@ -65,3 +65,14 @@
   font-size: var(--font-size-meta);
   text-decoration: underline;
 }
+
+.skipButton {
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}

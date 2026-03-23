@@ -69,4 +69,45 @@ RSpec.describe User, type: :model do
       expect(user.errors[:username]).to be_present
     end
   end
+
+  describe 'OAuth対応バリデーション' do
+    it 'UserProviderがある場合はパスワードなしで有効' do
+      user = described_class.new(username: 'oauthuser', email: 'oauth@example.com')
+      user.save!(validate: false)
+      UserProvider.create!(user: user, provider: 'google_oauth2', provider_uid: '12345')
+      user.reload
+      expect(user).to be_valid
+    end
+
+    it 'UserProviderがなくパスワードもない場合は無効' do
+      user = described_class.new(username: 'nopassuser', email: 'nopass@example.com')
+      expect(user).not_to be_valid
+    end
+
+    it 'メールアドレスが空でもUserProviderがあれば有効' do
+      user = described_class.new(username: 'noemailuser', email: '')
+      user.save!(validate: false)
+      UserProvider.create!(user: user, provider: 'google_oauth2', provider_uid: '12345')
+      user.reload
+      expect(user).to be_valid
+    end
+
+    it 'メールアドレスが空でUserProviderもなければ無効' do
+      user = described_class.new(username: 'noemailuser', email: '', password: 'password123')
+      expect(user).not_to be_valid
+    end
+  end
+
+  describe 'アソシエーション' do
+    it 'user_providersを持つ' do
+      user = described_class.create!(username: 'testuser', email: 'test@example.com', password: 'password123')
+      expect(user).to respond_to(:user_providers)
+    end
+
+    it 'ユーザー削除時にuser_providersも削除される' do
+      user = described_class.create!(username: 'testuser', email: 'test@example.com', password: 'password123')
+      UserProvider.create!(user: user, provider: 'google_oauth2', provider_uid: '12345')
+      expect { user.destroy }.to change(UserProvider, :count).by(-1)
+    end
+  end
 end
