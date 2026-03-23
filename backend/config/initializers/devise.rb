@@ -46,4 +46,15 @@ Devise.setup do |config|
   # Hotwire/Turbo互換のレスポンスステータス
   config.responder.error_status = :unprocessable_content
   config.responder.redirect_status = :see_other
+
+  # OmniAuthプロバイダ設定（ADR-0013）
+  config.omniauth :google_oauth2,
+                  ENV['GOOGLE_CLIENT_ID'],
+                  ENV['GOOGLE_CLIENT_SECRET'],
+                  scope: 'email,profile'
+
+  config.omniauth :twitter2,
+                  ENV['X_CLIENT_ID'],
+                  ENV['X_CLIENT_SECRET'],
+                  scope: 'tweet.read users.read'
 end
