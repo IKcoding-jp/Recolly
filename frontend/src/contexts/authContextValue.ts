@@ -13,6 +13,8 @@ export interface AuthContextValue {
     passwordConfirmation: string,
   ) => Promise<void>
   logout: () => Promise<void>
+  setUser: (user: User | null) => void
+  refreshUser: () => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

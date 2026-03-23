@@ -72,3 +72,42 @@ export const authApi = {
     })
   },
 }
+
+// CSRFトークン取得API
+export const csrfApi = {
+  getToken(): Promise<{ token: string }> {
+    return request<{ token: string }>('/csrf_token')
+  },
+}
+
+// OAuth関連API
+export const oauthApi = {
+  completeRegistration(username: string): Promise<AuthResponse> {
+    return request<AuthResponse>('/auth/complete_registration', {
+      method: 'POST',
+      body: JSON.stringify({ username }),
+    })
+  },
+}
+
+// アカウント設定API
+export const accountApi = {
+  setEmail(email: string): Promise<AuthResponse> {
+    return request<AuthResponse>('/account_settings/set_email', {
+      method: 'PUT',
+      body: JSON.stringify({ email }),
+    })
+  },
+  unlinkProvider(provider: string): Promise<AuthResponse> {
+    return request<AuthResponse>('/account_settings/unlink_provider', {
+      method: 'DELETE',
+      body: JSON.stringify({ provider }),
+    })
+  },
+  setPassword(password: string, passwordConfirmation: string): Promise<AuthResponse> {
+    return request<AuthResponse>('/account_settings/set_password', {
+      method: 'PUT',
+      body: JSON.stringify({ password, password_confirmation: passwordConfirmation }),
+    })
+  },
+}
