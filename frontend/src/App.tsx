@@ -9,6 +9,10 @@ import { DashboardPage } from './pages/DashboardPage/DashboardPage'
 import { SearchPage } from './pages/SearchPage/SearchPage'
 import { WorkDetailPage } from './pages/WorkDetailPage/WorkDetailPage'
 import { LibraryPage } from './pages/LibraryPage/LibraryPage'
+import { AuthCallbackPage } from './pages/AuthCallbackPage/AuthCallbackPage'
+import { OauthUsernamePage } from './pages/OauthUsernamePage/OauthUsernamePage'
+import { EmailPromptPage } from './pages/EmailPromptPage/EmailPromptPage'
+import { AccountSettingsPage } from './pages/AccountSettingsPage/AccountSettingsPage'
 
 // 認証済みならダッシュボードへ、未認証ならログインページへ
 function RootRedirect() {
@@ -41,6 +45,8 @@ function App() {
           <Route path="/" element={<RootRedirect />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route path="/auth/complete" element={<OauthUsernamePage />} />
           <Route
             path="/dashboard"
             element={
@@ -77,6 +83,24 @@ function App() {
               <ProtectedRoute>
                 <AuthenticatedLayout>
                   <WorkDetailPage />
+                </AuthenticatedLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/auth/email-setup"
+            element={
+              <ProtectedRoute>
+                <EmailPromptPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <AuthenticatedLayout>
+                  <AccountSettingsPage />
                 </AuthenticatedLayout>
               </ProtectedRoute>
             }

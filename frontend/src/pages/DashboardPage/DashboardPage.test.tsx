@@ -4,6 +4,22 @@ import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { DashboardPage } from './DashboardPage'
 
+vi.mock('../../contexts/useAuth', () => ({
+  useAuth: () => ({
+    user: {
+      id: 1,
+      username: 'testuser',
+      email: 'test@example.com',
+      avatar_url: null,
+      bio: null,
+      created_at: '2026-01-01',
+      has_password: true,
+      providers: [],
+      email_missing: false,
+    },
+  }),
+}))
+
 vi.mock('../../lib/recordsApi', () => ({
   recordsApi: { getAll: vi.fn(), update: vi.fn() },
 }))
