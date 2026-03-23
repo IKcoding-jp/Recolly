@@ -35,7 +35,7 @@ export function AuthCallbackPage() {
         case 'error':
         default: {
           const errorMessage = message ? ERROR_MESSAGES[message] || message : 'エラーが発生しました'
-          navigate('/', { replace: true, state: { error: errorMessage } })
+          navigate('/login', { replace: true, state: { error: errorMessage } })
           break
         }
       }
