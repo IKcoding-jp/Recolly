@@ -3,6 +3,11 @@
 module Api
   module V1
     class OmniauthCallbacksController < Devise::OmniauthCallbacksController
+      # CSRF検証をスキップ（OmniAuthのstateパラメータがCSRF保護を担当）
+      # フロントエンド（localhost:5173）とバックエンド（localhost:3000）が別オリジンのため、
+      # セッションベースのCSRFトークン検証が機能しない
+      skip_forgery_protection
+
       def google_oauth2
         handle_oauth_callback
       end
