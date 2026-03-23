@@ -3,7 +3,7 @@
 class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable,
-         :omniauthable, omniauth_providers: %i[google_oauth2 twitter2]
+         :omniauthable, omniauth_providers: %i[google_oauth2]
 
   has_many :user_providers, dependent: :destroy
   has_many :records, dependent: :destroy
@@ -18,7 +18,7 @@ class User < ApplicationRecord
     super
   end
 
-  # Xでメール未取得のユーザーはメールなしを許可
+  # OAuth専用ユーザーはメールなしを許可（将来のプロバイダー追加に備えて維持）
   def email_required?
     return false if user_providers.any?
 

@@ -12,10 +12,6 @@ module Api
         handle_oauth_callback
       end
 
-      def twitter2
-        handle_oauth_callback
-      end
-
       def failure
         redirect_to_frontend(status: 'error', message: 'oauth_failed')
       end

@@ -87,7 +87,7 @@ RSpec.describe User, type: :model do
     it 'メールアドレスが空でもUserProviderがあれば有効' do
       user = described_class.new(username: 'noemailuser', email: '')
       user.save!(validate: false)
-      UserProvider.create!(user: user, provider: 'twitter2', provider_uid: '12345')
+      UserProvider.create!(user: user, provider: 'google_oauth2', provider_uid: '12345')
       user.reload
       expect(user).to be_valid
     end

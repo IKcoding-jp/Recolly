@@ -13,11 +13,10 @@ describe('OAuthButtons', () => {
     vi.clearAllMocks()
   })
 
-  it('GoogleとXのOAuthボタンを表示する', async () => {
+  it('Google OAuthボタンを表示する', async () => {
     render(<OAuthButtons />)
     await waitFor(() => {
       expect(screen.getByText('Googleでログイン')).toBeInTheDocument()
-      expect(screen.getByText('Xでログイン')).toBeInTheDocument()
     })
   })
 

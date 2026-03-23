@@ -56,15 +56,4 @@ RSpec.describe 'OmniAuth Callbacks', type: :request do
       end
     end
   end
-
-  describe 'GET /api/v1/auth/twitter2/callback' do
-    context 'メールなしの新規ユーザー' do
-      before { mock_twitter_oauth }
-
-      it 'new_userステータスでフロントにリダイレクト' do
-        get '/api/v1/auth/twitter2/callback'
-        expect(response).to redirect_to("#{frontend_url}/auth/callback?status=new_user")
-      end
-    end
-  end
 end

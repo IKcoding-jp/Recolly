@@ -88,7 +88,7 @@ describe('OauthUsernamePage', () => {
         username: 'testuser',
         email: '',
         email_missing: true,
-        providers: ['twitter'],
+        providers: ['google'],
       },
     })
 

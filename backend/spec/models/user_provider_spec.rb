@@ -40,7 +40,7 @@ RSpec.describe UserProvider, type: :model do
     it '同一ユーザーで異なるプロバイダは許可' do
       user = User.create!(username: 'testuser', email: 'test@example.com', password: 'password123')
       described_class.create!(user: user, provider: 'google_oauth2', provider_uid: '12345')
-      different = described_class.new(user: user, provider: 'twitter2', provider_uid: '67890')
+      different = described_class.new(user: user, provider: 'other_provider', provider_uid: '67890')
       expect(different).to be_valid
     end
   end

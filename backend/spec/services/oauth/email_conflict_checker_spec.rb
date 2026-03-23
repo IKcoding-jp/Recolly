@@ -36,7 +36,7 @@ RSpec.describe Oauth::EmailConflictChecker do
     it '別のOAuthで登録済みならプロバイダ名付きエラー' do
       user = User.create!(username: 'existing', email: 'existing@example.com', password: 'password123')
       UserProvider.create!(user: user, provider: 'google_oauth2', provider_uid: '12345')
-      result = described_class.new(email: 'existing@example.com', provider: 'twitter2').check
+      result = described_class.new(email: 'existing@example.com', provider: 'other_provider').check
       expect(result[:code]).to eq('email_registered_with_other_provider')
       expect(result[:message]).to include('Google')
     end

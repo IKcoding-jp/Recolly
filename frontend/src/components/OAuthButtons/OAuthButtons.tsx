@@ -32,18 +32,6 @@ export function OAuthButtons() {
           Googleでログイン
         </button>
       </form>
-
-      <form method="post" action={`${API_BASE}/api/v1/auth/twitter2`}>
-        <input type="hidden" name="authenticity_token" value={csrfToken} />
-        <button
-          type="submit"
-          className={`${styles.oauthButton} ${styles.xButton}`}
-          disabled={!csrfToken}
-        >
-          <span className={styles.xIcon}>{'\u{1D54F}'}</span>
-          Xでログイン
-        </button>
-      </form>
     </div>
   )
 }

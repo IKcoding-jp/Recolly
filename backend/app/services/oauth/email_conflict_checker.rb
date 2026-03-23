@@ -3,8 +3,7 @@
 module Oauth
   class EmailConflictChecker
     PROVIDER_DISPLAY_NAMES = {
-      'google_oauth2' => 'Google',
-      'twitter2' => 'X'
+      'google_oauth2' => 'Google'
     }.freeze
 
     def initialize(email:, provider:)

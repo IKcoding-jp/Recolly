@@ -10,10 +10,9 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 // プロバイダーの表示名マッピング
 const PROVIDER_DISPLAY: Record<string, { name: string; icon: string }> = {
   google_oauth2: { name: 'Google', icon: 'G' },
-  twitter2: { name: 'X', icon: '\u{1D54F}' },
 }
 
-const ALL_PROVIDERS = ['google_oauth2', 'twitter2'] as const
+const ALL_PROVIDERS = ['google_oauth2'] as const
 
 export function AccountSettingsPage() {
   const [csrfToken, setCsrfToken] = useState('')

@@ -56,9 +56,4 @@ Devise.setup do |config|
                   ENV['GOOGLE_CLIENT_ID'],
                   ENV['GOOGLE_CLIENT_SECRET'],
                   scope: 'email,profile'
-
-  config.omniauth :twitter2,
-                  ENV['X_CLIENT_ID'],
-                  ENV['X_CLIENT_SECRET'],
-                  scope: 'tweet.read users.read'
 end

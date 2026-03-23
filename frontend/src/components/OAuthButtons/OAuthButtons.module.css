@@ -55,21 +55,7 @@
   cursor: not-allowed;
 }
 
-.xButton {
-  background-color: var(--color-text);
-  color: var(--color-bg-white);
-}
-
-.xButton:hover:not(:disabled) {
-  opacity: 0.85;
-}
-
 .googleIcon {
-  font-size: var(--font-size-body);
-  font-weight: var(--font-weight-bold);
-}
-
-.xIcon {
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-bold);
 }

@@ -44,20 +44,6 @@ RSpec.describe 'OAuth Registrations', type: :request do
       end
     end
 
-    context 'メールなし（X経由）の場合' do
-      before do
-        mock_twitter_oauth
-        get '/api/v1/auth/twitter2/callback'
-      end
-
-      it 'メールなしでユーザーを作成し、email_missingがtrue' do
-        post '/api/v1/auth/complete_registration', params: { username: 'xuser' }, as: :json
-        expect(response).to have_http_status(:created)
-        json = response.parsed_body
-        expect(json.dig('user', 'email_missing')).to be true
-      end
-    end
-
     context 'セッションデータがない場合' do
       it '401を返す' do
         post '/api/v1/auth/complete_registration', params: { username: 'newuser' }, as: :json

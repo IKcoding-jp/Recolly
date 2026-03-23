@@ -11,14 +11,6 @@ RSpec.describe Oauth::FindOrCreateUserService do
     }
   end
 
-  let(:twitter_auth_data) do
-    {
-      provider: 'twitter2',
-      uid: 'twitter_67890',
-      info: { email: nil, name: 'TwitterUser' }
-    }
-  end
-
   describe '#call' do
     context '既存ユーザー（UserProvider一致）' do
       it '既存ユーザーを返す' do
@@ -48,9 +40,17 @@ RSpec.describe Oauth::FindOrCreateUserService do
       end
     end
 
-    context '新規ユーザー（メールなし・X）' do
+    context '新規ユーザー（メールなし）' do
+      let(:no_email_auth_data) do
+        {
+          provider: 'google_oauth2',
+          uid: 'google_no_email',
+          info: { email: nil, name: 'NoEmailUser' }
+        }
+      end
+
       it 'new_userステータスを返す（メールなし）' do
-        result = described_class.new(twitter_auth_data).call
+        result = described_class.new(no_email_auth_data).call
         expect(result[:status]).to eq(:new_user)
         expect(result[:oauth_data][:email]).to be_nil
       end

@@ -94,6 +94,5 @@ describe('SignUpPage', () => {
   it('OAuthボタンが表示される', async () => {
     renderSignUpPage()
     expect(await screen.findByText('Googleでログイン')).toBeInTheDocument()
-    expect(screen.getByText('Xでログイン')).toBeInTheDocument()
   })
 })

@@ -61,7 +61,7 @@ describe('AccountSettingsPage', () => {
     renderPage()
 
     const connectButtons = screen.getAllByText('連携する')
-    expect(connectButtons).toHaveLength(2)
+    expect(connectButtons).toHaveLength(1)
   })
 
   it('パスワード未設定時は「パスワードを設定」と表示する', () => {
