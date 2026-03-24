@@ -60,4 +60,12 @@
   /* --- トランジション --- */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
+
+  /* --- ブレークポイント --- */
+  /* メディアクエリではCSS変数を直接使用できないため、値の一元管理用として定義。 */
+  /* メディアクエリでは数値リテラルで記述すること: */
+  /*   スマホ: max-width: 768px */
+  /*   タブレット: max-width: 1024px */
+  --breakpoint-tablet: 769px;
+  --breakpoint-desktop: 1025px;
 }
