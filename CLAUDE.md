@@ -63,7 +63,6 @@ recolly/
 
 ### 禁止事項
 
-- mainへの直接プッシュ禁止。ドキュメントのみの変更でも必ずブランチを切ってPR経由でマージする
 - 動作確認対象のタスクで動作確認を省略しない
 
 ### `/clear`後のコンテキスト復元
@@ -80,10 +79,6 @@ recolly/
 - ドキュメントは `docs/superpowers/` に一元管理（specs/, plans/）
 
 ## コードレビュー
-
-<!-- AI（ローカルのClaude Code）が書いたコードをAI（GitHub上のClaude Code Actions）がレビューする。
-     同じモデルでも、実装コンテキストを持たない別セッションが差分だけを読むことで、
-     確証バイアスのない客観的なレビューが可能になる。 -->
 
 ### フロー
 
@@ -196,40 +191,10 @@ refactor: 認証ロジックを整理
 
 ## Docker コマンド
 
-```bash
-# 全サービス起動
-docker compose up
-
-# バックエンドのみ
-docker compose up backend
-
-# テスト実行
-docker compose run --rm -e RAILS_ENV=test backend bundle exec rspec
-docker compose run --rm frontend npm test
-
-# lint実行
-docker compose run --rm backend bundle exec rubocop
-docker compose run --rm frontend npm run lint
-
-# DB操作
-docker compose run --rm backend bin/rails db:create
-docker compose run --rm backend bin/rails db:migrate
-docker compose run --rm backend bin/rails db:seed
-```
+→ `docs/docker-commands.md` を参照
 
 ## 理解負債防止
 
-- 技術選定・設計判断では `.claude/skills/comprehension-guard` スキルに従い、必ずユーザーの承認を得てから実装に進む
 - 説明はプログラミング初学者を前提とする。専門用語は初出時に平易な説明を添える
-- 設計判断は `docs/adr/` にADR（Architecture Decision Record）として記録する
-- 新技術の学習は `docs/learning/` にノートとして蓄積する
-
-### PR前セルフチェック（superpowers:finishing-a-development-branchで実施）
-
-- 同一メソッド/関数が複数ファイルに重複していないか（DRY）
-- 全ファイルが200行以内か
-- CSS/スタイルにハードコード値がないか
-- POSTで新規作成するエンドポイントは201を返しているか
-- 設定ファイルに未使用コメント/dead codeがないか
-- async関数をonClickに直接渡していないか
-- 設計判断のADR・学習ノートに記録漏れがないか
+- 設計判断は `docs/adr/` に記録、学習は `docs/learning/` に蓄積（自動発動ルール参照）
+- PR前セルフチェック → `docs/pr-self-check.md` を参照
