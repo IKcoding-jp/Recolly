@@ -1,90 +1,85 @@
-import { Link, useLocation } from "react-router-dom";
-import styles from "./BottomTabBar.module.css";
+import { Link, useLocation } from 'react-router-dom'
+import styles from './BottomTabBar.module.css'
 
 type TabItem = {
-  label: string;
-  path: string;
-};
+  label: string
+  path: string
+}
 
 const TAB_ITEMS: TabItem[] = [
-  { label: "ホーム", path: "/dashboard" },
-  { label: "検索", path: "/search" },
-  { label: "ライブラリ", path: "/library" },
-  { label: "設定", path: "/settings" },
-];
+  { label: 'ホーム', path: '/dashboard' },
+  { label: '検索', path: '/search' },
+  { label: 'ライブラリ', path: '/library' },
+  { label: '設定', path: '/settings' },
+]
 
 /* Recollyのクリーン・白黒デザインに合わせたモノクロSVGアイコン */
 function TabIcon({ label, active }: { label: string; active: boolean }) {
-  const stroke = active ? "var(--color-text)" : "var(--color-text-muted)";
-  const strokeWidth = active ? "2" : "1.5";
+  const stroke = active ? 'var(--color-text)' : 'var(--color-text-muted)'
+  const strokeWidth = active ? '2' : '1.5'
   const props = {
     width: 22,
     height: 22,
-    viewBox: "0 0 24 24",
-    fill: "none",
+    viewBox: '0 0 24 24',
+    fill: 'none',
     stroke,
     strokeWidth,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-  };
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+  }
 
   switch (label) {
-    case "ホーム":
+    case 'ホーム':
       return (
         <svg {...props}>
           <path d="M3 12l9-8 9 8" />
           <path d="M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9" />
         </svg>
-      );
-    case "検索":
+      )
+    case '検索':
       return (
         <svg {...props}>
           <circle cx="11" cy="11" r="7" />
           <path d="M21 21l-4.35-4.35" />
         </svg>
-      );
-    case "ライブラリ":
+      )
+    case 'ライブラリ':
       return (
         <svg {...props}>
           <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
         </svg>
-      );
-    case "設定":
+      )
+    case '設定':
       return (
         <svg {...props}>
           <circle cx="12" cy="12" r="3" />
           <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1.08-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1.08 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001.08 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1.08z" />
         </svg>
-      );
+      )
     default:
-      return null;
+      return null
   }
 }
 
 export function BottomTabBar() {
-  const { pathname } = useLocation();
+  const { pathname } = useLocation()
 
   // startsWithで判定し、/settings/account等のサブパスでも親タブをアクティブにする。
   // どのタブにもマッチしないパス（例: /works/:id）では全タブ非アクティブになる。
-  const isActive = (tabPath: string) =>
-    pathname === tabPath || pathname.startsWith(tabPath + "/");
+  const isActive = (tabPath: string) => pathname === tabPath || pathname.startsWith(tabPath + '/')
 
   return (
     <nav className={styles.tabBar}>
       {TAB_ITEMS.map((tab) => {
-        const active = isActive(tab.path);
+        const active = isActive(tab.path)
         return (
-          <Link
-            key={tab.path}
-            to={tab.path}
-            className={active ? styles.active : styles.tab}
-          >
+          <Link key={tab.path} to={tab.path} className={active ? styles.active : styles.tab}>
             <TabIcon label={tab.label} active={active} />
             <span className={styles.label}>{tab.label}</span>
           </Link>
-        );
+        )
       })}
     </nav>
-  );
+  )
 }

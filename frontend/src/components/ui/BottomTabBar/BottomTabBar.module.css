@@ -12,8 +12,7 @@
     right: 0;
     background: var(--color-bg-white);
     border-top: var(--border-width) solid var(--color-border);
-    padding: var(--spacing-sm) 0
-      calc(var(--spacing-sm) + env(safe-area-inset-bottom));
+    padding: var(--spacing-sm) 0 calc(var(--spacing-sm) + env(safe-area-inset-bottom));
     z-index: 50;
   }
 
