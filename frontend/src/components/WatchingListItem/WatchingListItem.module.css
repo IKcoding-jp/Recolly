@@ -76,22 +76,24 @@
 
 @media (max-width: 768px) {
   .row {
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: var(--spacing-sm);
+    min-height: 52px;
   }
 
   .cover {
-    width: 32px;
-    height: 45px;
+    width: 36px;
+    height: 50px;
   }
 
   .coverPlaceholder {
-    width: 32px;
-    height: 45px;
+    width: 36px;
+    height: 50px;
   }
 
   .actionButton {
     width: auto;
-    padding: var(--spacing-xs) var(--spacing-sm);
+    min-height: 44px;
+    padding: var(--spacing-sm) var(--spacing-md);
     font-size: var(--font-size-label);
   }
 }
