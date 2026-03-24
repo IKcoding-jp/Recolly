@@ -1,0 +1,43 @@
+/* PC・タブレットでは非表示 */
+.tabBar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .tabBar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--color-bg-white);
+    border-top: var(--border-width) solid var(--color-border);
+    padding: var(--spacing-sm) 0 calc(var(--spacing-sm) + env(safe-area-inset-bottom));
+    z-index: 50;
+  }
+
+  .tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    min-height: 52px;
+    text-decoration: none;
+    color: var(--color-text-muted);
+    font-family: var(--font-body);
+    transition: color var(--transition-fast);
+  }
+
+  .active {
+    composes: tab;
+    color: var(--color-text);
+  }
+
+  .label {
+    font-size: var(--font-size-tab);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: 0.5px;
+  }
+}

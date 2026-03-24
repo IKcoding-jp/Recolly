@@ -40,7 +40,10 @@
 }
 
 .filterButton {
-  padding: var(--spacing-xs) var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
   border: var(--border-width) var(--border-style) var(--color-border-light);
   background: none;
   font-family: var(--font-body);
@@ -92,4 +95,18 @@
 
 .manualSection {
   margin-top: var(--spacing-2xl);
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: var(--spacing-md);
+  }
+
+  .container {
+    max-width: 100%;
+  }
+
+  .filters {
+    display: none;
+  }
 }

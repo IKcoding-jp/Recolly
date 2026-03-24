@@ -1,8 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useRegisterSW } from 'virtual:pwa-register/react'
 import { AuthProvider } from './contexts/AuthContext'
 import { useAuth } from './contexts/useAuth'
 import { ProtectedRoute } from './components/ProtectedRoute/ProtectedRoute'
 import { NavBar } from './components/ui/NavBar/NavBar'
+import { BottomTabBar } from './components/ui/BottomTabBar/BottomTabBar'
+import { UpdatePrompt } from './components/ui/UpdatePrompt/UpdatePrompt'
+import appStyles from './App.module.css'
 import { LoginPage } from './pages/LoginPage/LoginPage'
 import { SignUpPage } from './pages/SignUpPage/SignUpPage'
 import { DashboardPage } from './pages/DashboardPage/DashboardPage'
@@ -32,15 +36,26 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <NavBar user={user} onLogout={() => void logout()} />
-      {children}
+      <div className={appStyles.authenticatedContent}>{children}</div>
+      <BottomTabBar />
     </>
   )
 }
 
 function App() {
+  const {
+    needRefresh: [needRefresh, setNeedRefresh],
+    updateServiceWorker,
+  } = useRegisterSW()
+
   return (
     <BrowserRouter>
       <AuthProvider>
+        <UpdatePrompt
+          needRefresh={needRefresh}
+          onRefresh={() => void updateServiceWorker(true)}
+          onClose={() => setNeedRefresh(false)}
+        />
         <Routes>
           <Route path="/" element={<RootRedirect />} />
           <Route path="/login" element={<LoginPage />} />

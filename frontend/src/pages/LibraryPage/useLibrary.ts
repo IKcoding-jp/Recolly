@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { UserRecord, RecordStatus, MediaType, PaginationMeta } from '../../lib/types'
 import { recordsApi } from '../../lib/recordsApi'
-import type { SortOption } from '../../components/SortSelector/SortSelector'
+import type { SortOption } from '../../components/SortSelector/sortOptions'
 
 const DEFAULT_SORT: SortOption = 'updated_at'
 const PER_PAGE = 20

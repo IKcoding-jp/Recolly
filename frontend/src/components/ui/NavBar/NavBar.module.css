@@ -56,3 +56,22 @@
   height: 20px;
   background: var(--color-border-light);
 }
+
+/* タブレット: ナビリンクを縮小 */
+@media (max-width: 1024px) {
+  .links {
+    gap: var(--spacing-md);
+  }
+
+  .link {
+    font-size: var(--font-size-label);
+    letter-spacing: 1px;
+  }
+}
+
+/* スマホ: リンクとユーザーメニューを非表示（BottomTabBarに移行） */
+@media (max-width: 768px) {
+  .right {
+    display: none;
+  }
+}

@@ -82,3 +82,10 @@
   font-size: var(--font-size-meta);
   color: var(--color-text-muted);
 }
+
+@media (max-width: 768px) {
+  .coverWrapper {
+    width: 48px;
+    height: 68px;
+  }
+}

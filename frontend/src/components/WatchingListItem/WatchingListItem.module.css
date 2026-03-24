@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid var(--color-border-light);
+  border: var(--border-width-thin) solid var(--color-border-light);
   border-radius: 6px;
   transition: background var(--transition-fast);
 }
@@ -72,4 +72,28 @@
 }
 .actionButton:hover {
   opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .row {
+    padding: var(--spacing-sm);
+    min-height: 52px;
+  }
+
+  .cover {
+    width: 36px;
+    height: 50px;
+  }
+
+  .coverPlaceholder {
+    width: 36px;
+    height: 50px;
+  }
+
+  .actionButton {
+    width: auto;
+    min-height: 44px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-label);
+  }
 }

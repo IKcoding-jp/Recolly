@@ -13,6 +13,9 @@
 .button {
   width: 2rem;
   height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: var(--border-width) var(--border-style) var(--color-border-light);
   border-radius: 4px;
   background: var(--color-bg-white);
@@ -22,6 +25,8 @@
   font-weight: var(--font-weight-bold);
   cursor: pointer;
   transition: all var(--transition-fast);
+  flex-shrink: 0;
+  line-height: 1;
 }
 
 .button:hover:not(:disabled) {
@@ -44,12 +49,15 @@
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-bold);
   color: var(--color-text);
-  min-width: 5rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
 }
 
 .input {
   width: 3.5rem;
-  padding: var(--spacing-xs) var(--spacing-sm);
+  height: 2rem;
+  padding: 0 var(--spacing-sm);
   border: var(--border-width) var(--border-style) var(--color-border-light);
   border-radius: 4px;
   font-family: var(--font-body);

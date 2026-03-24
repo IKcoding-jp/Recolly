@@ -1,5 +1,15 @@
 import { vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
+
+// vite-plugin-pwaの仮想モジュールはテスト環境で利用できないためモック
+vi.mock('virtual:pwa-register/react', () => ({
+  useRegisterSW: () => ({
+    needRefresh: [false, vi.fn()],
+    offlineReady: [false, vi.fn()],
+    updateServiceWorker: vi.fn(),
+  }),
+}))
+
 import App from './App'
 
 const mockFetch = vi.fn()

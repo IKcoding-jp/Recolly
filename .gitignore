@@ -39,6 +39,9 @@ coverage/
 # Superpowers (tool artifacts)
 .superpowers/
 
+# Playwright MCP
+.playwright-mcp/
+
 # Serena
 .serena/
 

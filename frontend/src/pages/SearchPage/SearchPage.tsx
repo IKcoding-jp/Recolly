@@ -10,28 +10,11 @@ import { RecordModal } from '../../components/RecordModal/RecordModal'
 import { Typography } from '../../components/ui/Typography/Typography'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import { Button } from '../../components/ui/Button/Button'
+import { getGenreLabel } from '../../lib/mediaTypeUtils'
+import { GenreDropdown } from './GenreDropdown'
+import { GENRE_FILTERS } from './genreFilters'
+import type { GenreFilter } from './genreFilters'
 import styles from './SearchPage.module.css'
-
-const MEDIA_TYPE_LABELS: Record<MediaType, string> = {
-  anime: 'アニメ',
-  movie: '映画',
-  drama: 'ドラマ',
-  book: '本',
-  manga: '漫画',
-  game: 'ゲーム',
-}
-
-type GenreFilter = MediaType | 'all'
-
-const GENRE_FILTERS: { value: GenreFilter; label: string }[] = [
-  { value: 'all', label: 'すべて' },
-  { value: 'anime', label: 'アニメ' },
-  { value: 'movie', label: '映画' },
-  { value: 'drama', label: 'ドラマ' },
-  { value: 'book', label: '本' },
-  { value: 'manga', label: '漫画' },
-  { value: 'game', label: 'ゲーム' },
-]
 
 export function SearchPage() {
   const [query, setQuery] = useState('')
@@ -126,6 +109,7 @@ export function SearchPage() {
           </Button>
         </form>
 
+        {/* PC: ピルボタン */}
         <div className={styles.filters}>
           {GENRE_FILTERS.map((filter) => (
             <button
@@ -138,6 +122,9 @@ export function SearchPage() {
             </button>
           ))}
         </div>
+
+        {/* モバイル: ドロップダウン */}
+        <GenreDropdown value={genre} onChange={handleGenreChange} />
 
         {error && <p className={styles.error}>{error}</p>}
 
@@ -181,7 +168,7 @@ export function SearchPage() {
       <RecordModal
         isOpen={modalWork !== null}
         title={modalWork?.title ?? ''}
-        mediaType={modalWork ? MEDIA_TYPE_LABELS[modalWork.media_type] : ''}
+        mediaType={modalWork ? getGenreLabel(modalWork.media_type) : ''}
         onConfirm={handleConfirmRecord}
         onCancel={() => setModalWork(null)}
         isLoading={loadingId !== null}

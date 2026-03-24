@@ -33,6 +33,7 @@
   --font-size-body: 1rem;
   --font-size-label: 0.875rem;
   --font-size-meta: 0.75rem;
+  --font-size-tab: 0.625rem;
 
   --font-weight-normal: 400;
   --font-weight-medium: 500;
@@ -45,6 +46,7 @@
   --letter-spacing-wide: 0.15em;
 
   /* --- スペーシング --- */
+  --bottom-tab-height: 64px;
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
@@ -55,9 +57,18 @@
 
   /* --- ボーダー --- */
   --border-width: 2px;
+  --border-width-thin: 1px;
   --border-style: solid;
 
   /* --- トランジション --- */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
+
+  /* --- ブレークポイント --- */
+  /* メディアクエリではCSS変数を直接使用できないため、値の一元管理用として定義。 */
+  /* メディアクエリでは数値リテラルで記述すること: */
+  /*   スマホ: max-width: 768px */
+  /*   タブレット: max-width: 1024px */
+  --breakpoint-mobile-max: 768px;
+  --breakpoint-tablet-max: 1024px;
 }
