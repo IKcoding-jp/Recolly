@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react'
 import { csrfApi } from '../../lib/api'
 import styles from './OAuthButtons.module.css'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-
 export function OAuthButtons() {
   const [csrfToken, setCsrfToken] = useState('')
 
@@ -25,7 +23,7 @@ export function OAuthButtons() {
         <span className={styles.dividerText}>または</span>
       </div>
 
-      <form method="post" action={`${API_BASE}/api/v1/auth/google_oauth2`}>
+      <form method="post" action="/api/v1/auth/google_oauth2">
         <input type="hidden" name="authenticity_token" value={csrfToken} />
         <button type="submit" className={styles.oauthButton} disabled={!csrfToken}>
           <span className={styles.googleIcon}>G</span>

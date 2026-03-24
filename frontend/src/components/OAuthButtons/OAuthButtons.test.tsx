@@ -26,4 +26,12 @@ describe('OAuthButtons', () => {
       expect(screen.getByText('または')).toBeInTheDocument()
     })
   })
+
+  it('OAuthフォームのactionが相対パスであること', async () => {
+    render(<OAuthButtons />)
+    await waitFor(() => {
+      const form = document.querySelector('form')
+      expect(form).toHaveAttribute('action', '/api/v1/auth/google_oauth2')
+    })
+  })
 })
