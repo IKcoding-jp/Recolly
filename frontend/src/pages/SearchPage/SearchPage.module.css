@@ -93,3 +93,24 @@
 .manualSection {
   margin-top: var(--spacing-2xl);
 }
+
+@media (max-width: 768px) {
+  .page {
+    padding: var(--spacing-md);
+  }
+
+  .container {
+    max-width: 100%;
+  }
+
+  .filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .filters::-webkit-scrollbar {
+    display: none;
+  }
+}
