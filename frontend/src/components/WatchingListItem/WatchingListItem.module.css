@@ -73,3 +73,25 @@
 .actionButton:hover {
   opacity: 0.8;
 }
+
+@media (max-width: 768px) {
+  .row {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .cover {
+    width: 32px;
+    height: 45px;
+  }
+
+  .coverPlaceholder {
+    width: 32px;
+    height: 45px;
+  }
+
+  .actionButton {
+    width: auto;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-label);
+  }
+}

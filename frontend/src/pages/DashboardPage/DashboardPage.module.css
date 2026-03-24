@@ -22,3 +22,11 @@
   color: var(--color-error);
   font-size: var(--font-size-body);
 }
+
+@media (max-width: 768px) {
+  .container {
+    max-width: 100%;
+    padding: 0 var(--spacing-md);
+    margin: var(--spacing-md) auto;
+  }
+}
