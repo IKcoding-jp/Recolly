@@ -5,8 +5,6 @@ import { csrfApi } from '../../lib/api'
 import { useAccountSettings } from './useAccountSettings'
 import styles from './AccountSettingsPage.module.css'
 
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
-
 // プロバイダーの表示名マッピング
 const PROVIDER_DISPLAY: Record<string, { name: string; icon: string }> = {
   google_oauth2: { name: 'Google', icon: 'G' },
@@ -96,7 +94,7 @@ export function AccountSettingsPage() {
                     )}
                   </div>
                 ) : (
-                  <form method="post" action={`${API_BASE}/api/v1/auth/${provider}`}>
+                  <form method="post" action={`/api/v1/auth/${provider}`}>
                     <input type="hidden" name="authenticity_token" value={csrfToken} />
                     <button type="submit" className={styles.connectButton} disabled={!csrfToken}>
                       連携する
