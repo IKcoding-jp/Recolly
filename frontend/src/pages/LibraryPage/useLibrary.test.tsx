@@ -22,12 +22,10 @@ describe('useLibrary', () => {
     vi.mocked(recordsApi.getAll).mockResolvedValue(mockResponse)
   })
 
-  it('初回アクセス（パラメータなし）で status=watching がデフォルト', async () => {
+  it('初回アクセス（パラメータなし）で status=all がデフォルト', async () => {
     renderHook(() => useLibrary(), { wrapper: wrapper(['/library']) })
     await waitFor(() => {
-      expect(recordsApi.getAll).toHaveBeenCalledWith(
-        expect.objectContaining({ status: 'watching' }),
-      )
+      expect(recordsApi.getAll).toHaveBeenCalledWith(expect.objectContaining({ status: undefined }))
     })
   })
 

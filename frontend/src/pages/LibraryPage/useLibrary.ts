@@ -23,13 +23,13 @@ export function useLibrary() {
     error: null,
   })
 
-  // 初回アクセス時にデフォルトの status=watching を設定
+  // 初回アクセス時にデフォルトの status=all を設定
   useEffect(() => {
     if (!searchParams.has('status')) {
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev)
-          next.set('status', 'watching')
+          next.set('status', 'all')
           return next
         },
         { replace: true },
