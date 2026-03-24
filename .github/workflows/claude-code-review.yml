@@ -40,8 +40,8 @@ jobs:
 
             PRブランチは現在のワーキングディレクトリにチェックアウト済みです。
 
-            `gh pr comment` でトップレベルのフィードバックを投稿してください。
-            `mcp__github_inline_comment__create_inline_comment`（`confirmed: true`）で具体的なコードの問題をインラインコメントしてください。
+            レビュー結果は `gh pr comment` で1つのコメントにまとめて投稿してください。
+            ファイル名・行番号を含めて具体的に指摘してください。
             GitHubコメントのみ投稿し、メッセージとしてレビューテキストを返さないでください。
           claude_args: |
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+            --allowedTools "Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
