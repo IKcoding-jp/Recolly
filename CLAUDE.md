@@ -36,21 +36,49 @@ recolly/
 **SDD（仕様駆動開発）+ TDD（テスト駆動開発）+ Issue駆動開発**
 **superpowersスキルを主軸とする。**
 
+### ワークフロー
+
 1. `superpowers:brainstorming`（要件深掘り + スペック作成）
-2. GitHub Issue作成（`.claude/skills/issue-creator` でスペックからIssue起票 + Working Docs生成）
+2. GitHub Issue作成（`issue-creator`スキルでスペックからIssue起票）
 3. `superpowers:writing-plans`（実装プラン作成）
 4. `superpowers:subagent-driven-development`（各タスク内で `superpowers:test-driven-development` を使用）
-5. `superpowers:finishing-a-development-branch` → PR作成 → Claude Code Review → マージ
+5. 動作確認（手動 or Playwright MCP自動確認をユーザーに選択させる）
+6. `superpowers:finishing-a-development-branch` → ブランチ作成 → PR作成 → Claude Code Review → マージ
 
-- ブレインストーミング中に技術選定が発生したら `comprehension-guard` が自動発動、判断確定時は `adr` で自動記録
-- ドキュメントは `docs/superpowers/` に一元管理（specs/, plans/, working/）
-- `/clear` 後は `docs/superpowers/working/` を読めばコンテキストを復元できる
+※ ステップ5はUI変更またはAPI動作に影響するタスクのみ必須。ドキュメントのみ・設定変更のみの場合はスキップ可。
+
+### 軽量パス
+
+軽微な修正（typo、コメント修正、ドキュメント更新等）はステップ1〜3を省略し、ステップ4〜6のみで可。
+
+### 自動発動ルール
+
+以下のスキルはワークフローのどの段階でも、条件を満たしたら自動で発動する：
+
+| スキル | 発動条件 |
+|--------|---------|
+| `comprehension-guard` | 技術選定・設計判断が発生したとき |
+| `adr` | comprehension-guardでユーザーが判断を確定したとき。「ADRを書きますか？」と聞かず自動作成する |
+| `learning-note` | ユーザーが質問してプロジェクトで初めて使う技術・パターン・ライブラリについて説明したとき。説明後に学習ノートを作成する |
+
+### 禁止事項
+
+- 動作確認対象のタスクで動作確認を省略しない
+
+### `/clear`後のコンテキスト復元
+
+以下を順に読むことでコンテキストを復元する：
+
+1. `CLAUDE.md`（プロジェクトルール）
+2. `docs/TODO.md`（全体進捗）
+3. 該当タスクの spec（`docs/superpowers/specs/`）+ plan（`docs/superpowers/plans/`）
+4. `git log`（直近の作業内容）
+
+### ドキュメント管理
+
+- ドキュメントは `docs/superpowers/` に一元管理（specs/, plans/）
 
 ## コードレビュー
-
-<!-- AI（ローカルのClaude Code）が書いたコードをAI（GitHub上のClaude Code Actions）がレビューする。
-     同じモデルでも、実装コンテキストを持たない別セッションが差分だけを読むことで、
-     確証バイアスのない客観的なレビューが可能になる。 -->
 
 ### フロー
 
@@ -102,7 +130,7 @@ refactor: 認証ロジックを整理
   - 機能追加・ADR付きの大きめPR → Merge commit（開発プロセスの履歴を残す）
   - バグ修正・リファクタ・ドキュメント修正など小さいPR → Squash and merge（履歴をきれいに保つ）
 - Rebase and mergeは使用しない
-- mainへの直接プッシュは禁止。必ずPRを経由する
+- mainへの直接プッシュは禁止。ドキュメントのみの変更でも必ずブランチを切ってPR経由でマージする
 
 ## PRルール
 
@@ -163,40 +191,10 @@ refactor: 認証ロジックを整理
 
 ## Docker コマンド
 
-```bash
-# 全サービス起動
-docker compose up
-
-# バックエンドのみ
-docker compose up backend
-
-# テスト実行
-docker compose run --rm -e RAILS_ENV=test backend bundle exec rspec
-docker compose run --rm frontend npm test
-
-# lint実行
-docker compose run --rm backend bundle exec rubocop
-docker compose run --rm frontend npm run lint
-
-# DB操作
-docker compose run --rm backend bin/rails db:create
-docker compose run --rm backend bin/rails db:migrate
-docker compose run --rm backend bin/rails db:seed
-```
+→ `docs/docker-commands.md` を参照
 
 ## 理解負債防止
 
-- 技術選定・設計判断では `.claude/skills/comprehension-guard` スキルに従い、必ずユーザーの承認を得てから実装に進む
 - 説明はプログラミング初学者を前提とする。専門用語は初出時に平易な説明を添える
-- 設計判断は `docs/adr/` にADR（Architecture Decision Record）として記録する
-- 新技術の学習は `docs/learning/` にノートとして蓄積する
-
-### PR前セルフチェック（superpowers:finishing-a-development-branchで実施）
-
-- 同一メソッド/関数が複数ファイルに重複していないか（DRY）
-- 全ファイルが200行以内か
-- CSS/スタイルにハードコード値がないか
-- POSTで新規作成するエンドポイントは201を返しているか
-- 設定ファイルに未使用コメント/dead codeがないか
-- async関数をonClickに直接渡していないか
-- 設計判断のADR・学習ノートに記録漏れがないか
+- 設計判断は `docs/adr/` に記録、学習は `docs/learning/` に蓄積（自動発動ルール参照）
+- PR前セルフチェック → `docs/pr-self-check.md` を参照
