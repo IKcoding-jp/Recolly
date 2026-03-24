@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#fafaf8" />
+  <title>Recolly — オフライン</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      background: #fafaf8;
+      color: #2c2c2c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .container {
+      text-align: center;
+      max-width: 400px;
+    }
+    .logo {
+      font-family: 'Fraunces', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+    .message {
+      font-size: 1rem;
+      color: #6b6b6b;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+    .button {
+      display: inline-block;
+      padding: 0.75rem 2rem;
+      background: #2c2c2c;
+      color: #ffffff;
+      border: none;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 150ms ease;
+    }
+    .button:hover { opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">Recolly</div>
+    <p class="message">インターネットに接続されていません。<br>接続を確認してもう一度お試しください。</p>
+    <button class="button" onclick="window.location.reload()">再読み込み</button>
+  </div>
+</body>
+</html>
