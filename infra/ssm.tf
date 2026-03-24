@@ -63,6 +63,22 @@ resource "aws_ssm_parameter" "igdb_client_secret" {
   lifecycle { ignore_changes = [value] }
 }
 
+resource "aws_ssm_parameter" "google_client_id" {
+  name  = "/${var.project_name}/${var.environment}/GOOGLE_CLIENT_ID"
+  type  = "SecureString"
+  value = "placeholder"
+
+  lifecycle { ignore_changes = [value] }
+}
+
+resource "aws_ssm_parameter" "google_client_secret" {
+  name  = "/${var.project_name}/${var.environment}/GOOGLE_CLIENT_SECRET"
+  type  = "SecureString"
+  value = "placeholder"
+
+  lifecycle { ignore_changes = [value] }
+}
+
 resource "aws_ssm_parameter" "frontend_url" {
   name  = "/${var.project_name}/${var.environment}/FRONTEND_URL"
   type  = "String"
