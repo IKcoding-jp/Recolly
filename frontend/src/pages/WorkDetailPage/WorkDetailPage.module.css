@@ -106,7 +106,15 @@
   margin-top: var(--spacing-xl);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+  .page {
+    padding: var(--spacing-md);
+  }
+
+  .container {
+    max-width: 100%;
+  }
+
   .layout {
     flex-direction: column;
   }
