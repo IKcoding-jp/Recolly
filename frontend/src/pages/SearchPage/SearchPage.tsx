@@ -168,7 +168,8 @@ export function SearchPage() {
       <RecordModal
         isOpen={modalWork !== null}
         title={modalWork?.title ?? ''}
-        mediaType={modalWork ? getGenreLabel(modalWork.media_type) : ''}
+        mediaType={modalWork?.media_type ?? 'anime'}
+        mediaTypeLabel={modalWork ? getGenreLabel(modalWork.media_type) : ''}
         onConfirm={handleConfirmRecord}
         onCancel={() => setModalWork(null)}
         isLoading={loadingId !== null}
