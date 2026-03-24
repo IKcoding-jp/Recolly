@@ -61,3 +61,22 @@
   font-weight: var(--font-weight-medium);
   color: var(--color-text);
 }
+
+@media (max-width: 768px) {
+  .page {
+    max-width: 100%;
+    padding: var(--spacing-md);
+  }
+
+  .filters {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  /* StatusFilterとMediaTypeFilterを横並び2列、SortSelectorを独立行に */
+  .filters > *:nth-child(-n+2) {
+    flex: 1;
+    min-width: 0;
+  }
+}
