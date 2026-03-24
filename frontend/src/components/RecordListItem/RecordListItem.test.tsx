@@ -76,4 +76,23 @@ describe('RecordListItem', () => {
     renderWithRouter(noEpisodes)
     expect(screen.queryByText(/話/)).not.toBeInTheDocument()
   })
+
+  it('本のステータスバッジは「読書中」と表示される', () => {
+    const bookRecord: UserRecord = {
+      ...mockRecord,
+      work: { ...mockRecord.work, media_type: 'book', total_episodes: null },
+    }
+    renderWithRouter(bookRecord)
+    expect(screen.getByText('読書中')).toBeInTheDocument()
+  })
+
+  it('ゲームの completed は「プレイ完了」と表示される', () => {
+    const gameRecord: UserRecord = {
+      ...mockRecord,
+      status: 'completed',
+      work: { ...mockRecord.work, media_type: 'game', total_episodes: null },
+    }
+    renderWithRouter(gameRecord)
+    expect(screen.getByText('プレイ完了')).toBeInTheDocument()
+  })
 })

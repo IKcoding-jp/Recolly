@@ -1,17 +1,10 @@
 import { Link } from 'react-router-dom'
-import type { UserRecord, RecordStatus } from '../../lib/types'
+import type { UserRecord } from '../../lib/types'
+import { getStatusLabel } from '../../lib/mediaTypeUtils'
 import styles from './RecordListItem.module.css'
 
 type RecordListItemProps = {
   record: UserRecord
-}
-
-const STATUS_LABELS: Record<RecordStatus, string> = {
-  watching: '視聴中',
-  completed: '視聴完了',
-  on_hold: '一時停止',
-  dropped: '中断',
-  plan_to_watch: '視聴予定',
 }
 
 export function RecordListItem({ record }: RecordListItemProps) {
@@ -43,7 +36,7 @@ export function RecordListItem({ record }: RecordListItemProps) {
         <div className={styles.header}>
           <h3 className={styles.title}>{work.title}</h3>
           <span className={`${styles.badge} ${styles[record.status]}`}>
-            {STATUS_LABELS[record.status]}
+            {getStatusLabel(record.status, work.media_type)}
           </span>
         </div>
 
