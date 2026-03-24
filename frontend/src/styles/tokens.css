@@ -33,6 +33,7 @@
   --font-size-body: 1rem;
   --font-size-label: 0.875rem;
   --font-size-meta: 0.75rem;
+  --font-size-tab: 0.625rem;
 
   --font-weight-normal: 400;
   --font-weight-medium: 500;
@@ -45,6 +46,7 @@
   --letter-spacing-wide: 0.15em;
 
   /* --- スペーシング --- */
+  --bottom-tab-height: 64px;
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;

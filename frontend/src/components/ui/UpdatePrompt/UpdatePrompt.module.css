@@ -48,7 +48,7 @@
 /* スマホ: ボトムタブバーの上に配置 */
 @media (max-width: 768px) {
   .toast {
-    bottom: calc(64px + var(--spacing-md));
+    bottom: calc(var(--bottom-tab-height) + var(--spacing-md));
     left: var(--spacing-md);
     right: var(--spacing-md);
     transform: none;

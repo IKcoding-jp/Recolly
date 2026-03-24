@@ -10,6 +10,7 @@ import { RecordModal } from '../../components/RecordModal/RecordModal'
 import { Typography } from '../../components/ui/Typography/Typography'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import { Button } from '../../components/ui/Button/Button'
+import { GenreDropdown } from './GenreDropdown'
 import styles from './SearchPage.module.css'
 
 const MEDIA_TYPE_LABELS: Record<MediaType, string> = {
@@ -141,20 +142,7 @@ export function SearchPage() {
         </div>
 
         {/* モバイル: ドロップダウン */}
-        <div className={styles.genreSelect}>
-          <span className={styles.genreSelectLabel}>ジャンル</span>
-          <select
-            className={styles.genreSelectInput}
-            value={genre}
-            onChange={(e) => handleGenreChange(e.target.value as GenreFilter)}
-          >
-            {GENRE_FILTERS.map((filter) => (
-              <option key={filter.value} value={filter.value}>
-                {filter.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <GenreDropdown value={genre} onChange={handleGenreChange} />
 
         {error && <p className={styles.error}>{error}</p>}
 

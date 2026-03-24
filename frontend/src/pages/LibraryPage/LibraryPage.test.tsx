@@ -92,4 +92,24 @@ describe('LibraryPage', () => {
       )
     })
   })
+
+  it('絞り込みボタンが存在し、クリックでフィルタが表示される', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByText('進撃の巨人')).toBeInTheDocument()
+    })
+
+    // フィルタサマリーのチップがDOMに存在する（jsdomではCSSメディアクエリが適用されないため、display:noneでも要素自体は存在する）
+    // 「視聴中」はチップ・ステータスフィルタ・記録バッジの3箇所に存在するため、getAllByTextで検証
+    expect(screen.getAllByText('視聴中').length).toBeGreaterThanOrEqual(1)
+
+    // 絞り込みボタンが存在する
+    const toggleButton = screen.getByRole('button', { name: '絞り込み' })
+    expect(toggleButton).toBeInTheDocument()
+
+    // クリックするとボタンテキストが「閉じる」に変わる
+    await user.click(toggleButton)
+    expect(screen.getByRole('button', { name: '閉じる' })).toBeInTheDocument()
+  })
 })

@@ -26,6 +26,6 @@
 /* ボトムタブバー分の余白（スマホのみ） */
 @media (max-width: 768px) {
   .authenticatedContent {
-    padding-bottom: 64px;
+    padding-bottom: var(--bottom-tab-height);
   }
 }
