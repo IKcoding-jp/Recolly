@@ -6,7 +6,7 @@ type MediaTypeFilterProps = {
   onChange: (mediaType: MediaType | null) => void
 }
 
-const MEDIA_TYPE_OPTIONS: { value: MediaType | null; label: string }[] = [
+export const MEDIA_TYPE_OPTIONS: { value: MediaType | null; label: string }[] = [
   { value: null, label: '全ジャンル' },
   { value: 'anime', label: 'アニメ' },
   { value: 'movie', label: '映画' },

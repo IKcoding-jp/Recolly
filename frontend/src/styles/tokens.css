@@ -57,6 +57,7 @@
 
   /* --- ボーダー --- */
   --border-width: 2px;
+  --border-width-thin: 1px;
   --border-style: solid;
 
   /* --- トランジション --- */
@@ -68,6 +69,6 @@
   /* メディアクエリでは数値リテラルで記述すること: */
   /*   スマホ: max-width: 768px */
   /*   タブレット: max-width: 1024px */
-  --breakpoint-tablet: 769px;
-  --breakpoint-desktop: 1025px;
+  --breakpoint-mobile-max: 768px;
+  --breakpoint-tablet-max: 1024px;
 }

@@ -1,9 +1,9 @@
 import type { MediaType } from '../../lib/types'
 import styles from './GenreDropdown.module.css'
 
-type GenreFilter = MediaType | 'all'
+export type GenreFilter = MediaType | 'all'
 
-const GENRE_FILTERS: { value: GenreFilter; label: string }[] = [
+export const GENRE_FILTERS: { value: GenreFilter; label: string }[] = [
   { value: 'all', label: 'すべて' },
   { value: 'anime', label: 'アニメ' },
   { value: 'movie', label: '映画' },

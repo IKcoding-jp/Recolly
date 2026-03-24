@@ -7,7 +7,7 @@ type SortSelectorProps = {
   onChange: (sort: SortOption) => void
 }
 
-const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+export const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'updated_at', label: '更新日' },
   { value: 'rating', label: '評価' },
   { value: 'title_asc', label: 'タイトル' },

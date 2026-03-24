@@ -4,14 +4,6 @@
   gap: var(--spacing-sm);
 }
 
-@media (max-width: 768px) {
-  .pill {
-    font-size: var(--font-size-meta);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    min-height: 36px;
-  }
-}
-
 .pill {
   font-family: var(--font-body);
   font-size: var(--font-size-meta);
@@ -37,4 +29,12 @@
   background: var(--color-text);
   color: var(--color-bg-white);
   border-color: var(--color-text);
+}
+
+@media (max-width: 768px) {
+  .pill {
+    font-size: var(--font-size-meta);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    min-height: 36px;
+  }
 }

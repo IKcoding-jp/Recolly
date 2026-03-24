@@ -6,7 +6,7 @@ type StatusFilterProps = {
   onChange: (status: RecordStatus | null) => void
 }
 
-const STATUS_OPTIONS: { value: RecordStatus | null; label: string }[] = [
+export const STATUS_OPTIONS: { value: RecordStatus | null; label: string }[] = [
   { value: null, label: 'すべて' },
   { value: 'watching', label: '視聴中' },
   { value: 'completed', label: '視聴完了' },

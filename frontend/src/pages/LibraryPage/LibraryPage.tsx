@@ -1,36 +1,21 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
-import { StatusFilter } from '../../components/StatusFilter/StatusFilter'
-import { MediaTypeFilter } from '../../components/MediaTypeFilter/MediaTypeFilter'
-import { SortSelector } from '../../components/SortSelector/SortSelector'
+import { StatusFilter, STATUS_OPTIONS } from '../../components/StatusFilter/StatusFilter'
+import {
+  MediaTypeFilter,
+  MEDIA_TYPE_OPTIONS,
+} from '../../components/MediaTypeFilter/MediaTypeFilter'
+import { SortSelector, SORT_OPTIONS } from '../../components/SortSelector/SortSelector'
 import { RecordListItem } from '../../components/RecordListItem/RecordListItem'
 import { Pagination } from '../../components/ui/Pagination/Pagination'
 import { Button } from '../../components/ui/Button/Button'
 import { useLibrary } from './useLibrary'
 import styles from './LibraryPage.module.css'
 
-const STATUS_LABELS: Record<string, string> = {
-  watching: '視聴中',
-  completed: '視聴完了',
-  on_hold: '一時停止',
-  dropped: '中断',
-  plan_to_watch: '視聴予定',
-}
-
-const MEDIA_TYPE_LABELS: Record<string, string> = {
-  anime: 'アニメ',
-  movie: '映画',
-  drama: 'ドラマ',
-  book: '本',
-  manga: '漫画',
-  game: 'ゲーム',
-}
-
-const SORT_LABELS: Record<string, string> = {
-  updated_at: '更新日',
-  rating: '評価',
-  title_asc: 'タイトル',
+/** オプション配列から値に対応するラベルを取得する */
+function findLabel<T>(options: { value: T; label: string }[], value: T): string | undefined {
+  return options.find((o) => o.value === value)?.label
 }
 
 export function LibraryPage() {
@@ -58,9 +43,9 @@ export function LibraryPage() {
     navigate('/search')
   }
 
-  const statusLabel = status ? STATUS_LABELS[status] : 'すべて'
-  const mediaTypeLabel = mediaType ? MEDIA_TYPE_LABELS[mediaType] : '全ジャンル'
-  const sortLabel = SORT_LABELS[sort] ?? '更新日'
+  const statusLabel = findLabel(STATUS_OPTIONS, status) ?? 'すべて'
+  const mediaTypeLabel = findLabel(MEDIA_TYPE_OPTIONS, mediaType) ?? '全ジャンル'
+  const sortLabel = findLabel(SORT_OPTIONS, sort) ?? '更新日'
 
   return (
     <div className={styles.page}>
