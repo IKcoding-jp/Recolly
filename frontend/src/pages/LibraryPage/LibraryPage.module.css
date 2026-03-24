@@ -75,7 +75,7 @@
   }
 
   /* StatusFilterとMediaTypeFilterを横並び2列、SortSelectorを独立行に */
-  .filters > *:nth-child(-n+2) {
+  .filters > *:nth-child(-n + 2) {
     flex: 1;
     min-width: 0;
   }

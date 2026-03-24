@@ -36,9 +36,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <NavBar user={user} onLogout={() => void logout()} />
-      <div className={appStyles.authenticatedContent}>
-        {children}
-      </div>
+      <div className={appStyles.authenticatedContent}>{children}</div>
       <BottomTabBar />
     </>
   )
