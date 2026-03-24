@@ -127,3 +127,15 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+@media (max-width: 768px) {
+  .page {
+    max-width: 100%;
+    padding: 0 var(--spacing-md);
+  }
+
+  .providerRow {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-label);
+  }
+}
