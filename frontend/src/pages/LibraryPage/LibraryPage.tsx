@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import { StatusFilter } from '../../components/StatusFilter/StatusFilter'
-import { STATUS_OPTIONS } from '../../components/StatusFilter/statusOptions'
+import { getStatusOptions } from '../../components/StatusFilter/statusOptions'
 import { MediaTypeFilter } from '../../components/MediaTypeFilter/MediaTypeFilter'
 import { MEDIA_TYPE_OPTIONS } from '../../components/MediaTypeFilter/mediaTypeOptions'
 import { SortSelector } from '../../components/SortSelector/SortSelector'
@@ -43,7 +43,8 @@ export function LibraryPage() {
     navigate('/search')
   }
 
-  const statusLabel = findLabel(STATUS_OPTIONS, status) ?? 'すべて'
+  const statusOptions = getStatusOptions(mediaType)
+  const statusLabel = findLabel(statusOptions, status) ?? 'すべて'
   const mediaTypeLabel = findLabel(MEDIA_TYPE_OPTIONS, mediaType) ?? '全ジャンル'
   const sortLabel = findLabel(SORT_OPTIONS, sort) ?? '更新日'
 
@@ -69,7 +70,7 @@ export function LibraryPage() {
 
       {/* PC: 常に表示 / モバイル: filtersOpen時のみ表示 */}
       <div className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}>
-        <StatusFilter value={status} onChange={setStatus} />
+        <StatusFilter value={status} onChange={setStatus} mediaType={mediaType} />
         <MediaTypeFilter value={mediaType} onChange={setMediaType} />
         <SortSelector value={sort} onChange={setSort} />
       </div>

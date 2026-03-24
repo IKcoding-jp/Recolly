@@ -85,7 +85,7 @@ describe('LibraryPage', () => {
     await waitFor(() => {
       expect(screen.getByText('進撃の巨人')).toBeInTheDocument()
     })
-    await user.click(screen.getByRole('button', { name: '視聴完了' }))
+    await user.click(screen.getByRole('button', { name: '完了' }))
     await waitFor(() => {
       expect(recordsApi.getAll).toHaveBeenCalledWith(
         expect.objectContaining({ status: 'completed' }),
@@ -101,8 +101,9 @@ describe('LibraryPage', () => {
     })
 
     // フィルタサマリーのチップがDOMに存在する（jsdomではCSSメディアクエリが適用されないため、display:noneでも要素自体は存在する）
-    // 「視聴中」はチップ・ステータスフィルタ・記録バッジの3箇所に存在するため、getAllByTextで検証
-    expect(screen.getAllByText('視聴中').length).toBeGreaterThanOrEqual(1)
+    // 「進行中」はチップ・ステータスフィルタの複数箇所に存在するため、getAllByTextで検証
+    // mediaType 未指定時は汎用ラベル（「進行中」）を使用する
+    expect(screen.getAllByText('進行中').length).toBeGreaterThanOrEqual(1)
 
     // 絞り込みボタンが存在する
     const toggleButton = screen.getByRole('button', { name: '絞り込み' })
