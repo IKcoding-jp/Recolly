@@ -1,17 +1,11 @@
+import type { SortOption } from './sortOptions'
+import { SORT_OPTIONS } from './sortOptions'
 import styles from './SortSelector.module.css'
-
-export type SortOption = 'updated_at' | 'rating' | 'title_asc'
 
 type SortSelectorProps = {
   value: SortOption
   onChange: (sort: SortOption) => void
 }
-
-export const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'updated_at', label: '更新日' },
-  { value: 'rating', label: '評価' },
-  { value: 'title_asc', label: 'タイトル' },
-]
 
 export function SortSelector({ value, onChange }: SortSelectorProps) {
   return (

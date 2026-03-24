@@ -11,8 +11,9 @@ import { Typography } from '../../components/ui/Typography/Typography'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import { Button } from '../../components/ui/Button/Button'
 import { getGenreLabel } from '../../lib/mediaTypeUtils'
-import { GenreDropdown, GENRE_FILTERS } from './GenreDropdown'
-import type { GenreFilter } from './GenreDropdown'
+import { GenreDropdown } from './GenreDropdown'
+import { GENRE_FILTERS } from './genreFilters'
+import type { GenreFilter } from './genreFilters'
 import styles from './SearchPage.module.css'
 
 export function SearchPage() {

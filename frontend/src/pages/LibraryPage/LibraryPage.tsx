@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
-import { StatusFilter, STATUS_OPTIONS } from '../../components/StatusFilter/StatusFilter'
-import {
-  MediaTypeFilter,
-  MEDIA_TYPE_OPTIONS,
-} from '../../components/MediaTypeFilter/MediaTypeFilter'
-import { SortSelector, SORT_OPTIONS } from '../../components/SortSelector/SortSelector'
+import { StatusFilter } from '../../components/StatusFilter/StatusFilter'
+import { STATUS_OPTIONS } from '../../components/StatusFilter/statusOptions'
+import { MediaTypeFilter } from '../../components/MediaTypeFilter/MediaTypeFilter'
+import { MEDIA_TYPE_OPTIONS } from '../../components/MediaTypeFilter/mediaTypeOptions'
+import { SortSelector } from '../../components/SortSelector/SortSelector'
+import { SORT_OPTIONS } from '../../components/SortSelector/sortOptions'
 import { RecordListItem } from '../../components/RecordListItem/RecordListItem'
 import { Pagination } from '../../components/ui/Pagination/Pagination'
 import { Button } from '../../components/ui/Button/Button'
