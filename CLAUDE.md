@@ -108,7 +108,7 @@ recolly/
 
 ### 設定ファイル
 
-- ワークフロー: `.github/workflows/claude-review.yml`
+- ワークフロー: `.github/workflows/claude-code-review.yml`
 - レビュー設定の変更は上記ファイルの `prompt` パラメータを編集する
 
 ## コミットメッセージ
