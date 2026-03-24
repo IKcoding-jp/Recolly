@@ -52,14 +52,18 @@ Devise.setup do |config|
   config.omniauth_path_prefix = '/api/v1/auth'
 
   # OmniAuthプロバイダ設定（ADR-0013）
-  # 本番ではCloudFront経由のため、コールバックURLを明示的に指定する必要がある
+  # 本番ではCloudFront経由のため、redirect_uriを明示的に指定する必要がある
   # （EC2が自身のホスト名でURLを生成すると、Googleの登録URLと一致しない）
-  google_callback_url = if ENV['FRONTEND_URL'].present?
-                          "#{ENV['FRONTEND_URL']}/api/v1/auth/google_oauth2/callback"
-                        end
+  # omniauth-oauth2はcallback_urlオプションではなくStrategyのメソッドでURLを生成するため、
+  # redirect_uriをauthorize_paramsで直接指定する
+  google_oauth_options = { scope: 'email,profile' }
+  if ENV['FRONTEND_URL'].present?
+    google_redirect_uri = "#{ENV['FRONTEND_URL']}/api/v1/auth/google_oauth2/callback"
+    google_oauth_options[:redirect_uri] = google_redirect_uri
+    google_oauth_options[:callback_url] = google_redirect_uri
+  end
   config.omniauth :google_oauth2,
                   ENV['GOOGLE_CLIENT_ID'],
                   ENV['GOOGLE_CLIENT_SECRET'],
-                  scope: 'email,profile',
-                  callback_url: google_callback_url
+                  google_oauth_options
 end
