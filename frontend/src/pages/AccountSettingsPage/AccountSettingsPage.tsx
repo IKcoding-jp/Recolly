@@ -5,7 +5,7 @@ import { csrfApi } from '../../lib/api'
 import { useAccountSettings } from './useAccountSettings'
 import styles from './AccountSettingsPage.module.css'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 
 // プロバイダーの表示名マッピング
 const PROVIDER_DISPLAY: Record<string, { name: string; icon: string }> = {

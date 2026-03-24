@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { csrfApi } from '../../lib/api'
 import styles from './OAuthButtons.module.css'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 
 export function OAuthButtons() {
   const [csrfToken, setCsrfToken] = useState('')
