@@ -22,3 +22,10 @@
   padding: var(--spacing-xs) var(--spacing-md);
   font-size: var(--font-size-label);
 }
+
+/* ボトムタブバー分の余白（スマホのみ） */
+@media (max-width: 768px) {
+  .authenticatedContent {
+    padding-bottom: 64px;
+  }
+}

@@ -3,6 +3,8 @@ import { AuthProvider } from './contexts/AuthContext'
 import { useAuth } from './contexts/useAuth'
 import { ProtectedRoute } from './components/ProtectedRoute/ProtectedRoute'
 import { NavBar } from './components/ui/NavBar/NavBar'
+import { BottomTabBar } from './components/ui/BottomTabBar/BottomTabBar'
+import appStyles from './App.module.css'
 import { LoginPage } from './pages/LoginPage/LoginPage'
 import { SignUpPage } from './pages/SignUpPage/SignUpPage'
 import { DashboardPage } from './pages/DashboardPage/DashboardPage'
@@ -32,7 +34,10 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <NavBar user={user} onLogout={() => void logout()} />
-      {children}
+      <div className={appStyles.authenticatedContent}>
+        {children}
+      </div>
+      <BottomTabBar />
     </>
   )
 }
