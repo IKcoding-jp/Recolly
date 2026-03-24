@@ -35,9 +35,11 @@ describe('SearchPage', () => {
 
   it('ジャンルフィルタが表示される', async () => {
     renderSearchPage()
-    expect(await screen.findByText('すべて')).toBeInTheDocument()
-    expect(screen.getByText('アニメ')).toBeInTheDocument()
-    expect(screen.getByText('映画')).toBeInTheDocument()
+    // PCではボタン、モバイルではselectの両方が存在するためgetAllByTextを使用
+    const allLabels = await screen.findAllByText('すべて')
+    expect(allLabels.length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('アニメ').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('映画').length).toBeGreaterThanOrEqual(1)
   })
 
   it('キーワード入力→検索で結果が表示される', async () => {
