@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { getActionLabel, getProgressText, getGenreLabel, hasEpisodes } from './mediaTypeUtils'
+import {
+  getActionLabel,
+  getProgressText,
+  getGenreLabel,
+  hasEpisodes,
+  getStatusLabel,
+  getStatusOptions,
+} from './mediaTypeUtils'
 
 describe('getActionLabel', () => {
   it('アニメは「+1話」を返す', () => {
@@ -82,5 +89,92 @@ describe('hasEpisodes', () => {
   })
   it('ゲームはfalseを返す', () => {
     expect(hasEpisodes('game')).toBe(false)
+  })
+})
+
+describe('getStatusLabel', () => {
+  // 映像系（anime / movie / drama）
+  it('アニメの watching は「視聴中」を返す', () => {
+    expect(getStatusLabel('watching', 'anime')).toBe('視聴中')
+  })
+  it('映画の completed は「視聴完了」を返す', () => {
+    expect(getStatusLabel('completed', 'movie')).toBe('視聴完了')
+  })
+  it('ドラマの plan_to_watch は「視聴予定」を返す', () => {
+    expect(getStatusLabel('plan_to_watch', 'drama')).toBe('視聴予定')
+  })
+
+  // 読み物系（book / manga）
+  it('本の watching は「読書中」を返す', () => {
+    expect(getStatusLabel('watching', 'book')).toBe('読書中')
+  })
+  it('漫画の completed は「読了」を返す', () => {
+    expect(getStatusLabel('completed', 'manga')).toBe('読了')
+  })
+  it('本の plan_to_watch は「読書予定」を返す', () => {
+    expect(getStatusLabel('plan_to_watch', 'book')).toBe('読書予定')
+  })
+
+  // ゲーム
+  it('ゲームの watching は「プレイ中」を返す', () => {
+    expect(getStatusLabel('watching', 'game')).toBe('プレイ中')
+  })
+  it('ゲームの completed は「プレイ完了」を返す', () => {
+    expect(getStatusLabel('completed', 'game')).toBe('プレイ完了')
+  })
+  it('ゲームの plan_to_watch は「プレイ予定」を返す', () => {
+    expect(getStatusLabel('plan_to_watch', 'game')).toBe('プレイ予定')
+  })
+
+  // 共通
+  it('on_hold はジャンル問わず「一時停止」を返す', () => {
+    expect(getStatusLabel('on_hold', 'anime')).toBe('一時停止')
+    expect(getStatusLabel('on_hold', 'book')).toBe('一時停止')
+    expect(getStatusLabel('on_hold', 'game')).toBe('一時停止')
+  })
+  it('dropped はジャンル問わず「中断」を返す', () => {
+    expect(getStatusLabel('dropped', 'anime')).toBe('中断')
+    expect(getStatusLabel('dropped', 'book')).toBe('中断')
+    expect(getStatusLabel('dropped', 'game')).toBe('中断')
+  })
+
+  // 汎用（mediaType 未指定）
+  it('mediaType 未指定の watching は「進行中」を返す', () => {
+    expect(getStatusLabel('watching')).toBe('進行中')
+  })
+  it('mediaType 未指定の completed は「完了」を返す', () => {
+    expect(getStatusLabel('completed')).toBe('完了')
+  })
+  it('mediaType 未指定の plan_to_watch は「予定」を返す', () => {
+    expect(getStatusLabel('plan_to_watch')).toBe('予定')
+  })
+  it('mediaType が null の場合も汎用ラベルを返す', () => {
+    expect(getStatusLabel('watching', null)).toBe('進行中')
+  })
+})
+
+describe('getStatusOptions', () => {
+  it('mediaType 未指定時は汎用ラベルの配列を返す', () => {
+    const options = getStatusOptions()
+    expect(options[0]).toEqual({ value: null, label: 'すべて' })
+    expect(options[1]).toEqual({ value: 'watching', label: '進行中' })
+    expect(options[2]).toEqual({ value: 'completed', label: '完了' })
+  })
+
+  it('anime 指定時は映像系ラベルの配列を返す', () => {
+    const options = getStatusOptions('anime')
+    expect(options[1]).toEqual({ value: 'watching', label: '視聴中' })
+    expect(options[2]).toEqual({ value: 'completed', label: '視聴完了' })
+  })
+
+  it('book 指定時は読み物系ラベルの配列を返す', () => {
+    const options = getStatusOptions('book')
+    expect(options[1]).toEqual({ value: 'watching', label: '読書中' })
+    expect(options[2]).toEqual({ value: 'completed', label: '読了' })
+  })
+
+  it('常に6つのオプション（すべて + 5ステータス）を返す', () => {
+    expect(getStatusOptions()).toHaveLength(6)
+    expect(getStatusOptions('game')).toHaveLength(6)
   })
 })
