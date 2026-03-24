@@ -64,6 +64,14 @@ describe('AccountSettingsPage', () => {
     expect(connectButtons).toHaveLength(1)
   })
 
+  it('OAuth連携フォームのactionが相対パスであること', () => {
+    mockUser = createUser({ providers: [], has_password: true })
+    renderPage()
+
+    const form = document.querySelector('form[action]')
+    expect(form).toHaveAttribute('action', '/api/v1/auth/google_oauth2')
+  })
+
   it('パスワード未設定時は「パスワードを設定」と表示する', () => {
     mockUser = createUser({ providers: ['google_oauth2'], has_password: false })
     renderPage()
