@@ -3,21 +3,9 @@ name: Claude Code Review
 on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
 
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -36,9 +24,24 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
-          plugins: 'code-review@claude-code-plugins'
-          prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
 
+            このPRをレビューしてください。CLAUDE.mdのレビュー観点に従ってください：
+
+            - CLAUDE.md準拠: コーディング規約、命名規則、ファイルサイズ（200行以内）
+            - コード品質: DRY / YAGNI原則、ベストプラクティス
+            - バグ・セキュリティ: SQLインジェクション、XSS、認証漏れ、Strong Parameters
+            - パフォーマンス: N+1クエリ、不要な再レンダリング、メモリリーク
+            - 保守性・可読性: 変数名、コメント（「なぜ」の説明）、ファイル分割
+            - テスト: カバレッジ、エッジケース、TDD遵守
+            - 設計・アーキテクチャ: thin controller、コンポーネント設計、責務の分離
+
+            PRブランチは現在のワーキングディレクトリにチェックアウト済みです。
+
+            `gh pr comment` でトップレベルのフィードバックを投稿してください。
+            `mcp__github_inline_comment__create_inline_comment`（`confirmed: true`）で具体的なコードの問題をインラインコメントしてください。
+            GitHubコメントのみ投稿し、メッセージとしてレビューテキストを返さないでください。
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
