@@ -1,26 +1,179 @@
-# Recolly
+# Recolly（レコリー）
 
-物語性のあるメディア（アニメ、映画、ドラマ、本、漫画、ゲーム）をジャンル横断で記録・分析・共有するWebアプリケーション。
+**物語性のあるメディアを、ジャンルの壁を越えて記録する。**
 
-## 特徴
+アニメ、映画、ドラマ、本、漫画、ゲーム — 好きなコンテンツを1つのアプリでまとめて管理できるWebアプリケーションです。
 
-- **オールインワン管理** — 全ジャンルを1つのアプリで記録。既存サービスのようなジャンル分断がない
-- **記録・進捗管理** — ステータス、★評価、話数進捗、話数ごとの感想
-- **コミュニティ** — 作品・話数ごとのディスカッション掲示板
-- **おすすめ** — 記録データに基づくクロスメディアレコメンド
+**本番環境:** https://d1libv2nochxfe.cloudfront.net
+
+---
+
+## なぜ作ったのか
+
+アニメはMyAnimeList、映画はLetterboxd、本は読書メーター、ゲームはHowLongToBeat...。コンテンツを記録するサービスはジャンルごとに分断されています。
+
+しかし「物語が好きな人」は、ジャンルを横断してコンテンツを楽しんでいます。アニメを観た後に原作漫画を読み、映画化されたらそれも観る。そういう体験を1つの場所で記録・振り返りたいという課題を解決するために、Recollyを開発しました。
+
+## 主な機能
+
+### ジャンル横断の作品検索
+
+4つの外部APIと連携し、6ジャンルの作品をキーワード1つで横断検索できます。
+
+| ジャンル | 外部API |
+|---------|--------|
+| 映画・ドラマ | TMDB |
+| アニメ・漫画 | AniList (GraphQL) |
+| 本 | Google Books |
+| ゲーム | IGDB (Twitch認証) |
+
+APIにない作品は手動登録フォームから追加可能です。
+
+### 記録・進捗管理
+
+- ステータス管理（視聴中 / 完了 / 中断 / 予定）
+- 10点満点の評価
+- 話数・巻数の進捗トラッキング
+- ステータス変更時の自動処理（完了日の自動セット、話数の自動同期）
+
+### マイライブラリ
+
+- ステータス別・ジャンル別フィルタ
+- 更新日・評価・タイトルでのソート
+- ページネーション（URLクエリパラメータと同期）
+
+### ダッシュボード
+
+- 進行中コンテンツの一覧表示
+- ワンクリック進捗更新（「+1話」「+1巻」「観た」「読了」「クリア」）
+
+### 認証
+
+- メール + パスワード認証（devise）
+- Google OAuth（OmniAuth）
+- アカウント設定画面（OAuth連携管理、パスワード設定）
+
+---
 
 ## 技術スタック
 
-| レイヤー | 技術 |
-|---------|------|
-| バックエンド | Ruby 3.3 / Rails 8（APIモード） |
-| フロントエンド | React 19 / TypeScript / Vite |
-| データベース | PostgreSQL 16 |
-| テスト | RSpec / Vitest + React Testing Library |
-| リンター | RuboCop / ESLint + Prettier |
-| インフラ | Docker Compose（開発）/ AWS（本番） |
-| CI/CD | GitHub Actions |
-| コードレビュー | Claude Code Actions |
+| レイヤー | 技術 | 選定理由 |
+|---------|------|---------|
+| バックエンド | Ruby 3.3 / Rails 8（APIモード） | 高速なAPI開発、豊富なエコシステム |
+| フロントエンド | React 19 / TypeScript / Vite | 型安全なSPA開発、高速なHMR |
+| データベース | PostgreSQL 16 | 信頼性、条件付きインデックス等の高度な機能 |
+| キャッシュ | Redis 7 | 外部API検索結果のキャッシュ |
+| 認証 | devise + OmniAuth | セッションCookie認証、OAuth拡張が容易 |
+| テスト（BE） | RSpec | request spec中心の統合テスト |
+| テスト（FE） | Vitest + React Testing Library | 高速なコンポーネントテスト |
+| リンター | RuboCop / ESLint + Prettier | コード品質の自動担保 |
+| インフラ | AWS（EC2, RDS, S3, CloudFront） | 本番環境のフル構成 |
+| IaC | Terraform | インフラのコード管理 |
+| CI/CD | GitHub Actions | lint, test, security scan, 自動デプロイ |
+| コードレビュー | Claude Code Actions | AIによる自動コードレビュー |
+| 開発環境 | Docker Compose | 環境差異のないローカル開発 |
+
+---
+
+## アーキテクチャ
+
+```
+                         ┌─────────────┐
+                         │  CloudFront │
+                         │   (CDN)     │
+                         └──────┬──────┘
+                                │
+                  ┌─────────────┼─────────────┐
+                  │             │             │
+           ┌──────▼──────┐ ┌───▼────┐ ┌──────▼──────┐
+           │  S3 Bucket  │ │  EC2   │ │             │
+           │ (React SPA) │ │(Rails) │ │   ブラウザ   │
+           └─────────────┘ └───┬────┘ └─────────────┘
+                               │
+                  ┌────────────┼────────────┐
+                  │            │            │
+           ┌──────▼──────┐ ┌──▼───┐ ┌──────▼──────┐
+           │    RDS      │ │Redis │ │  外部API     │
+           │(PostgreSQL) │ │      │ │ TMDB/AniList │
+           └─────────────┘ └──────┘ │ Google Books │
+                                    │ IGDB         │
+                                    └──────────────┘
+```
+
+### バックエンド（Rails API）
+
+- APIモード（HTMLレンダリングなし、JSONレスポンスのみ）
+- deviseによるセッションCookie認証 + OmniAuth OAuth
+- 外部APIクライアントはアダプタパターンで統一インターフェース化（ADR-0011）
+- thin controller原則（ビジネスロジックはサービスオブジェクトに分離）
+
+### フロントエンド（React SPA）
+
+- TypeScriptによる型安全な開発
+- CSS Modules + グローバルCSS変数によるデザインシステム
+- AuthContextによるセッション管理（Cookie自動送信）
+- 共通UIコンポーネント（Button, Typography, Divider等）を全ページで再利用
+
+---
+
+## AI駆動開発
+
+Recollyは**Claude Code**を開発の中核に据えたAI駆動開発で構築しています。
+
+### 開発手法：SDD + TDD
+
+**SDD（仕様駆動開発）** — 全ての実装は仕様書から始まります。
+
+```
+仕様書作成 → Issue起票 → 実装プラン作成 → TDD実装 → コードレビュー → マージ
+```
+
+各フェーズでClaude Codeの専用スキル（superpowers）を活用しています。
+
+| フェーズ | 使用スキル | 内容 |
+|---------|----------|------|
+| 要件定義 | brainstorming | 対話形式で要件を深掘り、設計仕様書を作成 |
+| 計画 | writing-plans | 仕様書からTDD形式の実装プランを生成 |
+| 実装 | subagent-driven-development | タスクごとにサブエージェントを起動、2段階レビュー |
+| テスト | test-driven-development | RED → GREEN → REFACTOR サイクル |
+| レビュー | Claude Code Actions | PRに対する自動コードレビュー（GitHub Actions経由） |
+
+### 自動コードレビュー
+
+全てのPRにClaude Code Reviewが自動実行されます。レビュー観点:
+
+- CLAUDE.md準拠（コーディング規約、命名規則、ファイルサイズ）
+- バグ・セキュリティ（SQLインジェクション、XSS、認証漏れ）
+- パフォーマンス（N+1クエリ、不要な再レンダリング）
+- テストカバレッジ
+
+### 理解負債の防止
+
+技術選定時には必ず「なぜその技術を選んだか」をADRに記録し、将来の自分やチームメンバーが判断の背景を理解できるようにしています。
+
+---
+
+## 設計判断の記録（ADR）
+
+全ての技術選定はADR（Architecture Decision Record）として記録しています。「何を選んだか」だけでなく「なぜ選んだか」「他に何を検討したか」を残すことで、設計の意図を将来にわたって参照可能にしています。
+
+| # | 決定 |
+|---|------|
+| 0001 | [バックエンドにRuby on Railsを採用](docs/adr/0001-バックエンドにruby-on-railsを採用.md) |
+| 0002 | [フロントエンドにReact + TypeScriptを採用](docs/adr/0002-フロントエンドにreact-typescriptを採用.md) |
+| 0003 | [データベースにPostgreSQLを採用](docs/adr/0003-データベースにpostgresqlを採用.md) |
+| 0004 | [開発環境にDocker Composeを採用](docs/adr/0004-開発環境にdocker-composeを採用.md) |
+| 0005 | [開発手法にSDD + TDDを採用](docs/adr/0005-開発手法にsdd-tddを採用.md) |
+| 0006 | [CSSスタイリング方式にCSS Modules + グローバルCSS変数を採用](docs/adr/0006-cssスタイリング方式にcss-modules-グローバルcss変数を採用.md) |
+| 0007 | [認証アーキテクチャにdevise + セッションCookieを採用](docs/adr/0007-認証アーキテクチャにdevise-セッションcookieを採用.md) |
+| 0008 | [検索キャッシュにRedisを採用](docs/adr/0008-検索キャッシュにredisを採用.md) |
+| 0009 | [HTTPクライアントにFaradayを採用](docs/adr/0009-httpクライアントにfaradayを採用.md) |
+| 0010 | [AniList GraphQLをHTTP直接クエリで対応](docs/adr/0010-anilist-graphqlをhttp直接クエリで対応.md) |
+| 0011 | [外部APIクライアントにアダプタパターンを採用](docs/adr/0011-外部apiクライアントにアダプタパターンを採用.md) |
+| 0012 | [本番インフラにAWS フル構成 + Terraformを採用](docs/adr/0012-本番インフラにaws-フル構成-terraformを採用.md) |
+| 0013 | [OAuth認証にOmniAuth + サーバーサイドフローを採用](docs/adr/0013-oauth認証にomniauth-サーバーサイドフローを採用.md) |
+
+---
 
 ## セットアップ
 
@@ -31,21 +184,24 @@
 ### 起動
 
 ```bash
-# 全サービス起動（PostgreSQL + Rails API + React）
+# 全サービス起動（PostgreSQL + Redis + Rails API + React）
 docker compose up
 
 # バックエンドのみ
 docker compose up backend
 ```
 
-- Rails API: http://localhost:3000
 - React: http://localhost:5173
-- ヘルスチェック: http://localhost:3000/api/v1/health
+- Rails API: http://localhost:3000
+- ヘルスチェック: http://localhost:3000/up
 
 ### テスト
 
 ```bash
+# バックエンド（RSpec）
 docker compose run --rm -e RAILS_ENV=test backend bundle exec rspec
+
+# フロントエンド（Vitest）
 docker compose run --rm frontend npm test
 ```
 
@@ -64,29 +220,39 @@ docker compose run --rm backend bin/rails db:migrate
 docker compose run --rm backend bin/rails db:seed
 ```
 
+---
+
 ## ディレクトリ構成
 
 ```
 recolly/
 ├── backend/          Rails API
+│   ├── app/
+│   │   ├── controllers/api/v1/   APIコントローラー
+│   │   ├── models/               モデル（User, Work, Record等）
+│   │   └── services/             サービスオブジェクト
+│   └── spec/                     RSpecテスト
 ├── frontend/         React + TypeScript
-├── infra/            AWS設定
-├── docs/             仕様書・設計ドキュメント
+│   └── src/
+│       ├── components/           共通UIコンポーネント
+│       ├── contexts/             React Context（認証等）
+│       ├── lib/                  API通信・型定義
+│       └── pages/                ページコンポーネント
+├── infra/            Terraform（AWS設定）
+├── docs/
+│   ├── adr/                      設計判断記録（ADR）
+│   └── superpowers/              仕様書・実装プラン
 ├── .github/          GitHub Actions（CI + Claude Code Review）
 ├── CLAUDE.md         プロジェクトルール
-├── lefthook.yml      Git hooks設定
 └── docker-compose.yml
 ```
 
-## 開発フロー
-
-1. `git checkout -b feature/xxx` でブランチ作成
-2. 実装 + テスト + コミット
-3. `git push` + `gh pr create` でPR作成
-4. CI（lint + test + security）+ Claude Code Review が自動実行
-5. レビュー指摘を解消 → マージ
+---
 
 ## ドキュメント
 
-- [プロダクト設計仕様書](docs/superpowers/specs/2026-03-20-recolly-design.md)
-- [プロジェクトルール](CLAUDE.md)
+| 種類 | リンク |
+|------|--------|
+| プロダクト設計仕様書 | [docs/superpowers/specs/2026-03-20-recolly-design.md](docs/superpowers/specs/2026-03-20-recolly-design.md) |
+| プロジェクトルール | [CLAUDE.md](CLAUDE.md) |
+| 設計判断記録 | [docs/adr/](docs/adr/) |
