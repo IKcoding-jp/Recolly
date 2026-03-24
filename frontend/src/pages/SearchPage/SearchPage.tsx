@@ -126,6 +126,7 @@ export function SearchPage() {
           </Button>
         </form>
 
+        {/* PC: ピルボタン */}
         <div className={styles.filters}>
           {GENRE_FILTERS.map((filter) => (
             <button
@@ -137,6 +138,22 @@ export function SearchPage() {
               {filter.label}
             </button>
           ))}
+        </div>
+
+        {/* モバイル: ドロップダウン */}
+        <div className={styles.genreSelect}>
+          <span className={styles.genreSelectLabel}>ジャンル</span>
+          <select
+            className={styles.genreSelectInput}
+            value={genre}
+            onChange={(e) => handleGenreChange(e.target.value as GenreFilter)}
+          >
+            {GENRE_FILTERS.map((filter) => (
+              <option key={filter.value} value={filter.value}>
+                {filter.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         {error && <p className={styles.error}>{error}</p>}
