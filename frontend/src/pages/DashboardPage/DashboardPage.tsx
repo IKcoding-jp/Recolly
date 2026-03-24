@@ -13,20 +13,22 @@ export function DashboardPage() {
   return (
     <div className={styles.container}>
       {user?.email_missing && <EmailPromptBanner />}
-      <SectionTitle>進行中</SectionTitle>
       {isLoading && <div className={styles.loading}>読み込み中...</div>}
       {error && <div className={styles.error}>{error}</div>}
       {!isLoading && !error && records.length === 0 && <DashboardEmptyState />}
       {!isLoading && records.length > 0 && (
-        <div className={styles.list}>
-          {records.map((record) => (
-            <WatchingListItem
-              key={record.id}
-              record={record}
-              onAction={() => void handleAction(record)}
-            />
-          ))}
-        </div>
+        <>
+          <SectionTitle>進行中</SectionTitle>
+          <div className={styles.list}>
+            {records.map((record) => (
+              <WatchingListItem
+                key={record.id}
+                record={record}
+                onAction={() => void handleAction(record)}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   )
