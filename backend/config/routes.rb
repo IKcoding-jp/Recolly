@@ -35,9 +35,13 @@ Rails.application.routes.draw do
         end
       end
 
+      # タグ管理（ユーザー所有タグの一覧・削除）
+      resources :tags, only: %i[index destroy]
+
       # 記録（ライブラリ追加）
       resources :records, only: %i[index show create update destroy] do
         resources :episode_reviews, only: %i[index create update destroy]
+        resources :tags, only: %i[create destroy], controller: 'record_tags'
       end
 
       get "health", to: "health#show"
