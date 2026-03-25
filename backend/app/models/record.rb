@@ -13,9 +13,15 @@ class Record < ApplicationRecord
     plan_to_watch: 4
   }
 
+  # private/publicはRubyの予約語のため、_recordサフィックスで衝突を回避
+  enum :visibility, { private_record: 0, public_record: 1 }, prefix: :visibility
+
+  has_many :episode_reviews, dependent: :destroy
+
   validates :work_id, uniqueness: { scope: :user_id }
   validates :rating, inclusion: { in: 1..10 }, allow_nil: true
   validates :current_episode, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :review_text, length: { maximum: 10_000 }
   validate :started_at_before_completed_at
   validate :current_episode_within_total
 
