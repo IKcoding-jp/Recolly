@@ -111,10 +111,7 @@ export function WorkDetailPage() {
 
             <div className={styles.section}>
               <div className={styles.label}>再視聴回数</div>
-              <RewatchControl
-                count={record.rewatch_count}
-                onChange={handleRewatchCountChange}
-              />
+              <RewatchControl count={record.rewatch_count} onChange={handleRewatchCountChange} />
             </div>
 
             <div className={styles.section}>
@@ -139,10 +136,7 @@ export function WorkDetailPage() {
 
             <div className={styles.section}>
               <div className={styles.label}>感想</div>
-              <ReviewSection
-                reviewText={record.review_text}
-                onSave={handleReviewTextSave}
-              />
+              <ReviewSection reviewText={record.review_text} onSave={handleReviewTextSave} />
             </div>
 
             {HAS_EPISODES.includes(work.media_type) && (

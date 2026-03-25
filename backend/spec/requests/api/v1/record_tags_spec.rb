@@ -73,9 +73,11 @@ RSpec.describe 'Api::V1::RecordTags', type: :request do
         tag = Tag.create!(name: 'お気に入り', user: user)
         RecordTag.create!(record: record, tag: tag)
 
+        tag_count_before = Tag.count
         expect do
           delete "/api/v1/records/#{record.id}/tags/#{tag.id}", as: :json
-        end.to change(RecordTag, :count).by(-1).and change(Tag, :count).by(0)
+        end.to change(RecordTag, :count).by(-1)
+        expect(Tag.count).to eq(tag_count_before)
 
         expect(response).to have_http_status(:no_content)
         expect(Tag.find(tag.id)).to be_present

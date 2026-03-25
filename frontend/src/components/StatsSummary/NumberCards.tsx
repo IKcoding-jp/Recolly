@@ -11,9 +11,7 @@ function sumGenreValues(byGenre: Record<string, number>): number {
 }
 
 // 今月の完了数を取得する（月別完了配列の最後の要素）
-function getCurrentMonthCount(
-  completions: Array<{ month: string; count: number }>,
-): number {
+function getCurrentMonthCount(completions: Array<{ month: string; count: number }>): number {
   if (completions.length === 0) return 0
   return completions[completions.length - 1].count
 }

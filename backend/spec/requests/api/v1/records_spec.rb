@@ -281,7 +281,7 @@ RSpec.describe 'Api::V1::Records', type: :request do
             params: { record: { review_text: '素晴らしい作品だった' } }
 
       expect(response).to have_http_status(:ok)
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json['record']['review_text']).to eq('素晴らしい作品だった')
     end
   end
@@ -295,7 +295,7 @@ RSpec.describe 'Api::V1::Records', type: :request do
             params: { record: { rewatch_count: 2 } }
 
       expect(response).to have_http_status(:ok)
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json['record']['rewatch_count']).to eq(2)
     end
   end
@@ -333,19 +333,25 @@ RSpec.describe 'Api::V1::Records', type: :request do
     before { sign_in user }
 
     # RSpec/ExampleLength対策: セットアップデータをヘルパーに抽出
-    def create_multi_tag_data
-      work2 = Work.create!(title: '別作品', media_type: 'anime')
-      work3 = Work.create!(title: '3作品目', media_type: 'anime')
-      record1 = Record.create!(user: user, work: existing_work)
-      record2 = Record.create!(user: user, work: work2)
-      record3 = Record.create!(user: user, work: work3)
-      tag1 = Tag.create!(name: 'お気に入り', user: user)
-      tag2 = Tag.create!(name: '名作', user: user)
-      RecordTag.create!(record: record1, tag: tag1)
-      RecordTag.create!(record: record1, tag: tag2)
-      RecordTag.create!(record: record2, tag: tag1)
-      RecordTag.create!(record: record3, tag: tag2)
-      [record1, tag1, tag2]
+    def create_tagged_records
+      records = create_records_for_tagging
+      tags = %w[お気に入り 名作].map { |name| Tag.create!(name: name, user: user) }
+      assign_tags(records, tags)
+      records[0]
+    end
+
+    def create_records_for_tagging
+      [existing_work, Work.create!(title: '別作品', media_type: 'anime'),
+       Work.create!(title: '3作品目', media_type: 'anime')].map do |w|
+        Record.create!(user: user, work: w)
+      end
+    end
+
+    def assign_tags(records, tags)
+      # records[0]に両方のタグ、records[1]にtags[0]、records[2]にtags[1]
+      [[0, 0], [0, 1], [1, 0], [2, 1]].each do |ri, ti|
+        RecordTag.create!(record: records[ri], tag: tags[ti])
+      end
     end
 
     it '単一タグでフィルタリングできる' do
@@ -366,7 +372,7 @@ RSpec.describe 'Api::V1::Records', type: :request do
     end
 
     it '複数タグのAND条件でフィルタリングできる' do
-      record1, tag1, tag2 = create_multi_tag_data
+      record1 = create_tagged_records
       get '/api/v1/records', params: { tag: %w[お気に入り 名作] }
 
       expect(response).to have_http_status(:ok)

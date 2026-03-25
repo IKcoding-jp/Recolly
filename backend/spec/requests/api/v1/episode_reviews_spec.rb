@@ -21,9 +21,9 @@ RSpec.describe 'Api::V1::EpisodeReviews', type: :request do
         get "/api/v1/records/#{record.id}/episode_reviews"
 
         expect(response).to have_http_status(:ok)
-        json = JSON.parse(response.body)
+        json = response.parsed_body
         expect(json['episode_reviews'].length).to eq(3)
-        expect(json['episode_reviews'].map { |r| r['episode_number'] }).to eq([1, 2, 3])
+        expect(json['episode_reviews'].pluck('episode_number')).to eq([1, 2, 3])
       end
 
       it '他ユーザーの記録の感想は取得できない' do
@@ -48,7 +48,7 @@ RSpec.describe 'Api::V1::EpisodeReviews', type: :request do
            params: { episode_review: { episode_number: 1, body: '神回だった' } }
 
       expect(response).to have_http_status(:created)
-      json = JSON.parse(response.body)
+      json = response.parsed_body
       expect(json['episode_review']['episode_number']).to eq(1)
       expect(json['episode_review']['body']).to eq('神回だった')
     end
@@ -73,24 +73,21 @@ RSpec.describe 'Api::V1::EpisodeReviews', type: :request do
   describe 'PATCH /api/v1/records/:record_id/episode_reviews/:id' do
     before { sign_in user }
 
-    let!(:review) { EpisodeReview.create!(record: record, episode_number: 1, body: '初版') }
-
     it '感想を更新できる' do
+      review = EpisodeReview.create!(record: record, episode_number: 1, body: '初版')
       patch "/api/v1/records/#{record.id}/episode_reviews/#{review.id}",
             params: { episode_review: { body: '更新版' } }
 
       expect(response).to have_http_status(:ok)
-      json = JSON.parse(response.body)
-      expect(json['episode_review']['body']).to eq('更新版')
+      expect(response.parsed_body['episode_review']['body']).to eq('更新版')
     end
   end
 
   describe 'DELETE /api/v1/records/:record_id/episode_reviews/:id' do
     before { sign_in user }
 
-    let!(:review) { EpisodeReview.create!(record: record, episode_number: 1, body: '削除対象') }
-
     it '感想を削除できる' do
+      review = EpisodeReview.create!(record: record, episode_number: 1, body: '削除対象')
       delete "/api/v1/records/#{record.id}/episode_reviews/#{review.id}"
       expect(response).to have_http_status(:no_content)
       expect(EpisodeReview.find_by(id: review.id)).to be_nil

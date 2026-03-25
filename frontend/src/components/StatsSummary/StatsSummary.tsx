@@ -15,16 +15,8 @@ export function StatsSummary({ statistics }: StatsSummaryProps) {
       <NumberCards statistics={statistics} />
 
       <div className={styles.distributionGrid}>
-        <DistributionBars
-          title="ジャンル別"
-          data={statistics.by_genre}
-          labels={GENRE_LABELS}
-        />
-        <DistributionBars
-          title="ステータス別"
-          data={statistics.by_status}
-          labels={STATUS_LABELS}
-        />
+        <DistributionBars title="ジャンル別" data={statistics.by_genre} labels={GENRE_LABELS} />
+        <DistributionBars title="ステータス別" data={statistics.by_status} labels={STATUS_LABELS} />
       </div>
 
       {statistics.monthly_completions.length > 0 && (

@@ -34,12 +34,7 @@ export function ReviewSection({ reviewText, onSave }: ReviewSectionProps) {
       />
       {isDirty && (
         <div className={styles.actions}>
-          <Button
-            variant="primary"
-            size="sm"
-            disabled={isSaving}
-            onClick={() => void handleSave()}
-          >
+          <Button variant="primary" size="sm" disabled={isSaving} onClick={() => void handleSave()}>
             {isSaving ? '保存中...' : '保存'}
           </Button>
         </div>

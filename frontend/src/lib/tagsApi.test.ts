@@ -24,10 +24,7 @@ describe('tagsApi', () => {
       const data = { tags: [] }
       mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(data) })
       await tagsApi.getAll()
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/tags'),
-        expect.any(Object),
-      )
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/tags'), expect.any(Object))
     })
   })
 

@@ -30,18 +30,11 @@ export const episodeReviewsApi = {
     })
   },
 
-  update(
-    recordId: number,
-    reviewId: number,
-    params: UpdateParams,
-  ): Promise<EpisodeReviewResponse> {
-    return request<EpisodeReviewResponse>(
-      `/records/${recordId}/episode_reviews/${reviewId}`,
-      {
-        method: 'PATCH',
-        body: JSON.stringify({ episode_review: params }),
-      },
-    )
+  update(recordId: number, reviewId: number, params: UpdateParams): Promise<EpisodeReviewResponse> {
+    return request<EpisodeReviewResponse>(`/records/${recordId}/episode_reviews/${reviewId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ episode_review: params }),
+    })
   },
 
   remove(recordId: number, reviewId: number): Promise<void> {
