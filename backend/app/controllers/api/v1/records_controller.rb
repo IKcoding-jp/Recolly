@@ -9,18 +9,18 @@ module Api
 
       # GET /api/v1/records
       def index
-        records = apply_sort(apply_filters(current_user.records.includes(:work)))
+        records = apply_sort(apply_filters(current_user.records.includes(:work, :tags)))
 
         if pagination_requested?
           render json: paginated_response(records)
         else
-          render json: { records: records.as_json(include: :work) }
+          render json: { records: records.as_json(include: %i[work tags]) }
         end
       end
 
       # GET /api/v1/records/:id
       def show
-        render json: { record: @record.as_json(include: :work) }
+        render json: { record: @record.as_json(include: %i[work tags]) }
       end
 
       # POST /api/v1/records
@@ -31,7 +31,7 @@ module Api
         record = current_user.records.new(work: work, **record_create_params)
 
         if record.save
-          render json: { record: record.as_json(include: :work) }, status: :created
+          render json: { record: record.as_json(include: %i[work tags]) }, status: :created
         else
           render json: { errors: record.errors.full_messages }, status: :unprocessable_content
         end
@@ -40,7 +40,7 @@ module Api
       # PATCH /api/v1/records/:id
       def update
         if @record.update(record_update_params)
-          render json: { record: @record.as_json(include: :work) }
+          render json: { record: @record.as_json(include: %i[work tags]) }
         else
           render json: { errors: @record.errors.full_messages }, status: :unprocessable_content
         end
@@ -64,7 +64,7 @@ module Api
         total_count = records.count
 
         {
-          records: records.offset((page - 1) * per_page).limit(per_page).as_json(include: :work),
+          records: records.offset((page - 1) * per_page).limit(per_page).as_json(include: %i[work tags]),
           meta: pagination_meta(page, per_page, total_count)
         }
       end
@@ -83,7 +83,7 @@ module Api
       end
 
       def set_record
-        @record = Record.find(params[:id])
+        @record = Record.includes(:work, :tags).find(params[:id])
       end
 
       def authorize_record!
@@ -97,13 +97,15 @@ module Api
       end
 
       def record_update_params
-        params.expect(record: %i[status rating current_episode started_at completed_at])
+        # visibilityはフェーズ2では受け付けない（スペック参照）。フェーズ3で追加する
+        params.expect(record: %i[status rating current_episode started_at completed_at review_text rewatch_count])
       end
 
       def apply_filters(records)
         records = filter_by_status(records)
         records = filter_by_media_type(records)
-        filter_by_work_id(records)
+        records = filter_by_work_id(records)
+        filter_by_tags(records)
       end
 
       def filter_by_status(records)
@@ -122,6 +124,20 @@ module Api
         return records if params[:work_id].blank?
 
         records.where(work_id: params[:work_id])
+      end
+
+      def filter_by_tags(records)
+        return records if params[:tag].blank?
+
+        # 複数タグ指定時はAND条件（全タグを持つ記録のみ）
+        tag_names = Array(params[:tag])
+        tag_names.each do |tag_name|
+          tag_record_ids = RecordTag.joins(:tag)
+                                    .where(tags: { name: tag_name, user_id: current_user.id })
+                                    .select(:record_id)
+          records = records.where(id: tag_record_ids)
+        end
+        records
       end
 
       def apply_sort(records)

@@ -272,6 +272,34 @@ RSpec.describe 'Api::V1::Records', type: :request do
     end
   end
 
+  describe 'PATCH /api/v1/records/:id — review_text' do
+    before { sign_in user }
+
+    it 'review_textを更新できる' do
+      record = Record.create!(user: user, work: existing_work)
+      patch "/api/v1/records/#{record.id}",
+            params: { record: { review_text: '素晴らしい作品だった' } }
+
+      expect(response).to have_http_status(:ok)
+      json = response.parsed_body
+      expect(json['record']['review_text']).to eq('素晴らしい作品だった')
+    end
+  end
+
+  describe 'PATCH /api/v1/records/:id — rewatch_count' do
+    before { sign_in user }
+
+    it 'rewatch_countを更新できる' do
+      record = Record.create!(user: user, work: existing_work)
+      patch "/api/v1/records/#{record.id}",
+            params: { record: { rewatch_count: 2 } }
+
+      expect(response).to have_http_status(:ok)
+      json = response.parsed_body
+      expect(json['record']['rewatch_count']).to eq(2)
+    end
+  end
+
   describe 'DELETE /api/v1/records/:id' do
     context '認証済み' do
       before { sign_in user }
@@ -298,6 +326,59 @@ RSpec.describe 'Api::V1::Records', type: :request do
         delete "/api/v1/records/#{record.id}", as: :json
         expect(response).to have_http_status(:unauthorized)
       end
+    end
+  end
+
+  describe 'GET /api/v1/records — タグフィルター' do
+    before { sign_in user }
+
+    # RSpec/ExampleLength対策: セットアップデータをヘルパーに抽出
+    def create_tagged_records
+      records = create_records_for_tagging
+      tags = %w[お気に入り 名作].map { |name| Tag.create!(name: name, user: user) }
+      assign_tags(records, tags)
+      records[0]
+    end
+
+    def create_records_for_tagging
+      [existing_work, Work.create!(title: '別作品', media_type: 'anime'),
+       Work.create!(title: '3作品目', media_type: 'anime')].map do |w|
+        Record.create!(user: user, work: w)
+      end
+    end
+
+    def assign_tags(records, tags)
+      # records[0]に両方のタグ、records[1]にtags[0]、records[2]にtags[1]
+      [[0, 0], [0, 1], [1, 0], [2, 1]].each do |ri, ti|
+        RecordTag.create!(record: records[ri], tag: tags[ti])
+      end
+    end
+
+    it '単一タグでフィルタリングできる' do
+      work2 = Work.create!(title: '別作品', media_type: 'anime')
+      record1 = Record.create!(user: user, work: existing_work)
+      _record2 = Record.create!(user: user, work: work2)
+      tag = Tag.create!(name: 'お気に入り', user: user)
+      RecordTag.create!(record: record1, tag: tag)
+
+      # as: :json はGETでもJSONボディで送信するため、tagパラメータがrecords#createに誤解釈される
+      # クエリストリングで送信してフィルターが正しく機能することを確認する
+      get '/api/v1/records', params: { tag: 'お気に入り' }
+
+      expect(response).to have_http_status(:ok)
+      json = response.parsed_body
+      expect(json['records'].length).to eq(1)
+      expect(json['records'].first['id']).to eq(record1.id)
+    end
+
+    it '複数タグのAND条件でフィルタリングできる' do
+      record1 = create_tagged_records
+      get '/api/v1/records', params: { tag: %w[お気に入り 名作] }
+
+      expect(response).to have_http_status(:ok)
+      json = response.parsed_body
+      expect(json['records'].length).to eq(1)
+      expect(json['records'].first['id']).to eq(record1.id)
     end
   end
 end

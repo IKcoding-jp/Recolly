@@ -10,6 +10,24 @@ vi.mock('../../lib/recordsApi', () => ({
   },
 }))
 
+vi.mock('../../lib/episodeReviewsApi', () => ({
+  episodeReviewsApi: {
+    getAll: vi.fn().mockResolvedValue({ episode_reviews: [] }),
+    create: vi.fn(),
+    update: vi.fn(),
+    remove: vi.fn(),
+  },
+}))
+
+vi.mock('../../lib/tagsApi', () => ({
+  tagsApi: {
+    getAll: vi.fn().mockResolvedValue({ tags: [] }),
+    addToRecord: vi.fn(),
+    removeFromRecord: vi.fn(),
+    deleteTag: vi.fn(),
+  },
+}))
+
 import { recordsApi } from '../../lib/recordsApi'
 
 const mockRecord = {
@@ -18,6 +36,8 @@ const mockRecord = {
   rating: 7,
   current_episode: 32,
   rewatch_count: 0,
+  review_text: null as string | null,
+  visibility: 'private_record' as const,
   started_at: '2026-01-15',
   completed_at: null,
   created_at: '2026-01-15T10:00:00Z',
@@ -85,6 +105,38 @@ describe('WorkDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByText('テストの説明文')).toBeInTheDocument()
     })
+  })
+
+  it('再視聴回数が表示される', async () => {
+    renderWithRouter('1')
+    await waitFor(() => {
+      expect(screen.getByText('0回')).toBeInTheDocument()
+    })
+  })
+
+  it('感想セクションが表示される', async () => {
+    renderWithRouter('1')
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('作品の感想を書く...')).toBeInTheDocument()
+    })
+  })
+
+  it('アニメの場合は話数ごとの感想セクションが表示される', async () => {
+    renderWithRouter('1')
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('この話数の感想を書く...')).toBeInTheDocument()
+    })
+  })
+
+  it('映画の場合は話数ごとの感想セクションが非表示', async () => {
+    vi.mocked(recordsApi.getAll).mockResolvedValue({
+      records: [{ ...mockRecord, work: { ...mockRecord.work, media_type: 'movie' as const } }],
+    })
+    renderWithRouter('1')
+    await waitFor(() => {
+      expect(screen.getByText('進撃の巨人')).toBeInTheDocument()
+    })
+    expect(screen.queryByPlaceholderText('この話数の感想を書く...')).not.toBeInTheDocument()
   })
 
   it('記録が見つからない場合にメッセージを表示', async () => {

@@ -24,6 +24,17 @@ vi.mock('../../lib/recordsApi', () => ({
   recordsApi: { getAll: vi.fn(), update: vi.fn() },
 }))
 
+vi.mock('../../lib/statisticsApi', () => ({
+  statisticsApi: {
+    get: vi.fn().mockResolvedValue({
+      by_genre: { anime: 0, movie: 0, drama: 0, book: 0, manga: 0, game: 0 },
+      by_status: { watching: 0, completed: 0, on_hold: 0, dropped: 0, plan_to_watch: 0 },
+      monthly_completions: [],
+      totals: { episodes_watched: 0, volumes_read: 0 },
+    }),
+  },
+}))
+
 import { recordsApi } from '../../lib/recordsApi'
 
 const mockAnimeRecord = {

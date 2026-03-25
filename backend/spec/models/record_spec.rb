@@ -160,5 +160,42 @@ RSpec.describe Record, type: :model do
       association = described_class.reflect_on_association(:work)
       expect(association.macro).to eq(:belongs_to)
     end
+
+    it 'has_many :episode_reviews' do
+      expect(described_class.reflect_on_association(:episode_reviews).macro).to eq(:has_many)
+    end
+  end
+
+  describe 'review_text' do
+    let(:record) { described_class.create!(user: user, work: work) }
+
+    it 'review_textを保存できる' do
+      record.update(review_text: '素晴らしい作品だった')
+      expect(record.reload.review_text).to eq('素晴らしい作品だった')
+    end
+
+    it '10,000文字を超えるreview_textは無効' do
+      record.review_text = 'あ' * 10_001
+      expect(record).not_to be_valid
+      expect(record.errors[:review_text]).to be_present
+    end
+
+    it '10,000文字ちょうどのreview_textは有効' do
+      record.review_text = 'あ' * 10_000
+      expect(record).to be_valid
+    end
+  end
+
+  describe 'visibility' do
+    let(:record) { described_class.create!(user: user, work: work) }
+
+    it 'デフォルトでprivate_recordになる' do
+      expect(record.visibility).to eq('private_record')
+    end
+
+    it 'public_recordに変更できる' do
+      record.update(visibility: :public_record)
+      expect(record.reload.visibility).to eq('public_record')
+    end
   end
 end

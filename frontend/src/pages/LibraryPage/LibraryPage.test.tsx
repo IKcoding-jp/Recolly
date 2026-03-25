@@ -7,6 +7,12 @@ import type { UserRecord } from '../../lib/types'
 
 vi.mock('../../lib/recordsApi')
 
+vi.mock('../../lib/tagsApi', () => ({
+  tagsApi: {
+    getAll: vi.fn().mockResolvedValue({ tags: [] }),
+  },
+}))
+
 const mockRecord: UserRecord = {
   id: 1,
   work_id: 10,

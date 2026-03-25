@@ -95,6 +95,24 @@
   color: var(--color-text);
 }
 
+/* --- タグバッジ --- */
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.tagBadge {
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  padding: 1px var(--spacing-xs);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
 .meta {
   display: flex;
   align-items: center;

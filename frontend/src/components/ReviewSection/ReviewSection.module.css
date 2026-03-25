@@ -1,0 +1,34 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: var(--spacing-sm);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: var(--border-width) var(--border-style) var(--color-border-light);
+  border-radius: 4px;
+  line-height: var(--line-height-relaxed);
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--color-text);
+}
+
+.textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}

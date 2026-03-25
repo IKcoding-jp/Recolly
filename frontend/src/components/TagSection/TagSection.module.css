@@ -1,0 +1,119 @@
+/* TagSection.module.css */
+/* 記録詳細画面で使用するタグ管理コンポーネント */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* --- 付与済みタグ一覧 --- */
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+.removeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: var(--font-size-meta);
+  line-height: 1;
+  border-radius: 50%;
+  transition: all var(--transition-fast);
+}
+
+.removeButton:hover {
+  color: var(--color-error);
+  background: var(--color-border-light);
+}
+
+/* --- タグ追加フォーム --- */
+
+.form {
+  display: flex;
+  gap: var(--spacing-xs);
+  position: relative;
+}
+
+.input {
+  flex: 1;
+  height: 2rem;
+  padding: 0 var(--spacing-sm);
+  border: var(--border-width) var(--border-style) var(--color-border-light);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-text);
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* --- オートコンプリート --- */
+
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 2px;
+  background: var(--color-bg-white);
+  border: var(--border-width) var(--border-style) var(--color-border-light);
+  border-radius: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.suggestion {
+  display: block;
+  width: 100%;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.suggestion:hover {
+  background: var(--color-bg);
+}
+
+.emptyText {
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}

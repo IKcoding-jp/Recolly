@@ -50,7 +50,13 @@ export function useWorkDetail() {
   }, [id])
 
   const updateRecord = useCallback(
-    async (params: { status?: RecordStatus; rating?: number | null; current_episode?: number }) => {
+    async (params: {
+      status?: RecordStatus
+      rating?: number | null
+      current_episode?: number
+      review_text?: string | null
+      rewatch_count?: number
+    }) => {
       if (!state.record) return
       try {
         const res = await recordsApi.update(state.record.id, params)
@@ -79,6 +85,20 @@ export function useWorkDetail() {
   const handleEpisodeChange = useCallback(
     (episode: number) => {
       void updateRecord({ current_episode: episode })
+    },
+    [updateRecord],
+  )
+
+  const handleReviewTextSave = useCallback(
+    async (text: string) => {
+      await updateRecord({ review_text: text })
+    },
+    [updateRecord],
+  )
+
+  const handleRewatchCountChange = useCallback(
+    (count: number) => {
+      void updateRecord({ rewatch_count: count })
     },
     [updateRecord],
   )
@@ -114,6 +134,8 @@ export function useWorkDetail() {
     handleStatusChange,
     handleRatingChange,
     handleEpisodeChange,
+    handleReviewTextSave,
+    handleRewatchCountChange,
     openDeleteDialog,
     closeDeleteDialog,
     confirmDelete,
