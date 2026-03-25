@@ -30,11 +30,21 @@ export function LibraryPage() {
     mediaType,
     sort,
     page,
+    allTags,
+    selectedTags,
     setStatus,
     setMediaType,
     setSort,
     setPage,
+    setTags,
   } = useLibrary()
+
+  const handleTagToggle = (tagName: string) => {
+    const next = selectedTags.includes(tagName)
+      ? selectedTags.filter((t) => t !== tagName)
+      : [...selectedTags, tagName]
+    setTags(next)
+  }
 
   // 空状態の判定: status=all かつ mediaType=null のときのみガイド表示
   const isUnfilteredEmpty = status === null && mediaType === null
@@ -72,6 +82,23 @@ export function LibraryPage() {
       <div className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}>
         <StatusFilter value={status} onChange={setStatus} mediaType={mediaType} />
         <MediaTypeFilter value={mediaType} onChange={setMediaType} />
+        {allTags.length > 0 && (
+          <div className={styles.tagFilter}>
+            <div className={styles.tagFilterLabel}>タグ</div>
+            <div className={styles.tagChips}>
+              {allTags.map((tag) => (
+                <button
+                  key={tag.id}
+                  type="button"
+                  className={`${styles.tagChip} ${selectedTags.includes(tag.name) ? styles.tagChipSelected : ''}`}
+                  onClick={() => handleTagToggle(tag.name)}
+                >
+                  {tag.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <SortSelector value={sort} onChange={setSort} />
       </div>
 

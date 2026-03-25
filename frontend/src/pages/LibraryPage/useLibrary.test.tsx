@@ -6,6 +6,12 @@ import { recordsApi } from '../../lib/recordsApi'
 
 vi.mock('../../lib/recordsApi')
 
+vi.mock('../../lib/tagsApi', () => ({
+  tagsApi: {
+    getAll: vi.fn().mockResolvedValue({ tags: [] }),
+  },
+}))
+
 const mockResponse = {
   records: [],
   meta: { current_page: 1, total_pages: 1, total_count: 0, per_page: 20 },

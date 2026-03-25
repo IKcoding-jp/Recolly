@@ -2,6 +2,10 @@ import type { MediaType } from '../../lib/types'
 import { StatusSelector } from '../../components/ui/StatusSelector/StatusSelector'
 import { RatingInput } from '../../components/ui/RatingInput/RatingInput'
 import { ProgressControl } from '../../components/ui/ProgressControl/ProgressControl'
+import { RewatchControl } from '../../components/RewatchControl/RewatchControl'
+import { ReviewSection } from '../../components/ReviewSection/ReviewSection'
+import { EpisodeReviewSection } from '../../components/EpisodeReviewSection/EpisodeReviewSection'
+import { TagSection } from '../../components/TagSection/TagSection'
 import { RecordDeleteDialog } from '../../components/RecordDeleteDialog/RecordDeleteDialog'
 import { Button } from '../../components/ui/Button/Button'
 import { useWorkDetail } from './useWorkDetail'
@@ -15,6 +19,9 @@ const MEDIA_TYPE_LABELS: Record<MediaType, string> = {
   manga: '漫画',
   game: 'ゲーム',
 }
+
+// 話数ごとの感想を表示するジャンル
+const HAS_EPISODES: MediaType[] = ['anime', 'drama', 'manga']
 
 const formatDate = (date: string | null): string => {
   if (!date) return '---'
@@ -30,6 +37,8 @@ export function WorkDetailPage() {
     handleStatusChange,
     handleRatingChange,
     handleEpisodeChange,
+    handleReviewTextSave,
+    handleRewatchCountChange,
     openDeleteDialog,
     closeDeleteDialog,
     confirmDelete,
@@ -101,6 +110,14 @@ export function WorkDetailPage() {
             </div>
 
             <div className={styles.section}>
+              <div className={styles.label}>再視聴回数</div>
+              <RewatchControl
+                count={record.rewatch_count}
+                onChange={handleRewatchCountChange}
+              />
+            </div>
+
+            <div className={styles.section}>
               <div className={styles.label}>日付</div>
               <div className={styles.dates}>
                 <div className={styles.dateItem}>開始: {formatDate(record.started_at)}</div>
@@ -108,10 +125,33 @@ export function WorkDetailPage() {
               </div>
             </div>
 
+            <div className={styles.section}>
+              <div className={styles.label}>タグ</div>
+              <TagSection recordId={record.id} initialTags={record.tags ?? []} />
+            </div>
+
             {work.description && (
               <div className={styles.section}>
                 <div className={styles.label}>あらすじ</div>
                 <p className={styles.description}>{work.description}</p>
+              </div>
+            )}
+
+            <div className={styles.section}>
+              <div className={styles.label}>感想</div>
+              <ReviewSection
+                reviewText={record.review_text}
+                onSave={handleReviewTextSave}
+              />
+            </div>
+
+            {HAS_EPISODES.includes(work.media_type) && (
+              <div className={styles.section}>
+                <div className={styles.label}>話数ごとの感想</div>
+                <EpisodeReviewSection
+                  recordId={record.id}
+                  currentEpisode={record.current_episode}
+                />
               </div>
             )}
 

@@ -62,6 +62,53 @@
   color: var(--color-text);
 }
 
+/* --- タグフィルタ --- */
+
+.tagFilter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.tagFilterLabel {
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.tagChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.tagChip {
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: 999px;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.tagChip:hover {
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.tagChipSelected {
+  background: var(--color-text);
+  color: var(--color-bg-white);
+  border-color: var(--color-text);
+}
+
+.tagChipSelected:hover {
+  color: var(--color-bg-white);
+}
+
 /* モバイル用: フィルタサマリー（PCでは非表示） */
 .filterSummary {
   display: none;

@@ -1,0 +1,49 @@
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.button {
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--border-width) var(--border-style) var(--color-border-light);
+  border-radius: 4px;
+  background: var(--color-bg-white);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.button:hover:not(:disabled) {
+  border-color: var(--color-border);
+}
+
+.button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.increment {
+  background: var(--color-text);
+  color: var(--color-bg-white);
+  border-color: var(--color-text);
+}
+
+.display {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+}

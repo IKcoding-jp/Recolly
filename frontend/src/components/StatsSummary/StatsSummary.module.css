@@ -1,0 +1,180 @@
+/* === StatsSummary === */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* --- 数値カード --- */
+
+.numberCards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-md);
+}
+
+.numberCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-sm);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: 6px;
+  background: var(--color-bg-white);
+}
+
+.numberValue {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color: var(--color-text);
+}
+
+.numberLabel {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+  margin-top: var(--spacing-xs);
+}
+
+/* --- ジャンル別・ステータス別 --- */
+
+.distributionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+}
+
+.distributionSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.distributionTitle {
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.barList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.barRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.barLabel {
+  width: 3.5em;
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.barTrack {
+  flex: 1;
+  height: 8px;
+  background: var(--color-border-light);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: var(--color-text);
+  border-radius: 4px;
+  opacity: 0.6;
+  transition: width var(--transition-normal);
+}
+
+.barCount {
+  width: 2em;
+  font-size: var(--font-size-meta);
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* --- 月別完了チャート --- */
+
+.monthlySection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.chartArea {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: var(--spacing-md);
+  height: 120px;
+  padding-top: var(--spacing-md);
+}
+
+.chartColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex: 1;
+  max-width: 60px;
+  height: 100%;
+}
+
+.chartCount {
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.chartBarWrapper {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.chartBar {
+  width: 100%;
+  background: var(--color-text);
+  opacity: 0.3;
+  border-radius: 3px 3px 0 0;
+  transition: height var(--transition-normal);
+}
+
+.chartBarCurrent {
+  opacity: 0.7;
+}
+
+.chartLabel {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+/* --- レスポンシブ --- */
+
+@media (max-width: 768px) {
+  .numberCards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .distributionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .chartArea {
+    height: 100px;
+  }
+}

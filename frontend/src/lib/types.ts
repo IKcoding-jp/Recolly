@@ -67,6 +67,7 @@ export interface UserRecord {
   completed_at: string | null
   created_at: string
   work: Work
+  tags?: Tag[]
 }
 
 // API レスポンス型

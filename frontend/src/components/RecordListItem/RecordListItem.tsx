@@ -40,6 +40,16 @@ export function RecordListItem({ record }: RecordListItemProps) {
           </span>
         </div>
 
+        {record.tags && record.tags.length > 0 && (
+          <div className={styles.tags}>
+            {record.tags.map((tag) => (
+              <span key={tag.id} className={styles.tagBadge}>
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        )}
+
         <div className={styles.meta}>
           {hasRating && (
             <span className={styles.rating}>

@@ -1,0 +1,141 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.loading {
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+}
+
+/* --- 入力フォーム --- */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.formRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.episodeLabel {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+}
+
+.episodeInput {
+  width: 4rem;
+  height: 2rem;
+  padding: 0 var(--spacing-sm);
+  border: var(--border-width) var(--border-style) var(--color-border-light);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  text-align: center;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+.episodeInput:focus {
+  outline: none;
+  border-color: var(--color-text);
+}
+
+.textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: var(--spacing-sm);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: var(--border-width) var(--border-style) var(--color-border-light);
+  border-radius: 4px;
+  line-height: var(--line-height-relaxed);
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--color-text);
+}
+
+.textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* --- 感想カード一覧 --- */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.card {
+  padding: var(--spacing-md);
+  border: var(--border-width) var(--border-style) var(--color-border-light);
+  border-radius: 4px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.episodeTag {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.cardDate {
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.cardActions {
+  margin-left: auto;
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.cardBody {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  line-height: var(--line-height-relaxed);
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* --- 編集フォーム --- */
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.editActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
