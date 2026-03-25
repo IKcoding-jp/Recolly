@@ -10,20 +10,33 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_22_235321) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_25_202707) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "episode_reviews", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.integer "episode_number", null: false
+    t.bigint "record_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "visibility", default: 0, null: false
+    t.index ["record_id", "episode_number"], name: "index_episode_reviews_on_record_id_and_episode_number", unique: true
+    t.index ["record_id"], name: "index_episode_reviews_on_record_id"
+  end
 
   create_table "records", force: :cascade do |t|
     t.date "completed_at"
     t.datetime "created_at", null: false
     t.integer "current_episode", default: 0
     t.integer "rating"
+    t.text "review_text"
     t.integer "rewatch_count", default: 0
     t.date "started_at"
     t.integer "status", default: 4, null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.integer "visibility", default: 0, null: false
     t.bigint "work_id", null: false
     t.index ["user_id", "work_id"], name: "index_records_on_user_id_and_work_id", unique: true
     t.index ["user_id"], name: "index_records_on_user_id"
@@ -71,6 +84,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_22_235321) do
     t.index ["external_api_id", "external_api_source"], name: "index_works_on_external_api_id_and_external_api_source", unique: true, where: "(external_api_id IS NOT NULL)"
   end
 
+  add_foreign_key "episode_reviews", "records"
   add_foreign_key "records", "users"
   add_foreign_key "records", "works"
   add_foreign_key "user_providers", "users"
