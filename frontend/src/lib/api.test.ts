@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { authApi, ApiError } from './api'
+import { authApi, ApiError, request } from './api'
 
 // fetchをモック化
 const mockFetch = vi.fn()
@@ -82,5 +82,29 @@ describe('ApiError', () => {
     expect(error.message).toBe('テストエラー')
     expect(error.status).toBe(401)
     expect(error.name).toBe('ApiError')
+  })
+})
+
+describe('request', () => {
+  it('204 No Contentでundefinedを返す', async () => {
+    mockFetch.mockResolvedValueOnce({
+      status: 204,
+      ok: true,
+    })
+
+    const result = await request<void>('/test', { method: 'DELETE' })
+    expect(result).toBeUndefined()
+  })
+
+  it('200レスポンスでは従来通りJSONをパースする', async () => {
+    const data = { message: 'success' }
+    mockFetch.mockResolvedValueOnce({
+      status: 200,
+      ok: true,
+      json: () => Promise.resolve(data),
+    })
+
+    const result = await request<{ message: string }>('/test')
+    expect(result).toEqual(data)
   })
 })
