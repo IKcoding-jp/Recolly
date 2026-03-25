@@ -78,7 +78,11 @@ export function WorkDetailPage() {
 
             <div className={styles.section}>
               <div className={styles.label}>ステータス</div>
-              <StatusSelector value={record.status} onChange={handleStatusChange} />
+              <StatusSelector
+                value={record.status}
+                onChange={handleStatusChange}
+                mediaType={work.media_type}
+              />
             </div>
 
             <div className={styles.section}>

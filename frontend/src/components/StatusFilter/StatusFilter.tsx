@@ -1,16 +1,19 @@
-import type { RecordStatus } from '../../lib/types'
-import { STATUS_OPTIONS } from './statusOptions'
+import type { MediaType, RecordStatus } from '../../lib/types'
+import { getStatusOptions } from './statusOptions'
 import styles from './StatusFilter.module.css'
 
 type StatusFilterProps = {
   value: RecordStatus | null
   onChange: (status: RecordStatus | null) => void
+  mediaType?: MediaType | null
 }
 
-export function StatusFilter({ value, onChange }: StatusFilterProps) {
+export function StatusFilter({ value, onChange, mediaType }: StatusFilterProps) {
+  const options = getStatusOptions(mediaType)
+
   return (
     <div className={styles.container}>
-      {STATUS_OPTIONS.map((option) => (
+      {options.map((option) => (
         <button
           key={option.value ?? 'all'}
           type="button"
