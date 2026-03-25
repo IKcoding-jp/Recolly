@@ -53,7 +53,7 @@ describe('tagsApi', () => {
 
   describe('removeFromRecord', () => {
     it('DELETEメソッドで正しいエンドポイントを呼び出す', async () => {
-      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
+      mockFetch.mockResolvedValueOnce({ status: 204, ok: true })
       await tagsApi.removeFromRecord(10, 5)
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/records/10/tags/5'),
@@ -64,7 +64,7 @@ describe('tagsApi', () => {
 
   describe('deleteTag', () => {
     it('DELETEメソッドで正しいエンドポイントを呼び出す', async () => {
-      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
+      mockFetch.mockResolvedValueOnce({ status: 204, ok: true })
       await tagsApi.deleteTag(3)
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/tags/3'),
