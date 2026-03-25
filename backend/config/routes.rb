@@ -44,6 +44,9 @@ Rails.application.routes.draw do
         resources :tags, only: %i[create destroy], controller: 'record_tags'
       end
 
+      # 統計（単一リソースのためIDなし）
+      resource :statistics, only: [:show], controller: 'statistics'
+
       get "health", to: "health#show"
     end
   end
