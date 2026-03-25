@@ -79,6 +79,24 @@ describe('recordsApi', () => {
       const result = await recordsApi.update(1, { status: 'completed', rating: 9 })
       expect(result.record.status).toBe('completed')
     })
+
+    it('review_textを含む更新パラメータを送信できる', async () => {
+      const data = { record: { id: 1, status: 'completed', rating: 9, review_text: '最高の作品' } }
+      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(data) })
+      await recordsApi.update(1, { review_text: '最高の作品' })
+      const callArgs = mockFetch.mock.calls[0]
+      const body = JSON.parse(callArgs[1].body as string) as { record: { review_text: string } }
+      expect(body.record.review_text).toBe('最高の作品')
+    })
+
+    it('rewatch_countを含む更新パラメータを送信できる', async () => {
+      const data = { record: { id: 1, status: 'completed', rewatch_count: 2 } }
+      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(data) })
+      await recordsApi.update(1, { rewatch_count: 2 })
+      const callArgs = mockFetch.mock.calls[0]
+      const body = JSON.parse(callArgs[1].body as string) as { record: { rewatch_count: number } }
+      expect(body.record.rewatch_count).toBe(2)
+    })
   })
 
   describe('remove', () => {

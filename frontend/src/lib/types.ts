@@ -61,6 +61,8 @@ export interface UserRecord {
   rating: number | null
   current_episode: number
   rewatch_count: number
+  review_text: string | null
+  visibility: 'private_record' | 'public_record'
   started_at: string | null
   completed_at: string | null
   created_at: string
@@ -92,4 +94,34 @@ export interface PaginationMeta {
 export interface RecordsListResponse {
   records: UserRecord[]
   meta?: PaginationMeta
+}
+
+// 話数感想
+export interface EpisodeReview {
+  id: number
+  record_id: number
+  episode_number: number
+  body: string
+  visibility: 'private_record' | 'public_record'
+  created_at: string
+  updated_at: string
+}
+
+// タグ
+export interface Tag {
+  id: number
+  name: string
+  user_id: number
+  created_at: string
+}
+
+// 統計
+export interface Statistics {
+  by_genre: Record<string, number>
+  by_status: Record<string, number>
+  monthly_completions: Array<{ month: string; count: number }>
+  totals: {
+    episodes_watched: number
+    volumes_read: number
+  }
 }

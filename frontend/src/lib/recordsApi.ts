@@ -12,6 +12,8 @@ type RecordUpdateParams = {
   current_episode?: number
   started_at?: string | null
   completed_at?: string | null
+  review_text?: string | null
+  rewatch_count?: number
 }
 
 type RecordFilterParams = {
@@ -21,6 +23,7 @@ type RecordFilterParams = {
   sort?: string
   page?: number
   perPage?: number
+  tags?: string[]
 }
 
 export const recordsApi = {
@@ -32,6 +35,9 @@ export const recordsApi = {
     if (filters?.sort) params.set('sort', filters.sort)
     if (filters?.page) params.set('page', String(filters.page))
     if (filters?.perPage) params.set('per_page', String(filters.perPage))
+    if (filters?.tags) {
+      filters.tags.forEach((tag) => params.append('tag[]', tag))
+    }
     const query = params.toString()
     return request<RecordsListResponse>(`/records${query ? `?${query}` : ''}`)
   },
