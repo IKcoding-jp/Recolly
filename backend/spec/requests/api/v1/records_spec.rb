@@ -272,6 +272,34 @@ RSpec.describe 'Api::V1::Records', type: :request do
     end
   end
 
+  describe 'PATCH /api/v1/records/:id — review_text' do
+    before { sign_in user }
+
+    it 'review_textを更新できる' do
+      record = Record.create!(user: user, work: existing_work)
+      patch "/api/v1/records/#{record.id}",
+            params: { record: { review_text: '素晴らしい作品だった' } }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['record']['review_text']).to eq('素晴らしい作品だった')
+    end
+  end
+
+  describe 'PATCH /api/v1/records/:id — rewatch_count' do
+    before { sign_in user }
+
+    it 'rewatch_countを更新できる' do
+      record = Record.create!(user: user, work: existing_work)
+      patch "/api/v1/records/#{record.id}",
+            params: { record: { rewatch_count: 2 } }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['record']['rewatch_count']).to eq(2)
+    end
+  end
+
   describe 'DELETE /api/v1/records/:id' do
     context '認証済み' do
       before { sign_in user }

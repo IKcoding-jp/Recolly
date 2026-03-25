@@ -36,7 +36,9 @@ Rails.application.routes.draw do
       end
 
       # 記録（ライブラリ追加）
-      resources :records, only: %i[index show create update destroy]
+      resources :records, only: %i[index show create update destroy] do
+        resources :episode_reviews, only: %i[index create update destroy]
+      end
 
       get "health", to: "health#show"
     end

@@ -97,7 +97,8 @@ module Api
       end
 
       def record_update_params
-        params.expect(record: %i[status rating current_episode started_at completed_at])
+        # visibilityはフェーズ2では受け付けない（スペック参照）。フェーズ3で追加する
+        params.expect(record: %i[status rating current_episode started_at completed_at review_text rewatch_count])
       end
 
       def apply_filters(records)
