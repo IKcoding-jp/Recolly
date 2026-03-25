@@ -83,7 +83,7 @@ module Api
       end
 
       def set_record
-        @record = Record.find(params[:id])
+        @record = Record.includes(:work, :tags).find(params[:id])
       end
 
       def authorize_record!

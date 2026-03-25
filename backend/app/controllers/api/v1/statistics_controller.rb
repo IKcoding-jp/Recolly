@@ -19,13 +19,13 @@ module Api
       private
 
       def count_by_genre(records)
-        # PostgreSQLはenumを文字列で返すため、文字列キーのままカウント
+        # Rails 8 + PostgreSQLではenum文字列キーで返る
         counts = records.joins(:work).group('works.media_type').count
         Work.media_types.keys.index_with { |genre| counts[genre] || 0 }
       end
 
       def count_by_status(records)
-        # PostgreSQLはenumを文字列で返すため、文字列キーのままカウント
+        # Rails 8 + PostgreSQLではenum文字列キーで返る
         counts = records.group(:status).count
         Record.statuses.keys.index_with { |status| counts[status] || 0 }
       end
