@@ -116,7 +116,7 @@
 
 ### ドキュメント
 - [x] プロダクト仕様書 — `docs/superpowers/specs/2026-03-20-recolly-design.md`
-- [x] ADR 0001〜0011 — `docs/adr/`
+- [x] ADR 0001〜0032 — `docs/adr/`
 - [x] コードレビュー再発防止策 — PR #17
 
 ### バグ
