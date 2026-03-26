@@ -28,6 +28,13 @@ Devise.setup do |config|
   # ログアウト時に全てのremember meトークンを無効化
   config.expire_all_remember_me_on_sign_out = true
 
+  # ログイン保持期間（remember meトークンの有効期限）
+  config.remember_for = 90.days
+
+  # アクセスのたびにremember meの有効期限を延長する
+  # （アクティブユーザーは実質ログアウト不要になる）
+  config.extend_remember_period = true
+
   # パスワードの長さ制限
   config.password_length = 6..128
 
