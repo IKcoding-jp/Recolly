@@ -3,6 +3,10 @@
 module Api
   module V1
     class OauthRegistrationsController < ApplicationController
+      # APIモードではcookiesが使えないため手動でinclude（remember_meに必要）
+      include ActionController::Cookies
+      include Devise::Controllers::Rememberable
+
       def create
         oauth_data = validate_oauth_session
         return render json: { error: '認証の有効期限が切れました。もう一度お試しください' }, status: :unauthorized unless oauth_data
@@ -10,6 +14,7 @@ module Api
         user = create_oauth_user(oauth_data)
         session.delete(:oauth_data)
         sign_in(user)
+        remember_me(user)
         render json: { user: user_json(user.reload) }, status: :created
       rescue ActiveRecord::RecordInvalid => e
         render json: { errors: e.record.errors.full_messages }, status: :unprocessable_content

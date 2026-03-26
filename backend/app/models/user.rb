@@ -25,4 +25,13 @@ class User < ApplicationRecord
 
     super
   end
+
+  # OAuthユーザーはencrypted_passwordをクリアするためsaltがnilになる。
+  # その場合はid + created_atをベースにした固定値をrememberable_valueとして使用する
+  def rememberable_value
+    salt = authenticatable_salt.presence
+    return salt if salt
+
+    Digest::SHA256.hexdigest("#{id}-#{created_at.to_i}")
+  end
 end
