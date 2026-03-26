@@ -8,6 +8,10 @@ module Api
       # セッションベースのCSRFトークン検証が機能しない
       skip_forgery_protection
 
+      # APIモードではcookiesが使えないため手動でinclude（remember_meに必要）
+      include ActionController::Cookies
+      include Devise::Controllers::Rememberable
+
       def google_oauth2
         handle_oauth_callback
       end
@@ -36,6 +40,7 @@ module Api
         case result[:status]
         when :existing_user
           sign_in(result[:user])
+          remember_me(result[:user])
           redirect_to_frontend(status: 'success')
         when :new_user
           store_oauth_data_in_session(result[:oauth_data])
