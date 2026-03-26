@@ -3,12 +3,17 @@
 module Api
   module V1
     class SessionsController < Devise::SessionsController
+      # APIモードではcookiesが使えないため手動でinclude（remember_meに必要）
+      include ActionController::Cookies
+      include Devise::Controllers::Rememberable
+
       respond_to :json
 
       # POST /api/v1/login
       def create
         self.resource = warden.authenticate!(auth_options)
         sign_in(resource_name, resource)
+        remember_me(resource)
         render json: { user: user_json(resource) }, status: :ok
       end
 
