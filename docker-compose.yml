@@ -43,6 +43,7 @@ services:
       DB_PASSWORD: password
       RAILS_ENV: development
       REDIS_URL: redis://redis:6379/0
+      FRONTEND_URL: http://localhost:5173
     volumes:
       - ./backend:/app
       - bundle_cache:/usr/local/bundle
