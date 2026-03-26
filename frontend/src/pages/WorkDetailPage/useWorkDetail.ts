@@ -116,7 +116,12 @@ export function useWorkDetail() {
     setState((prev) => ({ ...prev, isDeleting: true }))
     try {
       await recordsApi.remove(state.record.id)
-      navigate('/search')
+      // 履歴がある場合は前のページへ、なければ/searchへフォールバック
+      if (window.history.length > 1) {
+        navigate(-1)
+      } else {
+        navigate('/search')
+      }
     } catch {
       setState((prev) => ({ ...prev, isDeleting: false }))
     }

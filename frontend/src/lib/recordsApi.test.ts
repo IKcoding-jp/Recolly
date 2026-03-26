@@ -101,7 +101,7 @@ describe('recordsApi', () => {
 
   describe('remove', () => {
     it('正常系: 記録を削除', async () => {
-      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
+      mockFetch.mockResolvedValueOnce({ status: 204, ok: true })
       await recordsApi.remove(1)
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/records/1'),

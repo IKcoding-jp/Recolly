@@ -13,6 +13,11 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
     },
   })
 
+  // ボディなしレスポンス（204 No Content）はJSONパースをスキップ
+  if (response.status === 204) {
+    return undefined as T
+  }
+
   const data: unknown = await response.json()
 
   if (!response.ok) {

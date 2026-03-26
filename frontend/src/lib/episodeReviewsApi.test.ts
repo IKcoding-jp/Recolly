@@ -122,7 +122,7 @@ describe('episodeReviewsApi', () => {
 
   describe('remove', () => {
     it('正常系: 話数感想を削除', async () => {
-      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
+      mockFetch.mockResolvedValueOnce({ status: 204, ok: true })
       await episodeReviewsApi.remove(10, 1)
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/records/10/episode_reviews/1'),
