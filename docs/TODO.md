@@ -116,8 +116,16 @@
 
 ### ドキュメント
 - [x] プロダクト仕様書 — `docs/superpowers/specs/2026-03-20-recolly-design.md`
-- [x] ADR 0001〜0011 — `docs/adr/`
+- [x] ADR 0001〜0032 — `docs/adr/`
 - [x] コードレビュー再発防止策 — PR #17
+
+### バグ
+- [ ] 開発環境でログイン・Googleログインが失敗する — #49
+
+### 技術負債・改善
+- [ ] 本番キャッシュをmemory_storeからSolid Cacheに移行 — #46, ADR-0008
+- [ ] 本番ジョブキューをasyncからSolid Queueに移行 — #47, ADR-0008
+- [ ] Faradayにタイムアウト・リトライ・ログのミドルウェアを追加 — #48, ADR-0009
 
 ### インフラ・デプロイ
 - [x] AWS EC2（Railsサーバー）— PR #26, ADR-0012
