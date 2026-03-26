@@ -116,7 +116,7 @@ export function useWorkDetail() {
     setState((prev) => ({ ...prev, isDeleting: true }))
     try {
       await recordsApi.remove(state.record.id)
-      navigate('/search')
+      navigate(-1)
     } catch {
       setState((prev) => ({ ...prev, isDeleting: false }))
     }
