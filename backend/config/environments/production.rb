@@ -41,8 +41,8 @@ Rails.application.configure do
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
 
-  # MVPではmemory_storeを使用（将来ElastiCacheに移行可能）
-  config.cache_store = :memory_store
+  # Solid Cache: 既存PostgreSQLにキャッシュを保存（ADR-0008）
+  config.cache_store = :solid_cache_store
 
   # MVPではasyncアダプタを使用（Solid Queueの専用DBテーブル不要）
   config.active_job.queue_adapter = :async
