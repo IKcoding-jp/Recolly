@@ -56,9 +56,8 @@
 - Redisは開発環境でのみ使用。Docker Composeで手軽に起動でき、本番との設定差異はRailsの環境別設定（environments/*.rb）で吸収する
 
 ## 現状と必要な移行作業
-現在の本番環境は`memory_store`で動いており、Solid Cacheへの移行が未実施。以下のIssueで対応する:
-- Solid Cache導入（本番キャッシュのmemory_store → Solid Cache移行）
-- Solid Queue導入（本番ジョブキューのasync → Solid Queue移行）
+- ✅ Solid Cache導入完了（Issue #46, 2026-03-28）— 本番キャッシュを memory_store → solid_cache_store に移行
+- Solid Queue導入（本番ジョブキューのasync → Solid Queue移行）— 未対応
 
 ## 影響
 - 本番環境のキャッシュがPostgreSQLに保存されるため、RDSのストレージ使用量がわずかに増える（キャッシュデータ分）
