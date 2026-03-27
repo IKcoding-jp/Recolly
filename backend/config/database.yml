@@ -14,6 +14,10 @@ development:
     <<: *default
     database: recolly_development
     migrations_paths: db/cache_migrate
+  queue:
+    <<: *default
+    database: recolly_development
+    migrations_paths: db/queue_migrate
 
 test:
   primary:
@@ -23,6 +27,10 @@ test:
     <<: *default
     database: recolly_test
     migrations_paths: db/cache_migrate
+  queue:
+    <<: *default
+    database: recolly_test
+    migrations_paths: db/queue_migrate
 
 production:
   primary:
@@ -34,3 +42,8 @@ production:
     database: recolly_production
     url: <%= ENV["DATABASE_URL"] %>
     migrations_paths: db/cache_migrate
+  queue:
+    <<: *default
+    database: recolly_production
+    url: <%= ENV["DATABASE_URL"] %>
+    migrations_paths: db/queue_migrate

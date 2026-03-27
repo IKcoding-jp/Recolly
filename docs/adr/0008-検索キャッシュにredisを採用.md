@@ -57,7 +57,7 @@
 
 ## 現状と必要な移行作業
 - ✅ Solid Cache導入完了（Issue #46, 2026-03-28）— 本番キャッシュを memory_store → solid_cache_store に移行
-- Solid Queue導入（本番ジョブキューのasync → Solid Queue移行）— 未対応
+- ✅ Solid Queue導入完了（Issue #47, 2026-03-28）— 本番ジョブキューを async → solid_queue に移行
 
 ## 影響
 - 本番環境のキャッシュがPostgreSQLに保存されるため、RDSのストレージ使用量がわずかに増える（キャッシュデータ分）
