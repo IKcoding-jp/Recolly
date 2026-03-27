@@ -16,7 +16,7 @@ export function HomePage() {
       {isLoading && <div className={styles.loading}>読み込み中...</div>}
       {error && <div className={styles.error}>{error}</div>}
       {!isLoading && !error && records.length === 0 && <DashboardEmptyState />}
-      {!isLoading && records.length > 0 && (
+      {!isLoading && !error && records.length > 0 && (
         <>
           <SectionTitle>進行中</SectionTitle>
           <div className={styles.list}>
