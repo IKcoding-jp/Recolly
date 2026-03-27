@@ -1,29 +1,35 @@
-import { Link } from 'react-router-dom'
+import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
+import { WatchingListItem } from '../../components/WatchingListItem/WatchingListItem'
+import { DashboardEmptyState } from '../../components/DashboardEmptyState/DashboardEmptyState'
 import { EmailPromptBanner } from '../../components/EmailPromptBanner/EmailPromptBanner'
 import { useAuth } from '../../contexts/useAuth'
+import { useDashboard } from '../../hooks/useDashboard'
 import styles from './HomePage.module.css'
-
-const QUICK_ACTIONS = [
-  { label: '作品を探す', description: '新しい作品を検索して記録する', path: '/search' },
-  { label: 'ライブラリ', description: '記録した作品を一覧で確認する', path: '/library' },
-  { label: 'マイページ', description: '統計情報や進行中の作品を見る', path: '/mypage' },
-] as const
 
 export function HomePage() {
   const { user } = useAuth()
+  const { records, isLoading, error, handleAction } = useDashboard()
 
   return (
     <div className={styles.container}>
       {user?.email_missing && <EmailPromptBanner />}
-      <h1 className={styles.greeting}>おかえりなさい、{user?.username}さん</h1>
-      <div className={styles.cards}>
-        {QUICK_ACTIONS.map((action) => (
-          <Link key={action.path} to={action.path} className={styles.card}>
-            <span className={styles.cardLabel}>{action.label}</span>
-            <span className={styles.cardDescription}>{action.description}</span>
-          </Link>
-        ))}
-      </div>
+      {isLoading && <div className={styles.loading}>読み込み中...</div>}
+      {error && <div className={styles.error}>{error}</div>}
+      {!isLoading && !error && records.length === 0 && <DashboardEmptyState />}
+      {!isLoading && records.length > 0 && (
+        <>
+          <SectionTitle>進行中</SectionTitle>
+          <div className={styles.list}>
+            {records.map((record) => (
+              <WatchingListItem
+                key={record.id}
+                record={record}
+                onAction={() => void handleAction(record)}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }
