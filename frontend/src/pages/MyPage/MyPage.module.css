@@ -4,23 +4,10 @@
   padding: 0 var(--spacing-xl);
 }
 
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
 .loading {
   text-align: center;
   padding: var(--spacing-xl);
   color: var(--color-text-muted);
-}
-
-.error {
-  text-align: center;
-  padding: var(--spacing-md);
-  color: var(--color-error);
-  font-size: var(--font-size-body);
 }
 
 @media (max-width: 768px) {
