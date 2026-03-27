@@ -36,7 +36,9 @@ module ExternalApis
     def connection(url:)
       Faraday.new(url: url, request: { open_timeout: 5, timeout: 10 }) do |f|
         f.request :json
-        f.request :retry, max: 2, retry_statuses: [500, 502, 503, 504]
+        # POSTも含める（AniList GraphQL等の検索クエリは冪等のため安全）
+        f.request :retry, max: 2, retry_statuses: [500, 502, 503, 504],
+                          methods: %i[get head options put delete post]
         f.response :logger, Rails.logger, headers: false, bodies: !Rails.env.production?
         f.response :json
         f.adapter Faraday.default_adapter
