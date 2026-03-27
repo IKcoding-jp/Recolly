@@ -36,20 +36,8 @@ recolly/
 **SDD（仕様駆動開発）+ TDD（テスト駆動開発）+ Issue駆動開発**
 **superpowersスキルを主軸とする。**
 
-### ワークフロー
-
-1. `superpowers:brainstorming`（要件深掘り + スペック作成）
-2. GitHub Issue作成（`issue-creator`スキルでスペックからIssue起票）
-3. `superpowers:writing-plans`（実装プラン作成）
-4. `superpowers:subagent-driven-development`（各タスク内で `superpowers:test-driven-development` を使用）
-5. 動作確認（手動 or Playwright MCP自動確認をユーザーに選択させる）
-6. `superpowers:finishing-a-development-branch` → ブランチ作成 → PR作成 → Claude Code Review → マージ
-
-※ ステップ5はUI変更またはAPI動作に影響するタスクのみ必須。ドキュメントのみ・設定変更のみの場合はスキップ可。
-
-### 軽量パス
-
-軽微な修正（typo、コメント修正、ドキュメント更新等）はステップ1〜3を省略し、ステップ4〜6のみで可。
+詳細なワークフローは `recolly-workflow` スキルを参照。
+Git運用ルールは `recolly-git-rules` スキルを参照。
 
 ### 自動発動ルール
 
@@ -60,10 +48,6 @@ recolly/
 | `comprehension-guard` | 技術選定・設計判断が発生したとき |
 | `adr` | comprehension-guardでユーザーが判断を確定したとき。「ADRを書きますか？」と聞かず自動作成する |
 | `learning-note` | ユーザーが質問してプロジェクトで初めて使う技術・パターン・ライブラリについて説明したとき。説明後に学習ノートを作成する |
-
-### 禁止事項
-
-- 動作確認対象のタスクで動作確認を省略しない
 
 ### `/clear`後のコンテキスト復元
 
@@ -77,66 +61,6 @@ recolly/
 ### ドキュメント管理
 
 - ドキュメントは `docs/superpowers/` に一元管理（specs/, plans/）
-
-## コードレビュー
-
-### フロー
-
-1. ローカルで実装 + テスト + コミット
-2. `git push` + PR作成
-3. **Claude Code Review が自動でPRをレビュー**（GitHub Actions）
-4. 指摘事項を解消（ローカルのClaude Codeで修正）
-5. CI全パス + レビュー指摘解消 → マージ
-
-### ルール
-
-- 全PRにClaude Code Reviewを必須とする（CI経由で自動実行）
-- レビュー指摘を全て解消してからマージする
-- レビュー指摘の修正はローカルのClaude Codeで行い、再pushする
-
-### レビュー観点
-
-| 観点 | チェック内容 |
-|------|------------|
-| CLAUDE.md準拠 | コーディング規約、命名規則、ファイルサイズ（200行以内）等 |
-| コード品質 | DRY / YAGNI原則、ベストプラクティス |
-| バグ・セキュリティ | SQLインジェクション、XSS、認証漏れ、Strong Parameters |
-| パフォーマンス | N+1クエリ、不要な再レンダリング、メモリリーク |
-| 保守性・可読性 | 変数名、コメント（「なぜ」の説明）、ファイル分割 |
-| テスト | カバレッジ、エッジケース、TDD遵守 |
-| 設計・アーキテクチャ | thin controller、コンポーネント設計、責務の分離 |
-
-### 設定ファイル
-
-- ワークフロー: `.github/workflows/claude-code-review.yml`
-- レビュー設定の変更は上記ファイルの `prompt` パラメータを編集する
-
-## コミットメッセージ
-
-Conventional Commits（日本語）:
-
-```
-feat: ユーザー登録機能を追加
-fix: ログイン時のバリデーションエラーを修正
-chore: RuboCopの設定を更新
-test: 作品検索のテストを追加
-docs: API仕様書を更新
-refactor: 認証ロジックを整理
-```
-
-## マージ戦略
-
-- PRの性質に応じてマージ方法を使い分ける
-  - 機能追加・ADR付きの大きめPR → Merge commit（開発プロセスの履歴を残す）
-  - バグ修正・リファクタ・ドキュメント修正など小さいPR → Squash and merge（履歴をきれいに保つ）
-- Rebase and mergeは使用しない
-- mainへの直接プッシュは禁止。ドキュメントのみの変更でも必ずブランチを切ってPR経由でマージする
-
-## PRルール
-
-- PRタイトルはConventional Commits形式（例: feat: ○○, fix: ○○, docs: ○○）
-- Squash時のコミットメッセージはPRタイトルをそのまま使う
-- 1PRの変更は原則1つの関心事に絞る
 
 ## コーディング規約
 
@@ -197,4 +121,4 @@ refactor: 認証ロジックを整理
 
 - 説明はプログラミング初学者を前提とする。専門用語は初出時に平易な説明を添える
 - 設計判断は `docs/adr/` に記録、学習は `docs/learning/` に蓄積（自動発動ルール参照）
-- PR前セルフチェック → `docs/pr-self-check.md` を参照
+- PR前セルフチェック → `recolly-git-rules` スキルの references/pr-self-check.md を参照
