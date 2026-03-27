@@ -12,6 +12,31 @@ beforeEach(() => {
 })
 
 describe('ProtectedRoute', () => {
+  it('ロード中は読み込み中テキストを表示する', () => {
+    // fetchを未解決のまま保留してisLoading状態を維持
+    mockFetch.mockReturnValueOnce(new Promise(() => {}))
+
+    render(
+      <MemoryRouter initialEntries={['/protected']}>
+        <AuthProvider>
+          <Routes>
+            <Route
+              path="/protected"
+              element={
+                <ProtectedRoute>
+                  <div>保護されたコンテンツ</div>
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('読み込み中...')).toBeInTheDocument()
+    expect(screen.queryByText('保護されたコンテンツ')).not.toBeInTheDocument()
+  })
+
   it('認証済みユーザーはページを表示できる', async () => {
     // セッション確認: 認証済み
     mockFetch.mockResolvedValueOnce({

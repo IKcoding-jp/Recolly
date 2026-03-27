@@ -23,6 +23,12 @@
   font-size: var(--font-size-label);
 }
 
+.loading {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-muted);
+}
+
 /* ボトムタブバー分の余白（スマホのみ） */
 @media (max-width: 768px) {
   .authenticatedContent {

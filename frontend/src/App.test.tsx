@@ -26,6 +26,16 @@ beforeEach(() => {
 })
 
 describe('App', () => {
+  it('ロード中は読み込み中テキストを表示する', () => {
+    mockFetch.mockReset()
+    // fetchを未解決のまま保留してisLoading状態を維持
+    mockFetch.mockReturnValueOnce(new Promise(() => {}))
+
+    render(<App />)
+
+    expect(screen.getByText('読み込み中...')).toBeInTheDocument()
+  })
+
   it('未認証時にログインページが表示される', async () => {
     render(<App />)
     // ログインページにある「アカウントを作成」リンクで確認
