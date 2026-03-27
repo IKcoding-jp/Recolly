@@ -29,7 +29,18 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
         post user_session_path,
              params: { user: { email: 'test@example.com', password: 'password123' } },
              as: :json
-        expect(response.headers['Set-Cookie']).to include('_recolly_session')
+        # Set-Cookieは複数Cookie設定時に配列で返るため、any?でパターン検索する
+        set_cookies = Array(response.headers['Set-Cookie'])
+        expect(set_cookies.any? { |c| c.include?('_recolly_session') }).to be true
+      end
+
+      it 'remember_me Cookieがセットされる' do
+        post user_session_path,
+             params: { user: { email: 'test@example.com', password: 'password123' } },
+             as: :json
+        # Set-Cookieは複数Cookie設定時に配列で返るため、any?でパターン検索する
+        set_cookies = Array(response.headers['Set-Cookie'])
+        expect(set_cookies.any? { |c| c.match?(/remember_user_token/) }).to be true
       end
     end
 
@@ -70,6 +81,18 @@ RSpec.describe 'Api::V1::Sessions', type: :request do
         delete destroy_user_session_path, as: :json
         get api_v1_current_user_path, as: :json
         expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'ログアウト後にremember_me Cookieが削除される' do
+        # ログインしてremember_meを設定
+        post user_session_path,
+             params: { user: { email: 'test@example.com', password: 'password123' } },
+             as: :json
+        # ログアウト
+        delete destroy_user_session_path, as: :json
+        # Set-Cookieは複数Cookie設定時に配列で返るため、any?でパターン検索する
+        set_cookies = Array(response.headers['Set-Cookie'])
+        expect(set_cookies.any? { |c| c.match?(/remember_user_token=;/) }).to be true
       end
     end
 

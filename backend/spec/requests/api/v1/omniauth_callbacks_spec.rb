@@ -26,6 +26,12 @@ RSpec.describe 'OmniAuth Callbacks', type: :request do
         get '/api/v1/auth/google_oauth2/callback'
         expect(response).to redirect_to("#{frontend_url}/auth/callback?status=success")
       end
+
+      it 'remember_me Cookieがセットされる' do
+        get '/api/v1/auth/google_oauth2/callback'
+        set_cookies = Array(response.headers['Set-Cookie'])
+        expect(set_cookies.any? { |c| c.match?(/remember_user_token/) }).to be true
+      end
     end
 
     context 'メール衝突（パスワード登録済みユーザー）' do

@@ -43,6 +43,9 @@ module App
     # セッションCookie認証に必要なミドルウェアを追加（ADR-0007）
     # APIモードではデフォルト無効のため、deviseのセッション認証のために手動で有効化
     config.middleware.use ActionDispatch::Cookies
-    config.middleware.use ActionDispatch::Session::CookieStore, key: "_recolly_session"
+    config.middleware.use ActionDispatch::Session::CookieStore,
+                         key: "_recolly_session",
+                         same_site: :lax,
+                         secure: Rails.env.production?
   end
 end

@@ -42,6 +42,14 @@ RSpec.describe 'OAuth Registrations', type: :request do
         post '/api/v1/auth/complete_registration', params: { username: '' }, as: :json
         expect(response).to have_http_status(:unprocessable_content)
       end
+
+      it 'remember_me Cookieがセットされる' do
+        post '/api/v1/auth/complete_registration',
+             params: { username: 'newuser' },
+             as: :json
+        set_cookies = Array(response.headers['Set-Cookie'])
+        expect(set_cookies.any? { |c| c.match?(/remember_user_token/) }).to be true
+      end
     end
 
     context 'セッションデータがない場合' do
