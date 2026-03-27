@@ -7,14 +7,30 @@ default: &default
   password: <%= ENV.fetch("DB_PASSWORD") { "password" } %>
 
 development:
-  <<: *default
-  database: recolly_development
+  primary:
+    <<: *default
+    database: recolly_development
+  cache:
+    <<: *default
+    database: recolly_development
+    migrations_paths: db/cache_migrate
 
 test:
-  <<: *default
-  database: recolly_test
+  primary:
+    <<: *default
+    database: recolly_test
+  cache:
+    <<: *default
+    database: recolly_test
+    migrations_paths: db/cache_migrate
 
 production:
-  <<: *default
-  database: recolly_production
-  url: <%= ENV["DATABASE_URL"] %>
+  primary:
+    <<: *default
+    database: recolly_production
+    url: <%= ENV["DATABASE_URL"] %>
+  cache:
+    <<: *default
+    database: recolly_production
+    url: <%= ENV["DATABASE_URL"] %>
+    migrations_paths: db/cache_migrate
