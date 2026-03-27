@@ -34,8 +34,10 @@ module ExternalApis
     private
 
     def connection(url:)
-      Faraday.new(url: url) do |f|
+      Faraday.new(url: url, request: { open_timeout: 5, timeout: 10 }) do |f|
         f.request :json
+        f.request :retry, max: 2, retry_statuses: [500, 502, 503, 504]
+        f.response :logger, Rails.logger, headers: false, bodies: !Rails.env.production?
         f.response :json
         f.adapter Faraday.default_adapter
       end

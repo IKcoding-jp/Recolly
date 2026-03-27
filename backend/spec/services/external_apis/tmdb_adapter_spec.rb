@@ -87,6 +87,32 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
     end
   end
 
+  describe 'リトライミドルウェア' do
+    let(:retry_success_body) do
+      { 'results' => [{ 'id' => 550, 'title' => 'テスト映画', 'overview' => 'テスト概要',
+                        'poster_path' => '/test.jpg', 'media_type' => 'movie' }] }
+    end
+
+    it 'サーバーエラー時にリトライして成功する' do
+      stub_request(:get, /api.themoviedb.org/)
+        .to_return(status: 500, body: '{}', headers: { 'Content-Type' => 'application/json' })
+        .then.to_return(status: 200, body: retry_success_body.to_json,
+                        headers: { 'Content-Type' => 'application/json' })
+
+      results = adapter.search('テスト')
+      expect(results.length).to eq(1)
+      expect(results.first.title).to eq('テスト映画')
+    end
+  end
+
+  describe 'タイムアウト設定' do
+    it 'open_timeout と timeout が設定されている' do
+      conn = adapter.send(:tmdb_connection)
+      expect(conn.options.open_timeout).to eq(5)
+      expect(conn.options.timeout).to eq(10)
+    end
+  end
+
   describe '#safe_search' do
     it 'APIエラー時に空配列を返す' do
       stub_request(:get, /api.themoviedb.org/).to_return(status: 500)
