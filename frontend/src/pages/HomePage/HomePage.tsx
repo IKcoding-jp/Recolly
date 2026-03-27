@@ -15,9 +15,7 @@ export function HomePage() {
   return (
     <div className={styles.container}>
       {user?.email_missing && <EmailPromptBanner />}
-      <h1 className={styles.greeting}>
-        おかえりなさい、{user?.username}さん
-      </h1>
+      <h1 className={styles.greeting}>おかえりなさい、{user?.username}さん</h1>
       <div className={styles.cards}>
         {QUICK_ACTIONS.map((action) => (
           <Link key={action.path} to={action.path} className={styles.card}>
