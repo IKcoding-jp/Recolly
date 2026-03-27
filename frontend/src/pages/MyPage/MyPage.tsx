@@ -4,11 +4,11 @@ import { DashboardEmptyState } from '../../components/DashboardEmptyState/Dashbo
 import { EmailPromptBanner } from '../../components/EmailPromptBanner/EmailPromptBanner'
 import { StatsSummary } from '../../components/StatsSummary/StatsSummary'
 import { useAuth } from '../../contexts/useAuth'
-import { useDashboard } from './useDashboard'
+import { useDashboard } from '../../hooks/useDashboard'
 import { useStatistics } from '../../hooks/useStatistics'
-import styles from './DashboardPage.module.css'
+import styles from './MyPage.module.css'
 
-export function DashboardPage() {
+export function MyPage() {
   const { user } = useAuth()
   const { records, isLoading, error, handleAction } = useDashboard()
   const { statistics, isLoading: statsLoading } = useStatistics()
@@ -16,6 +16,7 @@ export function DashboardPage() {
   return (
     <div className={styles.container}>
       {user?.email_missing && <EmailPromptBanner />}
+      <SectionTitle>マイページ</SectionTitle>
       {!statsLoading && statistics && <StatsSummary statistics={statistics} />}
       {isLoading && <div className={styles.loading}>読み込み中...</div>}
       {error && <div className={styles.error}>{error}</div>}

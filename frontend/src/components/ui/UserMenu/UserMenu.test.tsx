@@ -37,7 +37,7 @@ describe('UserMenu', () => {
     await user.click(screen.getByRole('button', { name: 'ユーザーメニュー' }))
     expect(screen.getByText('ik@example.com')).toBeInTheDocument()
     expect(screen.getByText('ログアウト')).toBeInTheDocument()
-    expect(screen.getByText('マイページ（準備中）')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'マイページ' })).toBeInTheDocument()
     expect(screen.getByText('設定')).toBeInTheDocument()
   })
 

@@ -9,7 +9,8 @@ import { UpdatePrompt } from './components/ui/UpdatePrompt/UpdatePrompt'
 import appStyles from './App.module.css'
 import { LoginPage } from './pages/LoginPage/LoginPage'
 import { SignUpPage } from './pages/SignUpPage/SignUpPage'
-import { DashboardPage } from './pages/DashboardPage/DashboardPage'
+import { HomePage } from './pages/HomePage/HomePage'
+import { MyPage } from './pages/MyPage/MyPage'
 import { SearchPage } from './pages/SearchPage/SearchPage'
 import { WorkDetailPage } from './pages/WorkDetailPage/WorkDetailPage'
 import { LibraryPage } from './pages/LibraryPage/LibraryPage'
@@ -67,7 +68,17 @@ function App() {
             element={
               <ProtectedRoute>
                 <AuthenticatedLayout>
-                  <DashboardPage />
+                  <HomePage />
+                </AuthenticatedLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mypage"
+            element={
+              <ProtectedRoute>
+                <AuthenticatedLayout>
+                  <MyPage />
                 </AuthenticatedLayout>
               </ProtectedRoute>
             }

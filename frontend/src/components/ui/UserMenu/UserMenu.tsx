@@ -52,7 +52,9 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
           <Link to="/settings" className={styles.item} onClick={() => setIsOpen(false)}>
             設定
           </Link>
-          <div className={styles.disabled}>マイページ（準備中）</div>
+          <Link to="/mypage" className={styles.item} onClick={() => setIsOpen(false)}>
+            マイページ
+          </Link>
           <div className={styles.divider} />
           <button className={styles.item} onClick={onLogout}>
             ログアウト
