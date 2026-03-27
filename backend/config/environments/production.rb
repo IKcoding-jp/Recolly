@@ -44,8 +44,8 @@ Rails.application.configure do
   # Solid Cache: 既存PostgreSQLにキャッシュを保存（ADR-0008）
   config.cache_store = :solid_cache_store
 
-  # MVPではasyncアダプタを使用（Solid Queueの専用DBテーブル不要）
-  config.active_job.queue_adapter = :async
+  # Solid Queue: ジョブキューを既存PostgreSQLで管理（ADR-0008）
+  config.active_job.queue_adapter = :solid_queue
 
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
