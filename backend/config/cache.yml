@@ -1,15 +1,19 @@
+# Solid Cache設定（ADR-0008）
+# 本番: solid_cache_store（このファイルの設定を使用）
+# 開発: redis_cache_store（このファイルは参照されない）
+# テスト: null_store（このファイルは参照されない）
 default: &default
+  database: cache
   store_options:
-    # Cap age of oldest cache entry to fulfill retention policies
-    # max_age: <%= 60.days.to_i %>
+    max_age: <%= 1.week.to_i %>
     max_size: <%= 256.megabytes %>
     namespace: <%= Rails.env %>
+
+production:
+  <<: *default
 
 development:
   <<: *default
 
 test:
-  <<: *default
-
-production:
   <<: *default

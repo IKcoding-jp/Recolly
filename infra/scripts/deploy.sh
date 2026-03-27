@@ -43,15 +43,16 @@ GOOGLE_CLIENT_ID=$(get_param "GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET=$(get_param "GOOGLE_CLIENT_SECRET")
 FRONTEND_URL=$(get_param "FRONTEND_URL")
 
-# DBマイグレーション実行（コンテナ再起動の前に実行）
-echo "=== DBマイグレーション実行 ==="
+# DB準備（マイグレーション + 未作成DBのスキーマ適用）
+# db:prepare = db:migrate + db:schema:load（Solid Cache等のスキーマ対応）
+echo "=== DB準備 ==="
 docker run --rm \
   -e DATABASE_URL="$DATABASE_URL" \
   -e SECRET_KEY_BASE="$SECRET_KEY_BASE" \
   -e RAILS_MASTER_KEY="$RAILS_MASTER_KEY" \
   -e RAILS_ENV="$RAILS_ENV" \
   "${ECR_REGISTRY}/${APP_NAME}-backend:${IMAGE_TAG}" \
-  bin/rails db:migrate
+  bin/rails db:prepare
 
 # 既存コンテナを停止・削除
 docker stop "$CONTAINER_NAME" 2>/dev/null || true
