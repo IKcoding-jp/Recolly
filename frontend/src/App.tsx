@@ -22,7 +22,7 @@ import { AccountSettingsPage } from './pages/AccountSettingsPage/AccountSettings
 function RootRedirect() {
   const { isAuthenticated, isLoading } = useAuth()
 
-  if (isLoading) return null
+  if (isLoading) return <div className={appStyles.loading}>読み込み中...</div>
 
   return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
 }
@@ -31,7 +31,7 @@ function RootRedirect() {
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth()
 
-  if (!user) return null
+  if (!user) return <div className={appStyles.loading}>読み込み中...</div>
 
   return (
     <>
