@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { UserRecord } from '../../lib/types'
-import { recordsApi } from '../../lib/recordsApi'
-import { hasEpisodes } from '../../lib/mediaTypeUtils'
+import type { UserRecord } from '../lib/types'
+import { recordsApi } from '../lib/recordsApi'
+import { hasEpisodes } from '../lib/mediaTypeUtils'
 
 export function useDashboard() {
   const [records, setRecords] = useState<UserRecord[]>([])

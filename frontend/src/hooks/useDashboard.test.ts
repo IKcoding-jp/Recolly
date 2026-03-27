@@ -2,14 +2,14 @@ import { renderHook, waitFor, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useDashboard } from './useDashboard'
 
-vi.mock('../../lib/recordsApi', () => ({
+vi.mock('../lib/recordsApi', () => ({
   recordsApi: {
     getAll: vi.fn(),
     update: vi.fn(),
   },
 }))
 
-import { recordsApi } from '../../lib/recordsApi'
+import { recordsApi } from '../lib/recordsApi'
 
 const mockRecords = [
   {

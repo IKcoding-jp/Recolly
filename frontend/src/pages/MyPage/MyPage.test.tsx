@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { DashboardPage } from './DashboardPage'
+import { MyPage } from './MyPage'
 
 vi.mock('../../contexts/useAuth', () => ({
   useAuth: () => ({
@@ -61,7 +61,7 @@ const mockAnimeRecord = {
   },
 }
 
-describe('DashboardPage', () => {
+describe('MyPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -70,7 +70,7 @@ describe('DashboardPage', () => {
     vi.mocked(recordsApi.getAll).mockResolvedValue({ records: [mockAnimeRecord] })
     render(
       <MemoryRouter>
-        <DashboardPage />
+        <MyPage />
       </MemoryRouter>,
     )
     await waitFor(() => {
@@ -85,7 +85,7 @@ describe('DashboardPage', () => {
     vi.mocked(recordsApi.getAll).mockResolvedValue({ records: [] })
     render(
       <MemoryRouter>
-        <DashboardPage />
+        <MyPage />
       </MemoryRouter>,
     )
     await waitFor(() => {
@@ -102,7 +102,7 @@ describe('DashboardPage', () => {
     })
     render(
       <MemoryRouter>
-        <DashboardPage />
+        <MyPage />
       </MemoryRouter>,
     )
     await waitFor(() => {
@@ -116,11 +116,23 @@ describe('DashboardPage', () => {
     vi.mocked(recordsApi.getAll).mockRejectedValue(new Error('fail'))
     render(
       <MemoryRouter>
-        <DashboardPage />
+        <MyPage />
       </MemoryRouter>,
     )
     await waitFor(() => {
       expect(screen.getByText('記録の取得に失敗しました')).toBeInTheDocument()
+    })
+  })
+
+  it('マイページのタイトルを表示する', async () => {
+    vi.mocked(recordsApi.getAll).mockResolvedValue({ records: [] })
+    render(
+      <MemoryRouter>
+        <MyPage />
+      </MemoryRouter>,
+    )
+    await waitFor(() => {
+      expect(screen.getByText('マイページ')).toBeInTheDocument()
     })
   })
 })
