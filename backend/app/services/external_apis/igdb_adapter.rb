@@ -30,26 +30,19 @@ module ExternalApis
 
     # 日本語: IGDB直接検索 + Wikipedia補完を組み合わせる
     def search_japanese(sanitized)
-      # ① IGDB直接検索（全文検索 + パターンマッチ）
       keyword_results = search_by_keyword(sanitized)
       pattern_results = search_by_pattern(sanitized)
       igdb_results = merge_results(keyword_results, pattern_results)
-
-      # ② Wikipedia JP で日本語タイトル候補を取得し、IGDBで再検索
       wikipedia_results = search_via_wikipedia(sanitized, igdb_results)
-
-      # ③ マージ
       merge_results(igdb_results, wikipedia_results)
     end
 
-    # searchキーワードによる全文検索（関連度順で返る）
     def search_by_keyword(sanitized)
       body = "search \"#{sanitized}\"; fields #{SEARCH_FIELDS}; limit 20;"
       response = igdb_connection.post('/v4/games', body)
       (response.body || []).map { |item| normalize(item) }
     end
 
-    # name / alternative_names.name の部分一致検索
     def search_by_pattern(sanitized)
       where_clause = "name ~ *\"#{sanitized}\"* | alternative_names.name ~ *\"#{sanitized}\"*"
       body = "fields #{SEARCH_FIELDS}; where #{where_clause}; limit 20;"
@@ -57,7 +50,6 @@ module ExternalApis
       (response.body || []).map { |item| normalize(item) }
     end
 
-    # 2つの検索結果をマージし、IDで重複を除去
     def merge_results(primary, secondary)
       seen_ids = primary.to_set(&:external_api_id)
       combined = primary.dup
@@ -65,7 +57,6 @@ module ExternalApis
       combined
     end
 
-    # Wikipedia JP で日本語タイトルを取得し、各タイトルでIGDBを再検索
     def search_via_wikipedia(query, existing_results)
       wikipedia = WikipediaGameAdapter.new
       titles = wikipedia.search_titles(query)
@@ -78,7 +69,6 @@ module ExternalApis
       []
     end
 
-    # Wikipediaタイトル1件をIGDBで検索し、日本語情報を付与して返す
     def find_game_via_wikipedia(jp_title, wikipedia, existing_ids)
       match = igdb_match_from_wikipedia(jp_title, wikipedia, existing_ids)
       return nil if match.nil?
@@ -89,20 +79,39 @@ module ExternalApis
       match
     end
 
-    # Wikipedia言語間リンクで英語タイトル取得 → IGDBで検索
-    # 既存IDと重複しない最初のマッチを返す（リメイク版とオリジナル版を区別）
+    # Wikipedia言語間リンクで英語タイトル取得 → IGDBで検索（発売年でリメイク版を区別）
     def igdb_match_from_wikipedia(jp_title, wikipedia, existing_ids = Set.new)
       en_title = wikipedia.fetch_english_title(jp_title)
       return nil unless en_title
 
-      # Wikipediaの曖昧さ回避テキストを除去: "Resident Evil 2 (2019 video game)" → "Resident Evil 2"
-      clean_title = en_title.sub(/\s*\(.*\)\s*$/, '')
-      sanitized = clean_title.gsub('"', '\\"').gsub(';', '')
-      # 既存IDと重複しない最初のマッチを返す
-      search_by_keyword(sanitized).find { |r| existing_ids.exclude?(r.external_api_id) }
+      release_year = extract_year_from_title(en_title)
+      candidates = search_igdb_candidates(en_title, existing_ids)
+      select_best_candidate(candidates, release_year)
     end
 
-    # 日本語文字（ひらがな・カタカナ・漢字）が含まれるか判定
+    def extract_year_from_title(en_title)
+      year_match = en_title.match(/\((\d{4})/)
+      year_match && year_match[1].to_i
+    end
+
+    def search_igdb_candidates(en_title, existing_ids)
+      clean_title = en_title.sub(/\s*\(.*\)\s*$/, '')
+      sanitized = clean_title.gsub('"', '\\"').gsub(';', '')
+      search_by_keyword(sanitized).reject { |r| existing_ids.include?(r.external_api_id) }
+    end
+
+    def select_best_candidate(candidates, release_year)
+      return nil if candidates.empty?
+      return candidates.first unless release_year
+
+      candidates.find { |r| game_release_year(r) == release_year } || candidates.first
+    end
+
+    def game_release_year(result)
+      timestamp = result.metadata[:first_release_date]
+      timestamp && Time.at(timestamp).utc.year
+    end
+
     def japanese?(text)
       text.match?(/[\p{Hiragana}\p{Katakana}\p{Han}]/)
     end
@@ -110,10 +119,7 @@ module ExternalApis
     def igdb_connection
       token = access_token
       client_id = ENV.fetch('IGDB_CLIENT_ID')
-
-      # IGDBはプレーンテキストのクエリ言語を使うため、request :json は使わない
       Faraday.new(url: IGDB_URL, request: { open_timeout: 5, timeout: 10 }) do |f|
-        # POSTも含める（IGDB検索クエリは冪等のため安全）
         f.request :retry, max: 2, retry_statuses: [500, 502, 503, 504],
                           methods: %i[get head options put delete post]
         f.response :logger, Rails.logger, headers: false, bodies: !Rails.env.production?
@@ -126,19 +132,14 @@ module ExternalApis
 
     def access_token
       Rails.cache.fetch(TOKEN_CACHE_KEY, expires_in: 50.days) do
-        # Hashボディをapplication/x-www-form-urlencoded形式に変換する
         token_connection = Faraday.new do |f|
           f.request :url_encoded
           f.response :json
         end
-        response = token_connection.post(
-          TWITCH_TOKEN_URL,
-          {
-            client_id: ENV.fetch('IGDB_CLIENT_ID'),
-            client_secret: ENV.fetch('IGDB_CLIENT_SECRET'),
-            grant_type: 'client_credentials'
-          }
-        )
+        credentials = { client_id: ENV.fetch('IGDB_CLIENT_ID'),
+                        client_secret: ENV.fetch('IGDB_CLIENT_SECRET'),
+                        grant_type: 'client_credentials' }
+        response = token_connection.post(TWITCH_TOKEN_URL, credentials)
         token = response.body['access_token']
         raise "Twitch OAuthトークン取得失敗: #{response.body}" unless token
 
@@ -146,7 +147,6 @@ module ExternalApis
       end
     end
 
-    # alternative_namesから日本語タイトルを探す
     def japanese_title(item)
       alt_names = item['alternative_names'] || []
       jp = alt_names.find do |a|
@@ -156,7 +156,6 @@ module ExternalApis
       jp&.dig('name')
     end
 
-    # IGDBのtotal_rating値を0.0〜1.0に正規化（元は0〜100）
     def normalize_popularity(value)
       return 0.0 unless value
 

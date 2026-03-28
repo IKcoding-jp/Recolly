@@ -195,6 +195,82 @@ RSpec.describe ExternalApis::IgdbAdapter, type: :service do
     end
   end
 
+  describe '発売年によるリメイク版・原作版の区別' do
+    let(:wikipedia_double) { instance_double(ExternalApis::WikipediaGameAdapter) }
+
+    # 1998年のオリジナル版と2019年のリメイク版
+    let(:igdb_multiple_versions) do
+      [
+        {
+          'id' => 732,
+          'name' => 'Resident Evil 2',
+          'summary' => 'Original 1998 version',
+          'cover' => { 'image_id' => 'co1abc' },
+          'first_release_date' => 885_427_200, # 1998-01-21
+          'total_rating' => 85.0
+        },
+        {
+          'id' => 19_686,
+          'name' => 'Resident Evil 2',
+          'summary' => '2019 remake version',
+          'cover' => { 'image_id' => 'co2def' },
+          'first_release_date' => 1_548_374_400, # 2019-01-25
+          'total_rating' => 92.0
+        }
+      ]
+    end
+
+    before do
+      allow(ExternalApis::WikipediaGameAdapter).to receive(:new).and_return(wikipedia_double)
+      allow(wikipedia_double).to receive_messages(search_titles: ['バイオハザード RE:2'], fetch_extract: 'カプコンのサバイバルホラーゲーム。')
+    end
+
+    context '括弧に発売年がある場合' do
+      before do
+        allow(wikipedia_double).to receive(:fetch_english_title)
+          .with('バイオハザード RE:2').and_return('Resident Evil 2 (2019 video game)')
+
+        # 1回目・2回目: IGDB直接検索（日本語）→ 0件
+        # 3回目: Wikipedia経由でIGDB再検索 → 2件（1998版 + 2019版）
+        stub_request(:post, 'https://api.igdb.com/v4/games')
+          .to_return(
+            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
+            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
+            { status: 200, body: igdb_multiple_versions.to_json,
+              headers: { 'Content-Type' => 'application/json' } }
+          )
+      end
+
+      it '発売年が一致するリメイク版（2019年）を優先して返す' do
+        results = adapter.search('バイオハザードRE:2')
+        expect(results.length).to eq(1)
+        expect(results.first.external_api_id).to eq('19686')
+        expect(results.first.description).to eq('カプコンのサバイバルホラーゲーム。')
+      end
+    end
+
+    context '括弧に発売年がない場合' do
+      before do
+        allow(wikipedia_double).to receive(:fetch_english_title)
+          .with('バイオハザード RE:2').and_return('Resident Evil 2')
+
+        stub_request(:post, 'https://api.igdb.com/v4/games')
+          .to_return(
+            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
+            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
+            { status: 200, body: igdb_multiple_versions.to_json,
+              headers: { 'Content-Type' => 'application/json' } }
+          )
+      end
+
+      it '最初のマッチ（人気順の先頭）を返す' do
+        results = adapter.search('バイオハザードRE:2')
+        expect(results.length).to eq(1)
+        expect(results.first.external_api_id).to eq('732')
+      end
+    end
+  end
+
   describe 'リトライミドルウェア' do
     let(:retry_success_body) do
       [{ 'id' => 1942, 'name' => 'Test Game', 'summary' => 'テストゲーム' }]
