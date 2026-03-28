@@ -105,6 +105,24 @@
   margin-top: var(--spacing-2xl);
 }
 
+.manualCard {
+  border: 1px dashed var(--color-border-light);
+  border-radius: 8px;
+  padding: var(--spacing-xl);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.manualGuide {
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
 @media (max-width: 768px) {
   .page {
     padding: var(--spacing-md);
