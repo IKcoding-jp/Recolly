@@ -6,11 +6,11 @@ module ExternalApis
   class WikipediaGameAdapter
     ENDPOINT = 'https://ja.wikipedia.org/w/api.php'
 
-    # 日本語Wikipediaでキーワード検索し、記事タイトルの一覧を返す
+    # 日本語Wikipediaでキーワード検索し、ゲームソフトの記事タイトルのみ返す
     def search_titles(query)
       response = wikipedia_connection.get('', search_params(query))
       results = response.body.dig('query', 'search') || []
-      results.pluck('title')
+      results.pluck('title').reject { |title| excluded_title?(title, query) }
     rescue Faraday::Error => e
       Rails.logger.error("[WikipediaGameAdapter] 検索エラー: #{e.message}")
       []
@@ -43,6 +43,16 @@ module ExternalApis
     end
 
     private
+
+    # ゲームソフト以外の記事を除外する判定
+    def excluded_title?(title, query)
+      # 明らかにゲームソフト以外のパターン
+      return true if title.match?(/キャラクター|シリーズ|曖昧さ回避|登場人物|一覧/)
+      # 検索クエリとほぼ同じ（「ゼルダ」→「ゼルダ」のような曖昧さ回避ページ）
+      return true if title == query
+
+      false
+    end
 
     def wikipedia_connection
       @wikipedia_connection ||= Faraday.new(
