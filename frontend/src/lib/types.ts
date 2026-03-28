@@ -117,6 +117,30 @@ export interface Tag {
 }
 
 // 統計
+// 画像（S3にアップロード済み、DBに登録済み）
+export interface ImageRecord {
+  id: number
+  s3_key: string
+  file_name: string
+  content_type: string
+  file_size: number
+  imageable_type: string
+  imageable_id: number
+  url: string
+  created_at: string
+}
+
+// 署名付きURL発行レスポンス
+export interface PresignResponse {
+  presigned_url: string
+  s3_key: string
+}
+
+// 画像メタデータ登録レスポンス
+export interface ImageResponse {
+  image: ImageRecord
+}
+
 export interface Statistics {
   by_genre: Record<string, number>
   by_status: Record<string, number>
