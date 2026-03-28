@@ -1,11 +1,18 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import type { MediaType } from '../../lib/types'
+import { ImageUploader } from '../ImageUploader'
+import type { UploadResult } from '../ImageUploader'
 import { Button } from '../ui/Button/Button'
 import styles from './ManualWorkForm.module.css'
 
 type ManualWorkFormProps = {
-  onSubmit: (title: string, mediaType: MediaType, description: string) => Promise<void>
+  onSubmit: (
+    title: string,
+    mediaType: MediaType,
+    description: string,
+    imageData?: UploadResult,
+  ) => Promise<void>
 }
 
 const MEDIA_TYPE_OPTIONS: { value: MediaType; label: string }[] = [
@@ -21,6 +28,7 @@ export function ManualWorkForm({ onSubmit }: ManualWorkFormProps) {
   const [title, setTitle] = useState('')
   const [mediaType, setMediaType] = useState<MediaType>('anime')
   const [description, setDescription] = useState('')
+  const [imageData, setImageData] = useState<UploadResult | undefined>(undefined)
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -35,9 +43,10 @@ export function ManualWorkForm({ onSubmit }: ManualWorkFormProps) {
 
     setIsSubmitting(true)
     try {
-      await onSubmit(title, mediaType, description)
+      await onSubmit(title, mediaType, description, imageData)
       setTitle('')
       setDescription('')
+      setImageData(undefined)
     } catch {
       setError('登録に失敗しました')
     } finally {
@@ -69,6 +78,13 @@ export function ManualWorkForm({ onSubmit }: ManualWorkFormProps) {
             </option>
           ))}
         </select>
+      </div>
+      <div className={styles.field}>
+        <label>カバー画像（任意）</label>
+        <ImageUploader
+          onUploadComplete={(result) => setImageData(result)}
+          onRemove={() => setImageData(undefined)}
+        />
       </div>
       <div className={styles.field}>
         <label htmlFor="manual-description">説明（任意）</label>

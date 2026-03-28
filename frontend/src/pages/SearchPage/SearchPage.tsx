@@ -3,9 +3,11 @@ import type { FormEvent } from 'react'
 import type { SearchResult, MediaType, RecordStatus } from '../../lib/types'
 import { worksApi } from '../../lib/worksApi'
 import { recordsApi } from '../../lib/recordsApi'
+import { imagesApi } from '../../lib/imagesApi'
 import { ApiError } from '../../lib/api'
 import { WorkCard } from '../../components/WorkCard/WorkCard'
 import { ManualWorkForm } from '../../components/ManualWorkForm/ManualWorkForm'
+import type { UploadResult } from '../../components/ImageUploader'
 import { RecordModal } from '../../components/RecordModal/RecordModal'
 import { Typography } from '../../components/ui/Typography/Typography'
 import { Button } from '../../components/ui/Button/Button'
@@ -83,8 +85,23 @@ export function SearchPage() {
     }
   }
 
-  const handleManualSubmit = async (title: string, mediaType: MediaType, description: string) => {
-    await worksApi.create(title, mediaType, description)
+  const handleManualSubmit = async (
+    title: string,
+    mediaType: MediaType,
+    description: string,
+    imageData?: UploadResult,
+  ) => {
+    const { work } = await worksApi.create(title, mediaType, description)
+    if (imageData) {
+      await imagesApi.create({
+        s3Key: imageData.s3Key,
+        fileName: imageData.fileName,
+        contentType: imageData.contentType,
+        fileSize: imageData.fileSize,
+        imageableType: 'Work',
+        imageableId: work.id,
+      })
+    }
     setShowManualForm(false)
   }
 
