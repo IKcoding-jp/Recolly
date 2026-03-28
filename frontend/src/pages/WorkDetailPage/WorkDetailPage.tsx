@@ -1,4 +1,5 @@
 import type { MediaType } from '../../lib/types'
+import { hasEpisodes, getRewatchLabel } from '../../lib/mediaTypeUtils'
 import { StatusSelector } from '../../components/ui/StatusSelector/StatusSelector'
 import { RatingInput } from '../../components/ui/RatingInput/RatingInput'
 import { ProgressControl } from '../../components/ui/ProgressControl/ProgressControl'
@@ -99,18 +100,21 @@ export function WorkDetailPage() {
               <RatingInput value={record.rating} onChange={handleRatingChange} />
             </div>
 
-            <div className={styles.section}>
-              <div className={styles.label}>進捗</div>
-              <ProgressControl
-                current={record.current_episode}
-                total={work.total_episodes}
-                onChange={handleEpisodeChange}
-                showFullControls
-              />
-            </div>
+            {hasEpisodes(work.media_type) && (
+              <div className={styles.section}>
+                <div className={styles.label}>進捗</div>
+                <ProgressControl
+                  current={record.current_episode}
+                  total={work.total_episodes}
+                  onChange={handleEpisodeChange}
+                  showFullControls
+                  mediaType={work.media_type}
+                />
+              </div>
+            )}
 
             <div className={styles.section}>
-              <div className={styles.label}>再視聴回数</div>
+              <div className={styles.label}>{getRewatchLabel(work.media_type)}</div>
               <RewatchControl count={record.rewatch_count} onChange={handleRewatchCountChange} />
             </div>
 
