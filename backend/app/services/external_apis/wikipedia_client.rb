@@ -90,7 +90,7 @@ module ExternalApis
     end
 
     def categories_params(titles)
-      { action: 'query', titles: titles, prop: 'categories', cllimit: 50, format: 'json' }
+      { action: 'query', titles: titles, prop: 'categories', cllimit: 500, format: 'json' }
     end
   end
 end
