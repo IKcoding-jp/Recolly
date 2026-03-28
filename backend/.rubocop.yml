@@ -9,8 +9,10 @@ AllCops:
   Exclude:
     - "bin/**/*"
     - "db/schema.rb"
+    - "db/cache_schema.rb"
     - "db/migrate/**/*"
     - "db/queue_schema.rb"
+    - "db/queue_migrate/**/*"
     - "vendor/**/*"
     - "config/**/*"
     - "spec/rails_helper.rb"
