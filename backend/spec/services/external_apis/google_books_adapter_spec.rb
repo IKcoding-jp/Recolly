@@ -73,26 +73,10 @@ RSpec.describe ExternalApis::GoogleBooksAdapter, type: :service do
       expect(adapter.search('存在しない本')).to eq([])
     end
 
-    context 'タイトルフィルタ' do
-      it '検索キーワードがタイトルに含まれない結果を除外する' do
-        stub_books_response([
-                              { 'id' => '1', 'volumeInfo' => { 'title' => '三体', 'description' => 'SF小説' } },
-                              { 'id' => '2', 'volumeInfo' => { 'title' => '三体II 黒暗森林', 'description' => '続編' } },
-                              { 'id' => '3', 'volumeInfo' => { 'title' => '電離気体の原子・分子過程' } }
-                            ])
-        results = adapter.search('三体')
-        expect(results.map(&:title)).to contain_exactly('三体', '三体II 黒暗森林')
-      end
-
-      it '大文字小文字を区別しない' do
-        stub_books_response([
-                              { 'id' => '1',
-                                'volumeInfo' => { 'title' => "Harry Potter and the Philosopher's Stone" } },
-                              { 'id' => '2', 'volumeInfo' => { 'title' => 'Unrelated Book' } }
-                            ])
-        results = adapter.search('harry potter')
-        expect(results.length).to eq(1)
-      end
+    it 'intitle:パラメータでタイトル検索に限定する' do
+      adapter.search('三体')
+      expect(WebMock).to have_requested(:get, /www.googleapis.com/)
+        .with(query: hash_including(q: 'intitle:三体'))
     end
   end
 end

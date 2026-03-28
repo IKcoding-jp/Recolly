@@ -9,21 +9,15 @@ module ExternalApis
     end
 
     def search(query)
-      params = { q: query, key: ENV.fetch('GOOGLE_BOOKS_API_KEY'), maxResults: 20, langRestrict: 'ja' }
+      # intitle: でタイトル検索に限定し、無関係な結果を除外する
+      params = { q: "intitle:#{query}", key: ENV.fetch('GOOGLE_BOOKS_API_KEY'), maxResults: 20, langRestrict: 'ja' }
       response = books_connection.get('/books/v1/volumes', params)
 
       items = response.body['items'] || []
-      results = items.map { |item| normalize(item) }
-      filter_by_title(results, query)
+      items.map { |item| normalize(item) }
     end
 
     private
-
-    # 検索キーワードがタイトルに含まれる結果のみ残す（大文字小文字区別なし）
-    def filter_by_title(results, query)
-      query_downcase = query.downcase
-      results.select { |r| r.title&.downcase&.include?(query_downcase) }
-    end
 
     def books_connection
       @books_connection ||= connection(url: BASE_URL)
