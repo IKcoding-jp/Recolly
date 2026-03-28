@@ -1,0 +1,166 @@
+/* ImageUploader.module.css */
+
+/* --- ドロップゾーン（ファイル未選択時） --- */
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  height: 140px;
+  border: var(--border-width) dashed var(--color-border-light);
+  background-color: var(--color-bg);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.dropzone:hover,
+.dropzoneDragOver {
+  border-color: var(--color-text);
+}
+
+.dropzoneText {
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.dropzoneLink {
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-text);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+/* --- アップロード中 --- */
+.uploading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  height: 140px;
+  justify-content: center;
+  padding: var(--spacing-md);
+  border: var(--border-width) solid var(--color-border-light);
+}
+
+.uploadingText {
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  color: var(--color-text);
+}
+
+.progressBarOuter {
+  width: 100%;
+  height: 6px;
+  background-color: var(--color-border-light);
+}
+
+.progressBarInner {
+  height: 100%;
+  background-color: var(--color-text);
+  transition: width var(--transition-fast);
+}
+
+.progressPercent {
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+/* --- アップロード完了 --- */
+.done {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+}
+
+.preview {
+  width: 100px;
+  height: 140px;
+  object-fit: cover;
+  border: var(--border-width) solid var(--color-border-light);
+  flex-shrink: 0;
+}
+
+.doneInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.doneText {
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  color: var(--color-text);
+}
+
+.removeLink {
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-error);
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+}
+
+.removeLink:hover {
+  opacity: 0.7;
+}
+
+/* --- エラー --- */
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  height: 140px;
+  justify-content: center;
+  padding: var(--spacing-md);
+  border: var(--border-width) solid var(--color-error);
+}
+
+.errorText {
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  color: var(--color-error);
+}
+
+.retryLink {
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-text);
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+}
+
+/* --- モバイル対応 --- */
+@media (max-width: 768px) {
+  .dropzone {
+    height: 100px;
+  }
+
+  .uploading {
+    height: 100px;
+  }
+
+  .preview {
+    width: 72px;
+    height: 100px;
+  }
+
+  .errorContainer {
+    height: 100px;
+  }
+}

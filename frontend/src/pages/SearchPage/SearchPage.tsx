@@ -3,9 +3,11 @@ import type { FormEvent } from 'react'
 import type { SearchResult, MediaType, RecordStatus } from '../../lib/types'
 import { worksApi } from '../../lib/worksApi'
 import { recordsApi } from '../../lib/recordsApi'
+import { imagesApi } from '../../lib/imagesApi'
 import { ApiError } from '../../lib/api'
 import { WorkCard } from '../../components/WorkCard/WorkCard'
 import { ManualWorkForm } from '../../components/ManualWorkForm/ManualWorkForm'
+import type { UploadResult } from '../../components/ImageUploader'
 import { RecordModal } from '../../components/RecordModal/RecordModal'
 import { Typography } from '../../components/ui/Typography/Typography'
 import { Button } from '../../components/ui/Button/Button'
@@ -38,6 +40,8 @@ export function SearchPage() {
   const [error, setError] = useState('')
   const [showManualForm, setShowManualForm] = useState(false)
   const [modalWork, setModalWork] = useState<SearchResult | null>(null)
+  // 手動登録で作成したWorkのID（Record作成時に使用）
+  const [manualWorkId, setManualWorkId] = useState<number | null>(null)
 
   const handleSearch = async (e: FormEvent) => {
     e.preventDefault()
@@ -68,11 +72,20 @@ export function SearchPage() {
 
   const handleConfirmRecord = async (data: { status: RecordStatus; rating: number | null }) => {
     if (!modalWork) return
-    const workKey = `${modalWork.external_api_source}:${modalWork.external_api_id}`
-    setLoadingId(workKey)
+
     try {
-      await recordsApi.createFromSearchResult(modalWork, data)
-      setRecordedIds((prev) => new Set(prev).add(workKey))
+      if (manualWorkId) {
+        // 手動登録作品: work_idで直接Record作成
+        setLoadingId('manual')
+        await recordsApi.createFromWorkId(manualWorkId, data)
+        setManualWorkId(null)
+      } else {
+        // 検索結果作品: 既存のフロー
+        const workKey = `${modalWork.external_api_source}:${modalWork.external_api_id}`
+        setLoadingId(workKey)
+        await recordsApi.createFromSearchResult(modalWork, data)
+        setRecordedIds((prev) => new Set(prev).add(workKey))
+      }
       setModalWork(null)
     } catch (err) {
       if (err instanceof ApiError) {
@@ -83,8 +96,40 @@ export function SearchPage() {
     }
   }
 
-  const handleManualSubmit = async (title: string, mediaType: MediaType, description: string) => {
-    await worksApi.create(title, mediaType, description)
+  const handleManualSubmit = async (
+    title: string,
+    mediaType: MediaType,
+    description: string,
+    imageData?: UploadResult,
+  ) => {
+    const { work } = await worksApi.create(title, mediaType, description)
+    // 画像登録はbest-effort（失敗しても作品登録フローは継続する）
+    if (imageData) {
+      try {
+        await imagesApi.create({
+          s3Key: imageData.s3Key,
+          fileName: imageData.fileName,
+          contentType: imageData.contentType,
+          fileSize: imageData.fileSize,
+          imageableType: 'Work',
+          imageableId: work.id,
+        })
+      } catch {
+        // 画像登録失敗は無視してRecordModal表示に進む
+      }
+    }
+    // 手動登録後、RecordModalを開いてステータスを選ばせる
+    setManualWorkId(work.id)
+    setModalWork({
+      title: work.title,
+      media_type: work.media_type,
+      description: work.description,
+      cover_image_url: work.cover_image_url,
+      total_episodes: work.total_episodes,
+      external_api_id: null,
+      external_api_source: null,
+      metadata: {},
+    })
     setShowManualForm(false)
   }
 
@@ -191,7 +236,10 @@ export function SearchPage() {
         mediaType={modalWork?.media_type ?? 'anime'}
         mediaTypeLabel={modalWork ? getGenreLabel(modalWork.media_type) : ''}
         onConfirm={handleConfirmRecord}
-        onCancel={() => setModalWork(null)}
+        onCancel={() => {
+          setModalWork(null)
+          setManualWorkId(null)
+        }}
         isLoading={loadingId !== null}
       />
     </div>

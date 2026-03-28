@@ -9,18 +9,18 @@ module Api
 
       # GET /api/v1/records
       def index
-        records = apply_sort(apply_filters(current_user.records.includes(:work, :tags)))
+        records = apply_sort(apply_filters(current_user.records.includes(work: :images, tags: [])))
 
         if pagination_requested?
           render json: paginated_response(records)
         else
-          render json: { records: records.as_json(include: %i[work tags]) }
+          render json: { records: records_json(records) }
         end
       end
 
       # GET /api/v1/records/:id
       def show
-        render json: { record: @record.as_json(include: %i[work tags]) }
+        render json: { record: record_json(@record) }
       end
 
       # POST /api/v1/records
@@ -31,7 +31,7 @@ module Api
         record = current_user.records.new(work: work, **record_create_params)
 
         if record.save
-          render json: { record: record.as_json(include: %i[work tags]) }, status: :created
+          render json: { record: record_json(record) }, status: :created
         else
           render json: { errors: record.errors.full_messages }, status: :unprocessable_content
         end
@@ -40,7 +40,7 @@ module Api
       # PATCH /api/v1/records/:id
       def update
         if @record.update(record_update_params)
-          render json: { record: @record.as_json(include: %i[work tags]) }
+          render json: { record: record_json(@record) }
         else
           render json: { errors: @record.errors.full_messages }, status: :unprocessable_content
         end
@@ -64,7 +64,7 @@ module Api
         total_count = records.count
 
         {
-          records: records.offset((page - 1) * per_page).limit(per_page).as_json(include: %i[work tags]),
+          records: records_json(records.offset((page - 1) * per_page).limit(per_page)),
           meta: pagination_meta(page, per_page, total_count)
         }
       end
@@ -83,13 +83,22 @@ module Api
       end
 
       def set_record
-        @record = Record.includes(:work, :tags).find(params[:id])
+        @record = Record.includes(work: :images, tags: []).find(params[:id])
       end
 
       def authorize_record!
         return if @record.user_id == current_user.id
 
         render json: { error: '権限がありません' }, status: :forbidden
+      end
+
+      # Recordのレスポンス用JSON（Workのas_jsonオーバーライドを確実に適用する）
+      def record_json(record)
+        record.as_json(include: :tags).merge('work' => record.work.as_json)
+      end
+
+      def records_json(records)
+        records.map { |r| record_json(r) }
       end
 
       def record_create_params

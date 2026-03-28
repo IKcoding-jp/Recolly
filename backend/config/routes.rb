@@ -28,6 +28,13 @@ Rails.application.routes.draw do
         put :set_email
       end
 
+      # 画像アップロード
+      resources :images, only: %i[create destroy] do
+        collection do
+          post :presign
+        end
+      end
+
       # 作品検索・手動登録
       resources :works, only: [:create] do
         collection do
