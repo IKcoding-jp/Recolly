@@ -79,9 +79,13 @@ module ExternalApis
     end
 
     # Wikipediaタイトル1件をIGDBで検索し、日本語情報を付与して返す
+    # 日本語タイトル → Wikipedia言語間リンクで英語タイトル取得 → 英語タイトルでIGDB検索
     def find_game_via_wikipedia(jp_title, wikipedia, existing_ids)
-      sanitized_title = jp_title.gsub('"', '\\"').gsub(';', '')
-      igdb_matches = search_by_keyword(sanitized_title)
+      en_title = wikipedia.fetch_english_title(jp_title)
+      return nil unless en_title
+
+      sanitized = en_title.gsub('"', '\\"').gsub(';', '')
+      igdb_matches = search_by_keyword(sanitized)
       return nil if igdb_matches.empty?
 
       match = igdb_matches.first

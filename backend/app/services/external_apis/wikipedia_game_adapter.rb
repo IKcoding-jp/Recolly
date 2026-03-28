@@ -16,6 +16,19 @@ module ExternalApis
       []
     end
 
+    # 日本語Wikipediaの言語間リンクから英語タイトルを取得する
+    # IGDBは英語タイトルで検索する必要があるため、この変換が必要
+    def fetch_english_title(ja_title)
+      response = wikipedia_connection.get('', langlink_params(ja_title))
+      pages = response.body.dig('query', 'pages') || {}
+      page = pages.values.first
+      langlinks = page&.dig('langlinks') || []
+      langlinks.first&.dig('*')
+    rescue Faraday::Error => e
+      Rails.logger.error("[WikipediaGameAdapter] 英語タイトル取得エラー: #{e.message}")
+      nil
+    end
+
     # 指定タイトルのWikipedia記事から冒頭テキスト（概要）を取得する
     def fetch_extract(title)
       response = wikipedia_connection.get('', extract_params(title))
@@ -48,6 +61,10 @@ module ExternalApis
     def extract_params(title)
       { action: 'query', titles: title, prop: 'extracts', exintro: true,
         explaintext: true, format: 'json' }
+    end
+
+    def langlink_params(title)
+      { action: 'query', titles: title, prop: 'langlinks', lllang: 'en', format: 'json' }
     end
   end
 end

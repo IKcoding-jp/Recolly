@@ -72,6 +72,40 @@ RSpec.describe ExternalApis::WikipediaGameAdapter, type: :service do
     end
   end
 
+  describe '#fetch_english_title' do
+    let(:langlink_response) do
+      {
+        'query' => {
+          'pages' => {
+            '12345' => {
+              'title' => '星のカービィ スーパーデラックス',
+              'langlinks' => [{ 'lang' => 'en', '*' => 'Kirby Super Star' }]
+            }
+          }
+        }
+      }
+    end
+
+    before do
+      stub_request(:get, /ja.wikipedia.org/)
+        .to_return(status: 200, body: langlink_response.to_json,
+                   headers: { 'Content-Type' => 'application/json' })
+    end
+
+    it '日本語Wikipediaの言語間リンクから英語タイトルを返す' do
+      en_title = adapter.fetch_english_title('星のカービィ スーパーデラックス')
+      expect(en_title).to eq('Kirby Super Star')
+    end
+
+    it '英語版記事がない場合はnilを返す' do
+      no_langlink = { 'query' => { 'pages' => { '99' => { 'title' => 'テスト', 'langlinks' => [] } } } }
+      stub_request(:get, /ja.wikipedia.org/)
+        .to_return(status: 200, body: no_langlink.to_json,
+                   headers: { 'Content-Type' => 'application/json' })
+      expect(adapter.fetch_english_title('日本語のみの記事')).to be_nil
+    end
+  end
+
   describe 'エラーハンドリング' do
     it 'API通信エラー時にsearch_titlesは空配列を返す' do
       stub_request(:get, /ja.wikipedia.org/).to_timeout

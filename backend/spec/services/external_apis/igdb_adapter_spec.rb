@@ -141,6 +141,11 @@ RSpec.describe ExternalApis::IgdbAdapter, type: :service do
           search_titles: ['星のカービィ スーパーデラックス', '星のカービィ (アニメ)'],
           fetch_extract: '任天堂が発売したアクションゲーム。'
         )
+        # 言語間リンク: 日本語→英語タイトル
+        allow(wikipedia_double).to receive(:fetch_english_title)
+          .with('星のカービィ スーパーデラックス').and_return('Kirby Super Star')
+        allow(wikipedia_double).to receive(:fetch_english_title)
+          .with('星のカービィ (アニメ)').and_return(nil)
 
         # 1回目: search_by_keyword（日本語）→ 0件
         # 2回目: search_by_pattern（日本語）→ 0件
