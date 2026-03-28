@@ -19,21 +19,22 @@ class WorkSearchService
   private
 
   # クラス定数ではなくメソッドで返す（Zeitwerkのオートロード順序問題を回避）
+  # movieにAniListを含める（アニメ映画はTMDBで除外されるためAniList経由で取得）
   def adapter_map
     {
-      'movie' => ExternalApis::TmdbAdapter,
-      'drama' => ExternalApis::TmdbAdapter,
-      'anime' => ExternalApis::AniListAdapter,
-      'manga' => ExternalApis::AniListAdapter,
-      'book' => ExternalApis::GoogleBooksAdapter,
-      'game' => ExternalApis::IgdbAdapter
+      'movie' => [ExternalApis::TmdbAdapter, ExternalApis::AniListAdapter],
+      'drama' => [ExternalApis::TmdbAdapter],
+      'anime' => [ExternalApis::AniListAdapter],
+      'manga' => [ExternalApis::AniListAdapter],
+      'book' => [ExternalApis::GoogleBooksAdapter],
+      'game' => [ExternalApis::IgdbAdapter]
     }
   end
 
   def select_adapters(media_type)
     if media_type.present?
-      adapter_class = adapter_map[media_type]
-      adapter_class ? [adapter_class.new] : []
+      classes = adapter_map[media_type]
+      classes ? classes.map(&:new) : []
     else
       all_adapters
     end

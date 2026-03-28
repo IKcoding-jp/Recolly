@@ -49,9 +49,10 @@ RSpec.describe WorkSearchService, type: :service do
       expect(results.length).to eq(1)
     end
 
-    it 'media_type: movie で TmdbAdapter のみに問い合わせる' do
+    it 'media_type: movie で TmdbAdapter と AniListAdapter に問い合わせる' do
       service.search('テスト', media_type: 'movie')
-      expect(anilist_double).not_to have_received(:safe_search)
+      expect(tmdb_double).to have_received(:safe_search)
+      expect(anilist_double).to have_received(:safe_search)
     end
 
     it 'media_type: book で GoogleBooksAdapter のみに問い合わせる' do
@@ -271,8 +272,8 @@ RSpec.describe WorkSearchService, type: :service do
     it '異なるmedia_typeは別のキャッシュキーを使う' do
       service.search('テスト', media_type: 'anime')
       service.search('テスト', media_type: 'movie')
-      # anime（anilist）と movie（tmdb）でそれぞれ1回ずつ呼ばれる
-      expect(anilist_double).to have_received(:safe_search).exactly(:once)
+      # anime→anilist1回、movie→tmdb1回+anilist1回で、anilistは計2回呼ばれる
+      expect(anilist_double).to have_received(:safe_search).twice
       expect(tmdb_double).to have_received(:safe_search).exactly(:once)
     end
   end
