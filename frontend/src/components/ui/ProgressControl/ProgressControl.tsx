@@ -1,11 +1,20 @@
 import type { ChangeEvent } from 'react'
+import type { MediaType } from '../../../lib/types'
 import styles from './ProgressControl.module.css'
+
+// メディアタイプごとの単位ラベル（「話」「巻」など）
+const UNIT_LABELS: Partial<Record<MediaType, string>> = {
+  anime: '話',
+  drama: '話',
+  manga: '巻',
+}
 
 type ProgressControlProps = {
   current: number
   total: number | null
   onChange: (episode: number) => void
   showFullControls?: boolean
+  mediaType?: MediaType
 }
 
 export function ProgressControl({
@@ -13,7 +22,9 @@ export function ProgressControl({
   total,
   onChange,
   showFullControls = false,
+  mediaType,
 }: ProgressControlProps) {
+  const unit = (mediaType && UNIT_LABELS[mediaType]) ?? '話'
   const canIncrement = total === null || current < total
   const canDecrement = current > 0
   const percentage = total ? Math.round((current / total) * 100) : null
@@ -40,7 +51,7 @@ export function ProgressControl({
           </button>
         )}
         <span className={styles.display}>
-          {total !== null ? `${current} / ${total}話` : `${current}話`}
+          {total !== null ? `${current} / ${total}${unit}` : `${current}${unit}`}
         </span>
         <button
           type="button"

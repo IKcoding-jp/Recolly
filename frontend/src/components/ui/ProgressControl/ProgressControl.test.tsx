@@ -55,4 +55,19 @@ describe('ProgressControl', () => {
     const bar = container.querySelector('[class*="fill"]')
     expect(bar).toHaveStyle({ width: '50%' })
   })
+
+  it('漫画の場合は「巻」を表示する', () => {
+    render(<ProgressControl current={5} total={20} onChange={() => {}} mediaType="manga" />)
+    expect(screen.getByText('5 / 20巻')).toBeInTheDocument()
+  })
+
+  it('漫画でtotalがnullの場合は「5巻」を表示する', () => {
+    render(<ProgressControl current={5} total={null} onChange={() => {}} mediaType="manga" />)
+    expect(screen.getByText('5巻')).toBeInTheDocument()
+  })
+
+  it('mediaType未指定の場合はデフォルトで「話」を表示する', () => {
+    render(<ProgressControl current={5} total={24} onChange={() => {}} />)
+    expect(screen.getByText('5 / 24話')).toBeInTheDocument()
+  })
 })
