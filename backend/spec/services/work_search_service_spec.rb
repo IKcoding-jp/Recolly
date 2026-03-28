@@ -151,29 +151,28 @@ RSpec.describe WorkSearchService, type: :service do
       expect(results.first.description).to be_nil
     end
 
-    it '英語タイトルがない場合はローマ字タイトルで検索する' do # rubocop:disable RSpec/ExampleLength
-      no_english = ExternalApis::BaseAdapter::SearchResult.new(
+    it '日本語タイトルで見つからない場合、英語→ローマ字の順にフォールバックする' do # rubocop:disable RSpec/ExampleLength
+      no_japanese_match = ExternalApis::BaseAdapter::SearchResult.new(
         'シュタインズ・ゲート', 'anime', 'English description',
         nil, 24, '9253', 'anilist',
         { popularity: 0.8, title_romaji: 'Steins;Gate' }
       )
-      allow(anilist_double).to receive(:safe_search).and_return([no_english])
+      allow(anilist_double).to receive(:safe_search).and_return([no_japanese_match])
+      allow(tmdb_double).to receive(:fetch_japanese_description).with('シュタインズ・ゲート').and_return(nil)
       allow(tmdb_double).to receive(:fetch_japanese_description)
-        .with('Steins;Gate')
-        .and_return('タイムトラベルSF')
+        .with('Steins;Gate').and_return('タイムトラベルSF')
 
       results = service.search('シュタゲ')
       expect(results.first.description).to eq('タイムトラベルSF')
     end
 
-    it '英語タイトルで見つからない場合、ローマ字→日本語の順にフォールバックする' do # rubocop:disable RSpec/ExampleLength
+    it '日本語タイトル優先でTMDB検索する（英語タイトルの誤マッチを防止）' do
       keion_result = ExternalApis::BaseAdapter::SearchResult.new(
         'けいおん!', 'anime', 'K-ON! is a Japanese manga series.',
         nil, 13, '5680', 'anilist',
         { popularity: 0.7, title_english: 'K-ON!', title_romaji: 'K-ON!' }
       )
       allow(anilist_double).to receive(:safe_search).and_return([keion_result])
-      allow(tmdb_double).to receive(:fetch_japanese_description).with('K-ON!').and_return(nil)
       allow(tmdb_double).to receive(:fetch_japanese_description)
         .with('けいおん!').and_return('軽音部の日常を描いた作品')
 

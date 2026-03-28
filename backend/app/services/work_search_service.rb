@@ -63,12 +63,13 @@ class WorkSearchService
     end
   end
 
-  # TMDBで日本語説明を検索（複数パターンを順番に試す）
+  # TMDBで日本語説明を検索（日本語タイトル優先で複数パターンを順番に試す）
+  # 日本語タイトルの方がTMDB（language: 'ja'）でのマッチ精度が高い
   def fetch_japanese_description_from_tmdb(result, tmdb)
     queries = [
+      result.title,
       result.metadata[:title_english],
-      result.metadata[:title_romaji],
-      result.title
+      result.metadata[:title_romaji]
     ].compact.uniq
 
     queries.each do |query|
