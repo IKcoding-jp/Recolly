@@ -47,6 +47,10 @@ Layout/EndOfLine:
 Rails:
   Enabled: true
 
+# バリデーションメッセージの日本語直書きを許可（i18n本格導入時に移行する）
+Rails/I18nLocaleTexts:
+  Enabled: false
+
 # テストでは関連する複数のexpectをまとめて書くことを許可
 RSpec/MultipleExpectations:
   Max: 4
