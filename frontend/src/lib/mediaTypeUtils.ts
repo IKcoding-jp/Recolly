@@ -14,7 +14,7 @@ const ACTION_LABELS: Record<MediaType, string> = {
 const EPISODE_MEDIA_TYPES: ReadonlySet<MediaType> = new Set(['anime', 'drama', 'manga'])
 
 // 話数・巻数の単位ラベル
-const UNIT_LABELS: Partial<Record<MediaType, string>> = {
+export const UNIT_LABELS: Partial<Record<MediaType, string>> = {
   anime: '話',
   drama: '話',
   manga: '巻',

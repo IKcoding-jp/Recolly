@@ -1,13 +1,7 @@
 import type { ChangeEvent } from 'react'
 import type { MediaType } from '../../../lib/types'
+import { UNIT_LABELS } from '../../../lib/mediaTypeUtils'
 import styles from './ProgressControl.module.css'
-
-// メディアタイプごとの単位ラベル（「話」「巻」など）
-const UNIT_LABELS: Partial<Record<MediaType, string>> = {
-  anime: '話',
-  drama: '話',
-  manga: '巻',
-}
 
 type ProgressControlProps = {
   current: number
