@@ -95,11 +95,10 @@ RSpec.describe 'Api::V1::Images', type: :request do
         expect(S3DeleteService).to have_received(:call).with('uploads/images/a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg')
       end
 
-      it '存在しないimageableで422 + S3ロールバック' do
+      it '存在しないimageableで404' do
         params = image_params.deep_merge(image: { imageable_id: 999_999 })
         post '/api/v1/images', params: params, as: :json
-        expect(response).to have_http_status(:unprocessable_content)
-        expect(S3DeleteService).to have_received(:call).with('uploads/images/a1b2c3d4-e5f6-7890-abcd-ef1234567890.jpg')
+        expect(response).to have_http_status(:not_found)
       end
     end
 

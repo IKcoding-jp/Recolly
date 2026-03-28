@@ -33,6 +33,8 @@ module Api
       # POST /api/v1/images
       # S3アップロード完了後、画像メタデータをDBに登録する
       def create
+        return unless authorize_imageable!
+
         image = Image.new(image_params)
 
         if image.save
@@ -59,7 +61,26 @@ module Api
 
       private
 
-      # 画像の認可チェック: imageableに対する操作権限があるか確認
+      # create用の認可: imageableが有効なリソースか確認
+      # 手動登録フローではWork作成直後（Record作成前）に呼ばれるため、存在確認のみ
+      def authorize_imageable! # rubocop:disable Naming/PredicateMethod
+        imageable_type = image_params[:imageable_type]
+        imageable_id = image_params[:imageable_id]
+
+        unless Image::ALLOWED_IMAGEABLE_TYPES.include?(imageable_type)
+          render json: { error: '無効なリソースタイプです' }, status: :unprocessable_content
+          return false
+        end
+
+        unless imageable_type.constantize.exists?(id: imageable_id)
+          render json: { error: '指定されたリソースが見つかりません' }, status: :not_found
+          return false
+        end
+
+        true
+      end
+
+      # destroy用の認可: imageableに対する操作権限があるか確認
       # Work: 現在のユーザーがその作品のRecordを持っている場合のみ操作可能
       def authorize_image!(image) # rubocop:disable Naming/PredicateMethod
         case image.imageable_type

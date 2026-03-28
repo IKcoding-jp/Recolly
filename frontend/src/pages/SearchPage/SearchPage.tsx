@@ -103,15 +103,20 @@ export function SearchPage() {
     imageData?: UploadResult,
   ) => {
     const { work } = await worksApi.create(title, mediaType, description)
+    // 画像登録はbest-effort（失敗しても作品登録フローは継続する）
     if (imageData) {
-      await imagesApi.create({
-        s3Key: imageData.s3Key,
-        fileName: imageData.fileName,
-        contentType: imageData.contentType,
-        fileSize: imageData.fileSize,
-        imageableType: 'Work',
-        imageableId: work.id,
-      })
+      try {
+        await imagesApi.create({
+          s3Key: imageData.s3Key,
+          fileName: imageData.fileName,
+          contentType: imageData.contentType,
+          fileSize: imageData.fileSize,
+          imageableType: 'Work',
+          imageableId: work.id,
+        })
+      } catch {
+        // 画像登録失敗は無視してRecordModal表示に進む
+      }
     }
     // 手動登録後、RecordModalを開いてステータスを選ばせる
     setManualWorkId(work.id)
