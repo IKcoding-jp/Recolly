@@ -22,6 +22,9 @@ gem 'omniauth-twitter2'
 gem 'faraday'
 gem 'faraday-retry'
 
+# S3画像アップロード用
+gem 'aws-sdk-s3'
+
 # Redis（検索キャッシュ用、ADR-0008）
 gem 'redis'
 
