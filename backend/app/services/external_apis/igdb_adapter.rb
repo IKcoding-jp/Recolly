@@ -9,7 +9,8 @@ module ExternalApis
     SEARCH_FIELDS = [
       'name', 'summary', 'cover.image_id', 'platforms.name',
       'genres.name', 'first_release_date',
-      'alternative_names.name', 'alternative_names.comment'
+      'alternative_names.name', 'alternative_names.comment',
+      'total_rating'
     ].join(',').freeze
 
     def media_types
@@ -18,18 +19,79 @@ module ExternalApis
 
     def search(query)
       sanitized = query.gsub('"', '\\"').gsub(';', '')
-      body = if japanese?(query)
-               # IGDBは日本語の全文検索に非対応のため、alternative_names（ローカライズ名）で検索
-               "fields #{SEARCH_FIELDS}; where alternative_names.name ~ *\"#{sanitized}\"*; limit 20;"
-             else
-               "search \"#{sanitized}\"; fields #{SEARCH_FIELDS}; limit 20;"
-             end
-      response = igdb_connection.post('/v4/games', body)
-
-      (response.body || []).map { |item| normalize(item) }
+      if japanese?(query)
+        search_japanese(sanitized)
+      else
+        search_by_keyword(sanitized)
+      end
     end
 
     private
+
+    # 日本語: IGDB直接検索 + Wikipedia補完を組み合わせる
+    def search_japanese(sanitized)
+      # ① IGDB直接検索（全文検索 + パターンマッチ）
+      keyword_results = search_by_keyword(sanitized)
+      pattern_results = search_by_pattern(sanitized)
+      igdb_results = merge_results(keyword_results, pattern_results)
+
+      # ② Wikipedia JP で日本語タイトル候補を取得し、IGDBで再検索
+      wikipedia_results = search_via_wikipedia(sanitized, igdb_results)
+
+      # ③ マージ
+      merge_results(igdb_results, wikipedia_results)
+    end
+
+    # searchキーワードによる全文検索（関連度順で返る）
+    def search_by_keyword(sanitized)
+      body = "search \"#{sanitized}\"; fields #{SEARCH_FIELDS}; limit 20;"
+      response = igdb_connection.post('/v4/games', body)
+      (response.body || []).map { |item| normalize(item) }
+    end
+
+    # name / alternative_names.name の部分一致検索
+    def search_by_pattern(sanitized)
+      where_clause = "name ~ *\"#{sanitized}\"* | alternative_names.name ~ *\"#{sanitized}\"*"
+      body = "fields #{SEARCH_FIELDS}; where #{where_clause}; limit 20;"
+      response = igdb_connection.post('/v4/games', body)
+      (response.body || []).map { |item| normalize(item) }
+    end
+
+    # 2つの検索結果をマージし、IDで重複を除去
+    def merge_results(primary, secondary)
+      seen_ids = primary.to_set(&:external_api_id)
+      combined = primary.dup
+      secondary.each { |r| combined << r unless seen_ids.include?(r.external_api_id) }
+      combined
+    end
+
+    # Wikipedia JP で日本語タイトルを取得し、各タイトルでIGDBを再検索
+    def search_via_wikipedia(query, existing_results)
+      wikipedia = WikipediaGameAdapter.new
+      titles = wikipedia.search_titles(query)
+      return [] if titles.empty?
+
+      existing_ids = existing_results.to_set(&:external_api_id)
+      titles.filter_map { |jp_title| find_game_via_wikipedia(jp_title, wikipedia, existing_ids) }
+    rescue StandardError => e
+      Rails.logger.error("[IgdbAdapter] Wikipedia補完エラー: #{e.message}")
+      []
+    end
+
+    # Wikipediaタイトル1件をIGDBで検索し、日本語情報を付与して返す
+    def find_game_via_wikipedia(jp_title, wikipedia, existing_ids)
+      sanitized_title = jp_title.gsub('"', '\\"').gsub(';', '')
+      igdb_matches = search_by_keyword(sanitized_title)
+      return nil if igdb_matches.empty?
+
+      match = igdb_matches.first
+      return nil if existing_ids.include?(match.external_api_id)
+
+      match.title = jp_title
+      match.description = wikipedia.fetch_extract(jp_title).presence || match.description
+      existing_ids.add(match.external_api_id)
+      match
+    end
 
     # 日本語文字（ひらがな・カタカナ・漢字）が含まれるか判定
     def japanese?(text)
@@ -55,7 +117,11 @@ module ExternalApis
 
     def access_token
       Rails.cache.fetch(TOKEN_CACHE_KEY, expires_in: 50.days) do
-        token_connection = Faraday.new { |f| f.response :json }
+        # Hashボディをapplication/x-www-form-urlencoded形式に変換する
+        token_connection = Faraday.new do |f|
+          f.request :url_encoded
+          f.response :json
+        end
         response = token_connection.post(
           TWITCH_TOKEN_URL,
           {
@@ -81,6 +147,13 @@ module ExternalApis
       jp&.dig('name')
     end
 
+    # IGDBのtotal_rating値を0.0〜1.0に正規化（元は0〜100）
+    def normalize_popularity(value)
+      return 0.0 unless value
+
+      value.to_f / 100.0
+    end
+
     def normalize(item)
       cover_id = item.dig('cover', 'image_id')
 
@@ -95,7 +168,8 @@ module ExternalApis
         {
           platforms: item['platforms']&.pluck('name'),
           genres: item['genres']&.pluck('name'),
-          first_release_date: item['first_release_date']
+          first_release_date: item['first_release_date'],
+          popularity: normalize_popularity(item['total_rating'])
         }.compact
       )
     end

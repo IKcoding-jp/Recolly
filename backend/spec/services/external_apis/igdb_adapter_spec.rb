@@ -38,7 +38,8 @@ RSpec.describe ExternalApis::IgdbAdapter, type: :service do
           'cover' => { 'image_id' => 'co1wyy' },
           'platforms' => [{ 'name' => 'PC' }, { 'name' => 'PlayStation 4' }],
           'genres' => [{ 'name' => 'RPG' }],
-          'first_release_date' => 1_431_993_600
+          'first_release_date' => 1_431_993_600,
+          'total_rating' => 92.5
         }
       ]
     end
@@ -64,11 +65,128 @@ RSpec.describe ExternalApis::IgdbAdapter, type: :service do
       expect(game.cover_image_url).to include('images.igdb.com')
     end
 
+    it 'popularity（正規化済みtotal_rating）をmetadataに含める' do
+      game = adapter.search('Witcher').first
+      expect(game.metadata[:popularity]).to be_within(0.01).of(0.925)
+    end
+
     it 'Twitch OAuth トークンを取得してAPIに送信する' do
       adapter.search('Witcher')
       expect(WebMock).to have_requested(:post, 'https://id.twitch.tv/oauth2/token')
       expect(WebMock).to have_requested(:post, 'https://api.igdb.com/v4/games')
         .with(headers: { 'Authorization' => 'Bearer test_token', 'Client-ID' => client_id })
+    end
+
+    context '日本語クエリの場合' do
+      let(:keyword_response) do
+        [{ 'id' => 2623, 'name' => "Kirby's Dream Land", 'summary' => 'カービィのアクションゲーム',
+           'cover' => { 'image_id' => 'co2abc' }, 'total_rating' => 80.0 }]
+      end
+      let(:pattern_response) do
+        [
+          { 'id' => 2623, 'name' => "Kirby's Dream Land", 'summary' => 'カービィのアクションゲーム',
+            'cover' => { 'image_id' => 'co2abc' }, 'total_rating' => 80.0,
+            'alternative_names' => [{ 'name' => '星のカービィ', 'comment' => 'Japanese title' }] },
+          { 'id' => 3625, 'name' => 'Kirby Super Star', 'summary' => 'カービィの複合アクション',
+            'cover' => { 'image_id' => 'co3def' }, 'total_rating' => 85.0,
+            'alternative_names' => [{ 'name' => '星のカービィ スーパーデラックス', 'comment' => 'Japanese title' }] }
+        ]
+      end
+
+      before do
+        # Wikipedia補完はこのコンテキストでは空を返す（別コンテキストでテスト）
+        wiki_stub = instance_double(ExternalApis::WikipediaGameAdapter, search_titles: [])
+        allow(ExternalApis::WikipediaGameAdapter).to receive(:new).and_return(wiki_stub)
+        stub_request(:post, 'https://api.igdb.com/v4/games')
+          .to_return(
+            { status: 200, body: keyword_response.to_json, headers: { 'Content-Type' => 'application/json' } },
+            { status: 200, body: pattern_response.to_json, headers: { 'Content-Type' => 'application/json' } }
+          )
+      end
+
+      it 'searchキーワードとパターンマッチの両方で検索してマージする' do
+        results = adapter.search('カービィ')
+        expect(results.length).to eq(2)
+        expect(results.map(&:external_api_id)).to contain_exactly('2623', '3625')
+      end
+
+      it '重複するIDは除去される' do
+        results = adapter.search('カービィ')
+        ids = results.map(&:external_api_id)
+        expect(ids.uniq.length).to eq(ids.length)
+      end
+    end
+
+    context '日本語クエリ + Wikipedia補完' do
+      let(:wikipedia_double) { instance_double(ExternalApis::WikipediaGameAdapter) }
+
+      let(:igdb_wikipedia_match) do
+        [
+          {
+            'id' => 3075,
+            'name' => 'Kirby Super Star',
+            'summary' => 'A Kirby game',
+            'cover' => { 'image_id' => 'co5xyz' },
+            'total_rating' => 88.0,
+            'alternative_names' => [
+              { 'name' => '星のカービィ スーパーデラックス', 'comment' => 'Japanese title' }
+            ]
+          }
+        ]
+      end
+
+      before do
+        allow(ExternalApis::WikipediaGameAdapter).to receive(:new).and_return(wikipedia_double)
+        allow(wikipedia_double).to receive_messages(
+          search_titles: ['星のカービィ スーパーデラックス', '星のカービィ (アニメ)'],
+          fetch_extract: '任天堂が発売したアクションゲーム。'
+        )
+
+        # 1回目: search_by_keyword（日本語）→ 0件
+        # 2回目: search_by_pattern（日本語）→ 0件
+        # 3回目: Wikipedia「星のカービィ スーパーデラックス」でIGDB再検索 → ヒット
+        # 4回目: Wikipedia「星のカービィ (アニメ)」でIGDB再検索 → 0件
+        stub_request(:post, 'https://api.igdb.com/v4/games')
+          .to_return(
+            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
+            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
+            { status: 200, body: igdb_wikipedia_match.to_json,
+              headers: { 'Content-Type' => 'application/json' } },
+            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } }
+          )
+      end
+
+      it 'IGDB直接検索で見つからないゲームをWikipedia経由で見つける' do
+        results = adapter.search('カービィ')
+        expect(results.length).to eq(1)
+        expect(results.first.external_api_id).to eq('3075')
+      end
+
+      it 'Wikipedia経由の結果に日本語タイトルをセットする' do
+        results = adapter.search('カービィ')
+        expect(results.first.title).to eq('星のカービィ スーパーデラックス')
+      end
+
+      it 'Wikipedia経由の結果に日本語説明をセットする' do
+        results = adapter.search('カービィ')
+        expect(results.first.description).to eq('任天堂が発売したアクションゲーム。')
+      end
+    end
+
+    context '英語クエリではWikipedia検索を呼ばない' do
+      let(:wikipedia_double) { instance_spy(ExternalApis::WikipediaGameAdapter) }
+
+      before do
+        allow(ExternalApis::WikipediaGameAdapter).to receive(:new).and_return(wikipedia_double)
+        stub_request(:post, 'https://api.igdb.com/v4/games')
+          .to_return(status: 200, body: igdb_response.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it 'WikipediaGameAdapterのsearch_titlesを呼び出さない' do
+        adapter.search('Witcher')
+        expect(wikipedia_double).not_to have_received(:search_titles)
+      end
     end
   end
 
