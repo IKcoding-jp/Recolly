@@ -25,6 +25,9 @@ RSpec.describe WorkSearchService, type: :service do
     allow(ExternalApis::AniListAdapter).to receive(:new).and_return(anilist_double)
     allow(ExternalApis::GoogleBooksAdapter).to receive(:new).and_return(google_books_double)
     allow(ExternalApis::IgdbAdapter).to receive(:new).and_return(igdb_double)
+    # Wikipedia補完のデフォルト（見つからない場合）
+    wiki_double = instance_double(ExternalApis::WikipediaClient, fetch_extract: nil)
+    allow(ExternalApis::WikipediaClient).to receive(:new).and_return(wiki_double)
     # instance_spy はnull objectのため、スタブしないと自身を返す
     # enrich_anilist_descriptions で description に spy が入りマーシャリング失敗を防ぐ
     allow(tmdb_double).to receive_messages(safe_search: [], fetch_japanese_description: nil)
@@ -101,13 +104,11 @@ RSpec.describe WorkSearchService, type: :service do
         { popularity: 1.0, title_english: 'Attack on Titan', title_romaji: 'Shingeki no Kyojin' }
       )
     end
-    let(:wikipedia_client_double) { instance_double(ExternalApis::WikipediaClient) }
+    let(:wikipedia_client_double) { instance_double(ExternalApis::WikipediaClient, fetch_extract: nil) }
 
     before do
       allow(anilist_double).to receive(:safe_search).and_return([anilist_result])
-      # Wikipedia補完のデフォルト（見つからない場合）
       allow(ExternalApis::WikipediaClient).to receive(:new).and_return(wikipedia_client_double)
-      allow(wikipedia_client_double).to receive(:fetch_extract).and_return(nil)
     end
 
     it 'AniListの英語説明をTMDBの日本語説明に置き換える' do
