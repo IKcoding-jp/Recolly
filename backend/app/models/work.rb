@@ -25,12 +25,10 @@ class Work < ApplicationRecord
   end
 
   # カバー画像のURL（S3署名付きURL or 既存のcover_image_urlカラム）
+  # メモ化でN+1クエリを防止する
   def resolved_cover_image_url
-    if cover_image
-      S3PresignService.presign_get(cover_image.s3_key)
-    else
-      cover_image_url
-    end
+    img = cover_image
+    img ? S3PresignService.presign_get(img.s3_key) : cover_image_url
   end
 
   # JSONシリアライズ時にS3署名付きURLを使う

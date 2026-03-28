@@ -9,7 +9,7 @@ module Api
 
       # GET /api/v1/records
       def index
-        records = apply_sort(apply_filters(current_user.records.includes(:work, :tags)))
+        records = apply_sort(apply_filters(current_user.records.includes(work: :images, tags: [])))
 
         if pagination_requested?
           render json: paginated_response(records)
@@ -83,7 +83,7 @@ module Api
       end
 
       def set_record
-        @record = Record.includes(:work, :tags).find(params[:id])
+        @record = Record.includes(work: :images, tags: []).find(params[:id])
       end
 
       def authorize_record!

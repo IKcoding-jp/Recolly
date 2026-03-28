@@ -5,9 +5,14 @@ class Image < ApplicationRecord
   belongs_to :imageable, polymorphic: true
 
   ALLOWED_CONTENT_TYPES = %w[image/jpeg image/png image/gif image/webp].freeze
+  ALLOWED_IMAGEABLE_TYPES = %w[Work].freeze
   MAX_FILE_SIZE = 10 * 1024 * 1024 # 10MB
 
   validates :s3_key, presence: true, uniqueness: true
+  validates :imageable_type, inclusion: {
+    in: ALLOWED_IMAGEABLE_TYPES,
+    message: 'は許可されていないタイプです'
+  }
   validates :file_name, presence: true
   validates :content_type, presence: true, inclusion: {
     in: ALLOWED_CONTENT_TYPES,

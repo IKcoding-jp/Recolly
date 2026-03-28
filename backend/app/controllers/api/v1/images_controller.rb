@@ -39,13 +39,16 @@ module Api
           render json: { image: image_json(image) }, status: :created
         else
           # バリデーション失敗時、既にS3にアップロード済みのファイルを削除（ロールバック）
-          S3DeleteService.call(image_params[:s3_key]) if image_params[:s3_key].present?
+          # セキュリティ: 他ユーザーの画像を削除されないよう、DB未登録のキーのみ削除する
+          cleanup_orphaned_s3_file(image_params[:s3_key])
           render json: { errors: image.errors.full_messages }, status: :unprocessable_content
         end
       end
 
       # DELETE /api/v1/images/:id
       # DBレコードとS3ファイルの両方を削除する
+      # TODO: Workは共有リソースのため現時点では所有者チェックなし。
+      #       User等のユーザー固有imageableが追加された際に、所有者認可チェックを実装すること。
       def destroy
         image = Image.find(params[:id])
         s3_key = image.s3_key
@@ -62,6 +65,15 @@ module Api
 
       def image_params
         params.expect(image: %i[s3_key file_name content_type file_size imageable_type imageable_id])
+      end
+
+      # S3ロールバック: presignで発行したキー形式のみ許可し、DB未登録のキーのみ削除する
+      def cleanup_orphaned_s3_file(s3_key)
+        return if s3_key.blank?
+        return unless s3_key.match?(%r{\Auploads/images/[0-9a-f-]+\.\w+\z})
+        return if Image.exists?(s3_key: s3_key)
+
+        S3DeleteService.call(s3_key)
       end
 
       def image_json(image)
