@@ -13,10 +13,17 @@ module ExternalApis
       response = books_connection.get('/books/v1/volumes', params)
 
       items = response.body['items'] || []
-      items.map { |item| normalize(item) }
+      results = items.map { |item| normalize(item) }
+      filter_by_title(results, query)
     end
 
     private
+
+    # 検索キーワードがタイトルに含まれる結果のみ残す（大文字小文字区別なし）
+    def filter_by_title(results, query)
+      query_downcase = query.downcase
+      results.select { |r| r.title&.downcase&.include?(query_downcase) }
+    end
 
     def books_connection
       @books_connection ||= connection(url: BASE_URL)
