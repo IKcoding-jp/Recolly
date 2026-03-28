@@ -124,6 +124,8 @@ GEM
       logger
     faraday-net_http (3.4.2)
       net-http (~> 0.5)
+    faraday-retry (2.4.0)
+      faraday (~> 2.0)
     fugit (1.12.1)
       et-orbi (~> 1.4)
       raabro (~> 1.4)
@@ -457,6 +459,7 @@ DEPENDENCIES
   debug
   devise
   faraday
+  faraday-retry
   kamal
   letter_opener_web
   omniauth

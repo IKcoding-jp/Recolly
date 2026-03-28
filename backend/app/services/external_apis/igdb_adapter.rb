@@ -41,7 +41,11 @@ module ExternalApis
       client_id = ENV.fetch('IGDB_CLIENT_ID')
 
       # IGDBはプレーンテキストのクエリ言語を使うため、request :json は使わない
-      Faraday.new(url: IGDB_URL) do |f|
+      Faraday.new(url: IGDB_URL, request: { open_timeout: 5, timeout: 10 }) do |f|
+        # POSTも含める（IGDB検索クエリは冪等のため安全）
+        f.request :retry, max: 2, retry_statuses: [500, 502, 503, 504],
+                          methods: %i[get head options put delete post]
+        f.response :logger, Rails.logger, headers: false, bodies: !Rails.env.production?
         f.response :json
         f.headers['Authorization'] = "Bearer #{token}"
         f.headers['Client-ID'] = client_id

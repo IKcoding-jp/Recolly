@@ -72,6 +72,31 @@ RSpec.describe ExternalApis::IgdbAdapter, type: :service do
     end
   end
 
+  describe 'リトライミドルウェア' do
+    let(:retry_success_body) do
+      [{ 'id' => 1942, 'name' => 'Test Game', 'summary' => 'テストゲーム' }]
+    end
+
+    it 'サーバーエラー時にリトライして成功する' do
+      stub_request(:post, 'https://api.igdb.com/v4/games')
+        .to_return(status: 500, body: '[]', headers: { 'Content-Type' => 'application/json' })
+        .then.to_return(status: 200, body: retry_success_body.to_json,
+                        headers: { 'Content-Type' => 'application/json' })
+
+      results = adapter.search('Test')
+      expect(results.length).to eq(1)
+      expect(results.first.title).to eq('Test Game')
+    end
+  end
+
+  describe 'タイムアウト設定' do
+    it 'open_timeout と timeout が設定されている' do
+      conn = adapter.send(:igdb_connection)
+      expect(conn.options.open_timeout).to eq(5)
+      expect(conn.options.timeout).to eq(10)
+    end
+  end
+
   describe '#safe_search' do
     it 'OAuth認証失敗時に空配列を返す' do
       stub_request(:post, 'https://id.twitch.tv/oauth2/token').to_return(status: 401)
