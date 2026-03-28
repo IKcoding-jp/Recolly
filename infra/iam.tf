@@ -54,6 +54,24 @@ resource "aws_iam_instance_profile" "ec2" {
   role = aws_iam_role.ec2.name
 }
 
+# EC2がS3画像バケットを操作する権限（署名付きURL発行 + 画像削除）
+data "aws_iam_policy_document" "ec2_s3_images" {
+  statement {
+    actions   = ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"]
+    resources = ["${aws_s3_bucket.images.arn}/*"]
+  }
+}
+
+resource "aws_iam_policy" "ec2_s3_images" {
+  name   = "${var.project_name}-ec2-s3-images-policy"
+  policy = data.aws_iam_policy_document.ec2_s3_images.json
+}
+
+resource "aws_iam_role_policy_attachment" "ec2_s3_images" {
+  role       = aws_iam_role.ec2.name
+  policy_arn = aws_iam_policy.ec2_s3_images.arn
+}
+
 # === GitHub Actions OIDC ===
 
 # OIDCプロバイダ（GitHubとAWSの信頼関係）
