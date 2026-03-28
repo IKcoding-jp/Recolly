@@ -144,11 +144,11 @@ RSpec.describe WorkSearchService, type: :service do
       expect(results.first.description).to eq('巨人が支配する世界で人類が生き残りをかけて戦う')
     end
 
-    it 'TMDBでもWikipediaでも見つからない場合はAniListの英語説明をそのまま使う' do
+    it 'TMDBでもWikipediaでも見つからない場合は英語説明を除去する' do
       allow(tmdb_double).to receive(:fetch_japanese_description).and_return(nil)
 
       results = service.search('マイナーアニメ')
-      expect(results.first.description).to eq('In a world ruled by giants...')
+      expect(results.first.description).to be_nil
     end
 
     it '英語タイトルがない場合はローマ字タイトルで検索する' do # rubocop:disable RSpec/ExampleLength
@@ -203,13 +203,26 @@ RSpec.describe WorkSearchService, type: :service do
         expect(results.first.description).to eq('マイナーアニメは、日本のテレビアニメ作品。')
       end
 
-      it 'TMDBでもWikipediaでも見つからない場合、英語説明をそのまま使う' do
+      it 'TMDBでもWikipediaでも見つからない場合、英語説明を除去する' do
         allow(wikipedia_client_double).to receive(:fetch_extract)
           .with('マイナーアニメ').and_return(nil)
 
         results = service.search('マイナーアニメ')
-        expect(results.first.description).to eq('A minor anime series.')
+        expect(results.first.description).to be_nil
       end
+    end
+
+    it '日本語説明が見つからなかった場合、英語説明を除去する' do
+      english_anime = ExternalApis::BaseAdapter::SearchResult.new(
+        'マイナーOVA', 'anime', 'This is a minor OVA episode.',
+        nil, 1, '88888', 'anilist',
+        { popularity: 0.05, title_english: 'Minor OVA', title_romaji: 'Minor OVA' }
+      )
+      allow(anilist_double).to receive(:safe_search).and_return([english_anime])
+      allow(tmdb_double).to receive(:fetch_japanese_description).and_return(nil)
+
+      results = service.search('マイナーOVA')
+      expect(results.first.description).to be_nil
     end
   end
 

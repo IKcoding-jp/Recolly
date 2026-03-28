@@ -57,11 +57,9 @@ class WorkSearchService
     wikipedia = ExternalApis::WikipediaClient.new
 
     anilist_results.each do |result|
-      # ① TMDB検索（英語→ローマ字→日本語の順で複数パターンを試す）
       description = fetch_japanese_description_from_tmdb(result, tmdb)
-      # ② TMDBで見つからなければWikipediaから取得
       description ||= wikipedia.fetch_extract(result.title)
-      result.description = description if description.present?
+      result.description = resolve_description(description, result.description)
     end
   end
 
@@ -78,6 +76,21 @@ class WorkSearchService
       return description if description.present?
     end
     nil
+  end
+
+  # 日本語説明が見つかればそれを使い、見つからなければ英語説明を除去する
+  def resolve_description(japanese_desc, original_desc)
+    return japanese_desc if japanese_desc.present?
+
+    english_text?(original_desc) ? nil : original_desc
+  end
+
+  # 文字列の半分以上がASCII文字なら英語と判定
+  def english_text?(text)
+    return false if text.blank?
+
+    ascii_ratio = text.count("\x20-\x7E").to_f / text.length
+    ascii_ratio > 0.5
   end
 
   # 各アダプターが返すmetadata[:popularity]（0.0〜1.0に正規化済み）で降順ソート
