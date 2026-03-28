@@ -47,10 +47,10 @@ module Api
 
       # DELETE /api/v1/images/:id
       # DBレコードとS3ファイルの両方を削除する
-      # TODO: Workは共有リソースのため現時点では所有者チェックなし。
-      #       User等のユーザー固有imageableが追加された際に、所有者認可チェックを実装すること。
       def destroy
         image = Image.find(params[:id])
+        return unless authorize_image!(image)
+
         s3_key = image.s3_key
         image.destroy!
         S3DeleteService.call(s3_key)
@@ -58,6 +58,17 @@ module Api
       end
 
       private
+
+      # 画像の認可チェック: imageableに対する操作権限があるか確認
+      # Work: 現在のユーザーがその作品のRecordを持っている場合のみ操作可能
+      def authorize_image!(image) # rubocop:disable Naming/PredicateMethod
+        case image.imageable_type
+        when 'Work'
+          return true if current_user.records.exists?(work_id: image.imageable_id)
+        end
+        render json: { error: '権限がありません' }, status: :forbidden
+        false
+      end
 
       def presign_params
         params.expect(image: %i[file_name content_type file_size])

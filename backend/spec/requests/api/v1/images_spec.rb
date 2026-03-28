@@ -123,9 +123,11 @@ RSpec.describe 'Api::V1::Images', type: :request do
       )
     end
 
-    context '認証済み' do
+    context '認証済み（作品のRecordを持つユーザー）' do
       before do
         sign_in user
+        # 画像削除には、その作品のRecordを持っている必要がある
+        user.records.create!(work: work, status: :watching)
         allow(S3DeleteService).to receive(:call)
       end
 
@@ -144,6 +146,15 @@ RSpec.describe 'Api::V1::Images', type: :request do
       it '存在しないIDで404' do
         delete '/api/v1/images/999999', as: :json
         expect(response).to have_http_status(:not_found)
+      end
+    end
+
+    context '認証済み（Recordを持たないユーザー）' do
+      before { sign_in user }
+
+      it '権限がないため403を返す' do
+        delete "/api/v1/images/#{image.id}", as: :json
+        expect(response).to have_http_status(:forbidden)
       end
     end
 
