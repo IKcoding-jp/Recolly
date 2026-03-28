@@ -84,3 +84,13 @@ resource "aws_ssm_parameter" "frontend_url" {
   type  = "String"
   value = "https://${aws_cloudfront_distribution.main.domain_name}"
 }
+
+# === S3画像アップロード用 ===
+# 認証はEC2のIAMロールで行うため、アクセスキーのSSMパラメータは不要
+# バケット名のみDockerコンテナに渡す
+
+resource "aws_ssm_parameter" "s3_bucket_name" {
+  name  = "/${var.project_name}/${var.environment}/S3_BUCKET_NAME"
+  type  = "String"
+  value = aws_s3_bucket.images.id
+}

@@ -44,6 +44,8 @@ GOOGLE_CLIENT_SECRET=$(get_param "GOOGLE_CLIENT_SECRET")
 FRONTEND_URL=$(get_param "FRONTEND_URL")
 # SSMパラメータ未作成でもデプロイを止めない（puma.rbが未設定時はSolid Queueを起動しない）
 SOLID_QUEUE_IN_PUMA=$(get_param "SOLID_QUEUE_IN_PUMA" 2>/dev/null || echo "")
+# S3画像アップロード用（認証はEC2のIAMロールで行うため、アクセスキーは不要）
+S3_BUCKET_NAME=$(get_param "S3_BUCKET_NAME")
 
 # DB準備（マイグレーション + 未作成DBのスキーマ適用）
 # db:prepare = db:migrate + db:schema:load（Solid Cache等のスキーマ対応）
@@ -78,6 +80,7 @@ docker run -d \
   -e GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
   -e FRONTEND_URL="$FRONTEND_URL" \
   -e SOLID_QUEUE_IN_PUMA="$SOLID_QUEUE_IN_PUMA" \
+  -e S3_BUCKET_NAME="$S3_BUCKET_NAME" \
   -e RAILS_LOG_TO_STDOUT=1 \
   "${ECR_REGISTRY}/${APP_NAME}-backend:${IMAGE_TAG}"
 

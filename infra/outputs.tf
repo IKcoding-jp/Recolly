@@ -34,3 +34,8 @@ output "cloudfront_distribution_id" {
   description = "CloudFrontディストリビューションID（キャッシュクリア用）"
   value       = aws_cloudfront_distribution.main.id
 }
+
+output "s3_images_bucket_name" {
+  description = "画像アップロード用S3バケット名"
+  value       = aws_s3_bucket.images.id
+}
