@@ -84,3 +84,33 @@ resource "aws_ssm_parameter" "frontend_url" {
   type  = "String"
   value = "https://${aws_cloudfront_distribution.main.domain_name}"
 }
+
+# === S3画像アップロード用 ===
+
+resource "aws_ssm_parameter" "aws_access_key_id" {
+  name  = "/${var.project_name}/${var.environment}/AWS_ACCESS_KEY_ID"
+  type  = "SecureString"
+  value = "placeholder"
+
+  lifecycle { ignore_changes = [value] }
+}
+
+resource "aws_ssm_parameter" "aws_secret_access_key" {
+  name  = "/${var.project_name}/${var.environment}/AWS_SECRET_ACCESS_KEY"
+  type  = "SecureString"
+  value = "placeholder"
+
+  lifecycle { ignore_changes = [value] }
+}
+
+resource "aws_ssm_parameter" "aws_region" {
+  name  = "/${var.project_name}/${var.environment}/AWS_REGION"
+  type  = "String"
+  value = var.aws_region
+}
+
+resource "aws_ssm_parameter" "s3_bucket_name" {
+  name  = "/${var.project_name}/${var.environment}/S3_BUCKET_NAME"
+  type  = "String"
+  value = aws_s3_bucket.images.id
+}
