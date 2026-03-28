@@ -72,9 +72,7 @@ has_many :images, as: :imageable, dependent: :destroy
   "image": {
     "file_name": "cover.jpg",
     "content_type": "image/jpeg",
-    "file_size": 1200000,
-    "imageable_type": "Work",
-    "imageable_id": 1
+    "file_size": 1200000
   }
 }
 ```
@@ -82,19 +80,20 @@ has_many :images, as: :imageable, dependent: :destroy
 **バリデーション:**
 - content_type が JPEG/PNG/GIF/WebP のいずれか
 - file_size が 10MB以下
-- imageable_type が許可リスト内（現時点では "Work" のみ）
-- imageable_id に対応するレコードが存在し、現在のユーザーが所有者である
+
+**注:** imageable_type/imageable_id は presign 時点では不要。手動登録ではWorkがまだ存在しないため、メタデータ登録（POST /api/v1/images）時に指定する。
 
 **レスポンス (200):**
 ```json
 {
   "presigned_url": "https://s3.../...",
-  "s3_key": "uploads/works/1/a3f8b2c1-e4d5-6789.jpg"
+  "s3_key": "uploads/images/a3f8b2c1-e4d5-6789.jpg"
 }
 ```
 
-**S3キー生成ルール:** `uploads/{imageable_type}/{imageable_id}/{uuid}.{拡張子}`
+**S3キー生成ルール:** `uploads/images/{uuid}.{拡張子}`
 - UUIDはバックエンドで生成（パストラバーサル・XSS対策）
+- imageable に依存しないフラットな構造（手動登録時にWorkが未作成のため）
 
 ### POST /api/v1/images
 
@@ -171,13 +170,24 @@ ImageUploader は独立した共通コンポーネント。ManualWorkForm と作
 
 ### 4.3 アップロードフロー（3ステップ）
 
+**手動登録時（Workが未作成）:**
 ```
 ① POST /api/v1/images/presign → 署名付きURLとs3_keyを取得
 ② XHR PUT → 署名付きURLでS3に直接アップロード（プログレスバー表示）
-③ POST /api/v1/images → メタデータをDBに登録
+  ── ユーザーがフォームを埋めて「登録する」をクリック ──
+③ POST /api/v1/works → Workを作成し、work_idを取得
+④ POST /api/v1/images → メタデータをDBに登録（work_idを使用）
 ```
 
-- 3ステップは async/await で順番に実行
+**既存作品のカバー画像変更時:**
+```
+① POST /api/v1/images/presign → 署名付きURLとs3_keyを取得
+② XHR PUT → 署名付きURLでS3に直接アップロード
+③ POST /api/v1/images → メタデータをDBに登録（既存work_idを使用）
+④ DELETE /api/v1/images/:old_id → 旧画像を削除
+```
+
+- async/await で順番に実行
 - ステップ②はXHRを使用（fetchにはアップロード進捗取得機能がないため）
 - XHR の `upload.onprogress` イベントでプログレスバーを更新
 
