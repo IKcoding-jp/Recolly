@@ -38,9 +38,18 @@ module ExternalApis
           publisher: info['publisher'],
           published_date: info['publishedDate'],
           page_count: info['pageCount'],
-          categories: info['categories']
+          categories: info['categories'],
+          # ratingsCountで人気度を推定。100件レビューで正規化上限1.0
+          popularity: normalize_popularity(info['ratingsCount'])
         }.compact
       )
+    end
+
+    # Google Booksのレビュー数を0.0〜1.0に正規化
+    def normalize_popularity(value)
+      return 0.0 unless value
+
+      [value.to_f / 100.0, 1.0].min
     end
   end
 end

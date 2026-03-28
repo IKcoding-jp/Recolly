@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# Faraday 2.x ではリトライミドルウェアを明示的にrequireする必要がある
+require 'faraday/retry'
+
 module ExternalApis
   # 外部API共通インターフェース（ADR-0011: アダプタパターン）
   # 各APIアダプタはこのクラスを継承し、search メソッドを実装する

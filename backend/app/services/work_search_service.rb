@@ -8,7 +8,9 @@ class WorkSearchService
 
     Rails.cache.fetch(cache_key, expires_in: CACHE_TTL) do
       adapters = select_adapters(media_type)
-      adapters.flat_map { |adapter| adapter.safe_search(query) }
+      results = adapters.flat_map { |adapter| adapter.safe_search(query) }
+      enrich_anilist_descriptions(results)
+      sort_by_popularity(results)
     end
   end
 
@@ -42,5 +44,26 @@ class WorkSearchService
       ExternalApis::GoogleBooksAdapter.new,
       ExternalApis::IgdbAdapter.new
     ]
+  end
+
+  # AniListの結果にTMDBから日本語説明を補完する
+  # AniListの説明は英語のため、TMDBの日本語概要で置き換える
+  # TMDBで見つからない場合はAniListの英語説明をそのまま使う（フォールバック）
+  def enrich_anilist_descriptions(results)
+    anilist_results = results.select { |r| r.external_api_source == 'anilist' }
+    return if anilist_results.empty?
+
+    tmdb = ExternalApis::TmdbAdapter.new
+    anilist_results.each do |result|
+      # 英語タイトルまたはローマ字タイトルでTMDB検索（日本語タイトルよりマッチ率が高い）
+      query = result.metadata[:title_english] || result.metadata[:title_romaji] || result.title
+      description = tmdb.fetch_japanese_description(query)
+      result.description = description if description.present?
+    end
+  end
+
+  # 各アダプターが返すmetadata[:popularity]（0.0〜1.0に正規化済み）で降順ソート
+  def sort_by_popularity(results)
+    results.sort_by { |r| -(r.metadata[:popularity] || 0) }
   end
 end
