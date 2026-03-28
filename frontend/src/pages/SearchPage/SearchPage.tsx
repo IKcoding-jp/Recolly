@@ -16,6 +16,18 @@ import { GENRE_FILTERS } from './genreFilters'
 import type { GenreFilter } from './genreFilters'
 import styles from './SearchPage.module.css'
 
+// 日本語文字（ひらがな・カタカナ・漢字）が含まれるか判定
+function containsJapanese(text: string): boolean {
+  return /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]/.test(text)
+}
+
+// ゲーム検索結果が少ない＋日本語クエリのとき英語検索ヒントを表示すべきか判定
+function shouldShowEnglishHint(results: SearchResult[], searchQuery: string): boolean {
+  if (!containsJapanese(searchQuery)) return false
+  const gameCount = results.filter((r) => r.media_type === 'game').length
+  return gameCount <= 3
+}
+
 export function SearchPage() {
   const [query, setQuery] = useState('')
   const [genre, setGenre] = useState<GenreFilter>('all')
@@ -138,6 +150,13 @@ export function SearchPage() {
             </Button>
           </div>
         )}
+
+        {!isSearching &&
+          hasSearched &&
+          results.length > 0 &&
+          shouldShowEnglishHint(results, query) && (
+            <p className={styles.hint}>海外ゲームは英語タイトルでも検索してみてください</p>
+          )}
 
         {results.length > 0 && (
           <div className={styles.results}>

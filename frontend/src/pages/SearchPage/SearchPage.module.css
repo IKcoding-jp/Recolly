@@ -89,6 +89,14 @@
   margin-bottom: var(--spacing-md);
 }
 
+.hint {
+  color: var(--color-text-secondary, var(--color-text-muted));
+  font-size: var(--font-size-meta);
+  font-family: var(--font-body);
+  text-align: center;
+  margin-top: var(--spacing-sm);
+}
+
 .results {
   margin-top: var(--spacing-lg);
 }
