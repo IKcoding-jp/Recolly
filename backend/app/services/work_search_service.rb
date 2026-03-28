@@ -11,6 +11,7 @@ class WorkSearchService
       results = adapters.flat_map { |adapter| adapter.safe_search(query) }
       results = results.select { |r| r.media_type == media_type } if media_type.present?
       enrich_anilist_descriptions(results)
+      remove_english_descriptions(results)
       sort_by_popularity(results)
     end
   end
@@ -77,6 +78,11 @@ class WorkSearchService
       return description if description.present?
     end
     nil
+  end
+
+  # 全結果から英語の説明文を除去する（IGDB等の英語説明も対象）
+  def remove_english_descriptions(results)
+    results.each { |r| r.description = nil if english_text?(r.description) }
   end
 
   # 日本語説明が見つかればそれを使い、見つからなければ英語説明を除去する

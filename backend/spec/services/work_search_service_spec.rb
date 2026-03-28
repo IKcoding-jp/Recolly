@@ -120,6 +120,32 @@ RSpec.describe WorkSearchService, type: :service do
     end
   end
 
+  describe '英語説明文の除去' do
+    it 'IGDB等の英語説明文をnilにする' do
+      english_game = ExternalApis::BaseAdapter::SearchResult.new(
+        'Elden Ring', 'game', 'An action RPG developed by FromSoftware.',
+        nil, nil, '119133', 'igdb', { popularity: 0.9 }
+      )
+      allow(igdb_double).to receive(:safe_search).and_return([english_game])
+      allow(anilist_double).to receive(:safe_search).and_return([])
+
+      results = service.search('エルデンリング')
+      expect(results.first.description).to be_nil
+    end
+
+    it '日本語の説明文は除去しない' do
+      japanese_game = ExternalApis::BaseAdapter::SearchResult.new(
+        'モンスターハンター', 'game', 'カプコンが開発したアクションゲーム。',
+        nil, nil, '1111', 'igdb', { popularity: 0.8 }
+      )
+      allow(igdb_double).to receive(:safe_search).and_return([japanese_game])
+      allow(anilist_double).to receive(:safe_search).and_return([])
+
+      results = service.search('モンハン')
+      expect(results.first.description).to eq('カプコンが開発したアクションゲーム。')
+    end
+  end
+
   describe 'AniList日本語説明補完' do # rubocop:disable RSpec/MultipleMemoizedHelpers
     let(:anilist_result) do
       ExternalApis::BaseAdapter::SearchResult.new(
