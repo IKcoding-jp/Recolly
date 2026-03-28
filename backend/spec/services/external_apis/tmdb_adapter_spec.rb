@@ -219,6 +219,26 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
       stub_request(:get, /api.themoviedb.org/).to_timeout
       expect(adapter.fetch_japanese_description('テスト')).to be_nil
     end
+
+    it '同名の外国作品より日本語原語の作品を優先する' do
+      mixed = { 'results' => [
+        { 'media_type' => 'movie', 'original_language' => 'en', 'overview' => 'American SF movie' },
+        { 'media_type' => 'tv', 'original_language' => 'ja', 'overview' => '巨人が支配する世界で人類が戦う' }
+      ] }
+      stub_request(:get, %r{api.themoviedb.org/3/search/multi})
+        .to_return(status: 200, body: mixed.to_json, headers: { 'Content-Type' => 'application/json' })
+      expect(adapter.fetch_japanese_description('Attack on Titan')).to eq('巨人が支配する世界で人類が戦う')
+    end
+
+    it '日本語原語の結果がない場合は最初のmovie/tvにフォールバックする' do
+      english_only = { 'results' => [
+        { 'media_type' => 'person' },
+        { 'media_type' => 'movie', 'original_language' => 'en', 'overview' => 'An English movie' }
+      ] }
+      stub_request(:get, %r{api.themoviedb.org/3/search/multi})
+        .to_return(status: 200, body: english_only.to_json, headers: { 'Content-Type' => 'application/json' })
+      expect(adapter.fetch_japanese_description('Some Movie')).to eq('An English movie')
+    end
   end
 
   describe '#safe_search' do

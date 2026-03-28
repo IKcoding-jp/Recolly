@@ -33,8 +33,7 @@ module ExternalApis
                                      language: 'ja')
 
       results = response.body['results'] || []
-      match = results.find { |item| %w[movie tv].include?(item['media_type']) }
-      match&.dig('overview').presence
+      best_match_overview(results)
     rescue Faraday::Error => e
       Rails.logger.error("[TmdbAdapter] 日本語説明取得エラー: #{e.message}")
       nil
@@ -44,6 +43,13 @@ module ExternalApis
 
     # 日本のアニメーション作品を判定（AniListで取得するため、TMDBからは除外する）
     # genre_ids に Animation(16) が含まれ、かつ原語が日本語の場合はアニメとみなす
+    # 日本語原語の作品を優先してoverviewを返す（同名の外国作品との誤マッチを防止）
+    def best_match_overview(results)
+      candidates = results.select { |item| %w[movie tv].include?(item['media_type']) }
+      match = candidates.find { |item| item['original_language'] == 'ja' } || candidates.first
+      match&.dig('overview').presence
+    end
+
     def japanese_animation?(item)
       genre_ids = item['genre_ids'] || []
       genre_ids.include?(ANIMATION_GENRE_ID) && item['original_language'] == 'ja'

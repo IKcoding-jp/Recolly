@@ -25,6 +25,9 @@ RSpec.describe WorkSearchService, type: :service do
     allow(ExternalApis::AniListAdapter).to receive(:new).and_return(anilist_double)
     allow(ExternalApis::GoogleBooksAdapter).to receive(:new).and_return(google_books_double)
     allow(ExternalApis::IgdbAdapter).to receive(:new).and_return(igdb_double)
+    # Wikipedia補完のデフォルト（見つからない場合）
+    wiki_double = instance_double(ExternalApis::WikipediaClient, fetch_extract: nil)
+    allow(ExternalApis::WikipediaClient).to receive(:new).and_return(wiki_double)
     # instance_spy はnull objectのため、スタブしないと自身を返す
     # enrich_anilist_descriptions で description に spy が入りマーシャリング失敗を防ぐ
     allow(tmdb_double).to receive_messages(safe_search: [], fetch_japanese_description: nil)
@@ -46,9 +49,10 @@ RSpec.describe WorkSearchService, type: :service do
       expect(results.length).to eq(1)
     end
 
-    it 'media_type: movie で TmdbAdapter のみに問い合わせる' do
+    it 'media_type: movie で TmdbAdapter と AniListAdapter に問い合わせる' do
       service.search('テスト', media_type: 'movie')
-      expect(anilist_double).not_to have_received(:safe_search)
+      expect(tmdb_double).to have_received(:safe_search)
+      expect(anilist_double).to have_received(:safe_search)
     end
 
     it 'media_type: book で GoogleBooksAdapter のみに問い合わせる' do
@@ -59,6 +63,30 @@ RSpec.describe WorkSearchService, type: :service do
     it 'media_type: game で IgdbAdapter のみに問い合わせる' do
       service.search('テスト', media_type: 'game')
       expect(anilist_double).not_to have_received(:safe_search)
+    end
+
+    it 'media_type指定時にアダプターが返した別ジャンルの結果を除外する' do
+      manga_result = ExternalApis::BaseAdapter::SearchResult.new(
+        'けいおん!', 'manga', 'マンガ版', nil, nil, '2', 'anilist', { popularity: 0.3 }
+      )
+      anime_result = ExternalApis::BaseAdapter::SearchResult.new(
+        'けいおん!', 'anime', 'アニメ版', nil, 13, '3', 'anilist', { popularity: 0.7 }
+      )
+      allow(anilist_double).to receive(:safe_search).and_return([manga_result, anime_result])
+
+      results = service.search('けいおん', media_type: 'anime')
+      expect(results.map(&:media_type)).to all(eq('anime'))
+      expect(results.length).to eq(1)
+    end
+
+    it 'media_type未指定時は全ジャンルの結果を返す' do
+      manga_result = ExternalApis::BaseAdapter::SearchResult.new(
+        'けいおん!', 'manga', 'マンガ版', nil, nil, '2', 'anilist', { popularity: 0.3 }
+      )
+      allow(anilist_double).to receive(:safe_search).and_return([mock_result, manga_result])
+
+      results = service.search('けいおん')
+      expect(results.map(&:media_type)).to contain_exactly('anime', 'manga')
     end
   end
 
@@ -93,6 +121,32 @@ RSpec.describe WorkSearchService, type: :service do
     end
   end
 
+  describe '英語説明文の除去' do
+    it 'IGDB等の英語説明文をnilにする' do
+      english_game = ExternalApis::BaseAdapter::SearchResult.new(
+        'Elden Ring', 'game', 'An action RPG developed by FromSoftware.',
+        nil, nil, '119133', 'igdb', { popularity: 0.9 }
+      )
+      allow(igdb_double).to receive(:safe_search).and_return([english_game])
+      allow(anilist_double).to receive(:safe_search).and_return([])
+
+      results = service.search('エルデンリング')
+      expect(results.first.description).to be_nil
+    end
+
+    it '日本語の説明文は除去しない' do
+      japanese_game = ExternalApis::BaseAdapter::SearchResult.new(
+        'モンスターハンター', 'game', 'カプコンが開発したアクションゲーム。',
+        nil, nil, '1111', 'igdb', { popularity: 0.8 }
+      )
+      allow(igdb_double).to receive(:safe_search).and_return([japanese_game])
+      allow(anilist_double).to receive(:safe_search).and_return([])
+
+      results = service.search('モンハン')
+      expect(results.first.description).to eq('カプコンが開発したアクションゲーム。')
+    end
+  end
+
   describe 'AniList日本語説明補完' do # rubocop:disable RSpec/MultipleMemoizedHelpers
     let(:anilist_result) do
       ExternalApis::BaseAdapter::SearchResult.new(
@@ -101,9 +155,11 @@ RSpec.describe WorkSearchService, type: :service do
         { popularity: 1.0, title_english: 'Attack on Titan', title_romaji: 'Shingeki no Kyojin' }
       )
     end
+    let(:wikipedia_client_double) { instance_double(ExternalApis::WikipediaClient, fetch_extract: nil) }
 
     before do
       allow(anilist_double).to receive(:safe_search).and_return([anilist_result])
+      allow(ExternalApis::WikipediaClient).to receive(:new).and_return(wikipedia_client_double)
     end
 
     it 'AniListの英語説明をTMDBの日本語説明に置き換える' do
@@ -115,27 +171,84 @@ RSpec.describe WorkSearchService, type: :service do
       expect(results.first.description).to eq('巨人が支配する世界で人類が生き残りをかけて戦う')
     end
 
-    it 'TMDBで見つからない場合はAniListの英語説明をそのまま使う' do
-      allow(tmdb_double).to receive(:fetch_japanese_description)
-        .and_return(nil)
+    it 'TMDBでもWikipediaでも見つからない場合は英語説明を除去する' do
+      allow(tmdb_double).to receive(:fetch_japanese_description).and_return(nil)
 
       results = service.search('マイナーアニメ')
-      expect(results.first.description).to eq('In a world ruled by giants...')
+      expect(results.first.description).to be_nil
     end
 
-    it '英語タイトルがない場合はローマ字タイトルで検索する' do # rubocop:disable RSpec/ExampleLength
-      no_english = ExternalApis::BaseAdapter::SearchResult.new(
+    it '日本語タイトルで見つからない場合、英語→ローマ字の順にフォールバックする' do # rubocop:disable RSpec/ExampleLength
+      no_japanese_match = ExternalApis::BaseAdapter::SearchResult.new(
         'シュタインズ・ゲート', 'anime', 'English description',
         nil, 24, '9253', 'anilist',
         { popularity: 0.8, title_romaji: 'Steins;Gate' }
       )
-      allow(anilist_double).to receive(:safe_search).and_return([no_english])
+      allow(anilist_double).to receive(:safe_search).and_return([no_japanese_match])
+      allow(tmdb_double).to receive(:fetch_japanese_description).with('シュタインズ・ゲート').and_return(nil)
       allow(tmdb_double).to receive(:fetch_japanese_description)
-        .with('Steins;Gate')
-        .and_return('タイムトラベルSF')
+        .with('Steins;Gate').and_return('タイムトラベルSF')
 
       results = service.search('シュタゲ')
       expect(results.first.description).to eq('タイムトラベルSF')
+    end
+
+    it '日本語タイトル優先でTMDB検索する（英語タイトルの誤マッチを防止）' do
+      keion_result = ExternalApis::BaseAdapter::SearchResult.new(
+        'けいおん!', 'anime', 'K-ON! is a Japanese manga series.',
+        nil, 13, '5680', 'anilist',
+        { popularity: 0.7, title_english: 'K-ON!', title_romaji: 'K-ON!' }
+      )
+      allow(anilist_double).to receive(:safe_search).and_return([keion_result])
+      allow(tmdb_double).to receive(:fetch_japanese_description)
+        .with('けいおん!').and_return('軽音部の日常を描いた作品')
+
+      results = service.search('けいおん')
+      expect(results.first.description).to eq('軽音部の日常を描いた作品')
+    end
+
+    context 'TMDBで見つからない場合のWikipedia補完' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+      let(:minor_anime) do
+        ExternalApis::BaseAdapter::SearchResult.new(
+          'マイナーアニメ', 'anime', 'A minor anime series.',
+          nil, 12, '99999', 'anilist',
+          { popularity: 0.1, title_english: 'Minor Anime', title_romaji: 'Minor Anime' }
+        )
+      end
+
+      before do
+        allow(anilist_double).to receive(:safe_search).and_return([minor_anime])
+        allow(tmdb_double).to receive(:fetch_japanese_description).and_return(nil)
+      end
+
+      it 'TMDBで見つからない場合、Wikipediaから日本語説明を取得する' do
+        allow(wikipedia_client_double).to receive(:fetch_extract)
+          .with('マイナーアニメ').and_return('マイナーアニメは、日本のテレビアニメ作品。')
+
+        results = service.search('マイナーアニメ')
+        expect(results.first.description).to eq('マイナーアニメは、日本のテレビアニメ作品。')
+      end
+
+      it 'TMDBでもWikipediaでも見つからない場合、英語説明を除去する' do
+        allow(wikipedia_client_double).to receive(:fetch_extract)
+          .with('マイナーアニメ').and_return(nil)
+
+        results = service.search('マイナーアニメ')
+        expect(results.first.description).to be_nil
+      end
+    end
+
+    it '日本語説明が見つからなかった場合、英語説明を除去する' do
+      english_anime = ExternalApis::BaseAdapter::SearchResult.new(
+        'マイナーOVA', 'anime', 'This is a minor OVA episode.',
+        nil, 1, '88888', 'anilist',
+        { popularity: 0.05, title_english: 'Minor OVA', title_romaji: 'Minor OVA' }
+      )
+      allow(anilist_double).to receive(:safe_search).and_return([english_anime])
+      allow(tmdb_double).to receive(:fetch_japanese_description).and_return(nil)
+
+      results = service.search('マイナーOVA')
+      expect(results.first.description).to be_nil
     end
   end
 
@@ -159,8 +272,8 @@ RSpec.describe WorkSearchService, type: :service do
     it '異なるmedia_typeは別のキャッシュキーを使う' do
       service.search('テスト', media_type: 'anime')
       service.search('テスト', media_type: 'movie')
-      # anime（anilist）と movie（tmdb）でそれぞれ1回ずつ呼ばれる
-      expect(anilist_double).to have_received(:safe_search).exactly(:once)
+      # anime→anilist1回、movie→tmdb1回+anilist1回で、anilistは計2回呼ばれる
+      expect(anilist_double).to have_received(:safe_search).twice
       expect(tmdb_double).to have_received(:safe_search).exactly(:once)
     end
   end

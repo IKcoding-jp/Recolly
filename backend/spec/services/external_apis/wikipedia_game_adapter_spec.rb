@@ -1,120 +1,91 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-require 'webmock/rspec'
 
 RSpec.describe ExternalApis::WikipediaGameAdapter, type: :service do
   subject(:adapter) { described_class.new }
 
-  describe '#search_titles' do
-    let(:search_response) do
-      {
-        'query' => {
-          'search' => [
-            { 'title' => '星のカービィ スーパーデラックス', 'snippet' => 'ゲームソフト' },
-            { 'title' => '星のカービィ Wii', 'snippet' => 'アクションゲーム' },
-            { 'title' => '星のカービィ (アニメ)', 'snippet' => 'テレビアニメ' }
-          ]
-        }
-      }
-    end
+  let(:client_double) { instance_double(ExternalApis::WikipediaClient) }
 
-    before do
-      stub_request(:get, /ja.wikipedia.org/)
-        .to_return(status: 200, body: search_response.to_json,
-                   headers: { 'Content-Type' => 'application/json' })
-    end
-
-    it 'Wikipediaの検索結果からタイトル一覧を返す' do
-      titles = adapter.search_titles('カービィ')
-      expect(titles).to include('星のカービィ スーパーデラックス')
-      expect(titles).to include('星のカービィ Wii')
-    end
-
-    it '最大10件のタイトルを返す' do
-      titles = adapter.search_titles('カービィ')
-      expect(titles.length).to be <= 10
-    end
+  before do
+    allow(ExternalApis::WikipediaClient).to receive(:new).and_return(client_double)
   end
 
-  describe '#fetch_extract' do
-    let(:extract_response) do
+  describe '#search_titles' do
+    let(:search_titles) do
+      ['ゼルダの伝説 ブレス オブ ザ ワイルド', '金熊賞', 'スタジオジブリ',
+       'ゼルダの伝説 ティアーズ オブ ザ キングダム', 'ゼルダ (ゲームキャラクター)']
+    end
+    let(:categories_map) do
       {
-        'query' => {
-          'pages' => {
-            '12345' => {
-              'title' => '星のカービィ スーパーデラックス',
-              'extract' => '星のカービィ スーパーデラックスは、1996年に任天堂が発売したスーパーファミコン用アクションゲーム。'
-            }
-          }
-        }
+        'ゼルダの伝説 ブレス オブ ザ ワイルド' => [
+          'Category:2017年のコンピュータゲーム',
+          'Category:Nintendo Switchのゲームソフト'
+        ],
+        '金熊賞' => ['Category:ベルリン国際映画祭', 'Category:映画の賞'],
+        'スタジオジブリ' => ['Category:日本のアニメスタジオ'],
+        'ゼルダの伝説 ティアーズ オブ ザ キングダム' => [
+          'Category:2023年のコンピュータゲーム',
+          'Category:Nintendo Switchのゲームソフト'
+        ],
+        'ゼルダ (ゲームキャラクター)' => ['Category:ゼルダの伝説の登場人物']
       }
     end
 
     before do
-      stub_request(:get, /ja.wikipedia.org/)
-        .to_return(status: 200, body: extract_response.to_json,
-                   headers: { 'Content-Type' => 'application/json' })
+      allow(client_double).to receive_messages(
+        search: search_titles, fetch_categories: categories_map
+      )
     end
 
-    it '記事の冒頭テキストを返す' do
-      extract = adapter.fetch_extract('星のカービィ スーパーデラックス')
-      expect(extract).to include('1996年')
-      expect(extract).to include('アクションゲーム')
+    it 'ゲームカテゴリを持つ記事だけを返す' do
+      titles = adapter.search_titles('ゼルダ')
+      expect(titles).to contain_exactly(
+        'ゼルダの伝説 ブレス オブ ザ ワイルド',
+        'ゼルダの伝説 ティアーズ オブ ザ キングダム'
+      )
     end
 
-    it '記事が存在しない場合はnilを返す' do
-      not_found = { 'query' => { 'pages' => { '-1' => { 'missing' => '' } } } }
-      stub_request(:get, /ja.wikipedia.org/)
-        .to_return(status: 200, body: not_found.to_json,
-                   headers: { 'Content-Type' => 'application/json' })
-      expect(adapter.fetch_extract('存在しないページ')).to be_nil
+    it 'ゲーム以外の記事（金熊賞、スタジオジブリ等）を除外する' do
+      titles = adapter.search_titles('ゼルダ')
+      expect(titles).not_to include('金熊賞', 'スタジオジブリ', 'ゼルダ (ゲームキャラクター)')
+    end
+
+    it 'タイトルパターンでも事前フィルタする（テレビアニメ等）' do
+      # 「星のカービィ (アニメ)」はNON_GAME_PATTERNSで除外されるため、カテゴリ取得は1件のみ
+      allow(client_double).to receive_messages(search: ['星のカービィ (アニメ)', '星のカービィ スーパーデラックス'],
+                                               fetch_categories: { '星のカービィ スーパーデラックス' => ['Category:1996年のコンピュータゲーム'] })
+      titles = adapter.search_titles('カービィ')
+      expect(titles).to eq(['星のカービィ スーパーデラックス'])
+    end
+
+    it '検索クエリと完全一致するタイトルを除外する（曖昧さ回避ページ対策）' do
+      allow(client_double).to receive_messages(search: %w[ゼルダ ゼルダの伝説],
+                                               fetch_categories: { 'ゼルダの伝説' => ['Category:ゲーム作品'] })
+      titles = adapter.search_titles('ゼルダ')
+      expect(titles).to eq(['ゼルダの伝説'])
+    end
+
+    it 'カテゴリ取得でエラーが発生した場合は空配列を返す' do
+      allow(client_double).to receive(:fetch_categories).and_return({})
+      titles = adapter.search_titles('ゼルダ')
+      expect(titles).to eq([])
     end
   end
 
   describe '#fetch_english_title' do
-    let(:langlink_response) do
-      {
-        'query' => {
-          'pages' => {
-            '12345' => {
-              'title' => '星のカービィ スーパーデラックス',
-              'langlinks' => [{ 'lang' => 'en', '*' => 'Kirby Super Star' }]
-            }
-          }
-        }
-      }
-    end
-
-    before do
-      stub_request(:get, /ja.wikipedia.org/)
-        .to_return(status: 200, body: langlink_response.to_json,
-                   headers: { 'Content-Type' => 'application/json' })
-    end
-
-    it '日本語Wikipediaの言語間リンクから英語タイトルを返す' do
-      en_title = adapter.fetch_english_title('星のカービィ スーパーデラックス')
-      expect(en_title).to eq('Kirby Super Star')
-    end
-
-    it '英語版記事がない場合はnilを返す' do
-      no_langlink = { 'query' => { 'pages' => { '99' => { 'title' => 'テスト', 'langlinks' => [] } } } }
-      stub_request(:get, /ja.wikipedia.org/)
-        .to_return(status: 200, body: no_langlink.to_json,
-                   headers: { 'Content-Type' => 'application/json' })
-      expect(adapter.fetch_english_title('日本語のみの記事')).to be_nil
+    it 'WikipediaClientに委譲する' do
+      allow(client_double).to receive(:fetch_english_title)
+        .with('バイオハザード RE:2').and_return('Resident Evil 2 (2019 video game)')
+      expect(adapter.fetch_english_title('バイオハザード RE:2')).to eq('Resident Evil 2 (2019 video game)')
     end
   end
 
-  describe 'エラーハンドリング' do
-    it 'API通信エラー時にsearch_titlesは空配列を返す' do
-      stub_request(:get, /ja.wikipedia.org/).to_timeout
-      expect(adapter.search_titles('テスト')).to eq([])
-    end
-
-    it 'API通信エラー時にfetch_extractはnilを返す' do
-      stub_request(:get, /ja.wikipedia.org/).to_timeout
-      expect(adapter.fetch_extract('テスト')).to be_nil
+  describe '#fetch_extract' do
+    it 'WikipediaClientに委譲する' do
+      allow(client_double).to receive(:fetch_extract)
+        .with('星のカービィ').and_return('任天堂が発売したアクションゲーム。')
+      expect(adapter.fetch_extract('星のカービィ')).to eq('任天堂が発売したアクションゲーム。')
     end
   end
 end

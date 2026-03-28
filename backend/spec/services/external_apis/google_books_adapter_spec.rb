@@ -13,6 +13,12 @@ RSpec.describe ExternalApis::GoogleBooksAdapter, type: :service do
     allow(ENV).to receive(:fetch).with('GOOGLE_BOOKS_API_KEY').and_return(api_key)
   end
 
+  def stub_books_response(items)
+    stub_request(:get, %r{www.googleapis.com/books/v1/volumes})
+      .to_return(status: 200, body: { 'items' => items }.to_json,
+                 headers: { 'Content-Type' => 'application/json' })
+  end
+
   describe '#media_types' do
     it 'book を返す' do
       expect(adapter.media_types).to eq(%w[book])
@@ -65,6 +71,12 @@ RSpec.describe ExternalApis::GoogleBooksAdapter, type: :service do
         .to_return(status: 200, body: { 'totalItems' => 0 }.to_json,
                    headers: { 'Content-Type' => 'application/json' })
       expect(adapter.search('存在しない本')).to eq([])
+    end
+
+    it 'intitle:パラメータでタイトル検索に限定する' do
+      adapter.search('三体')
+      expect(WebMock).to have_requested(:get, /www.googleapis.com/)
+        .with(query: hash_including(q: 'intitle:三体'))
     end
   end
 end
