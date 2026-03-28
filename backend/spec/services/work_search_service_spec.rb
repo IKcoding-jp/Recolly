@@ -101,9 +101,13 @@ RSpec.describe WorkSearchService, type: :service do
         { popularity: 1.0, title_english: 'Attack on Titan', title_romaji: 'Shingeki no Kyojin' }
       )
     end
+    let(:wikipedia_client_double) { instance_double(ExternalApis::WikipediaClient) }
 
     before do
       allow(anilist_double).to receive(:safe_search).and_return([anilist_result])
+      # Wikipedia補完のデフォルト（見つからない場合）
+      allow(ExternalApis::WikipediaClient).to receive(:new).and_return(wikipedia_client_double)
+      allow(wikipedia_client_double).to receive(:fetch_extract).and_return(nil)
     end
 
     it 'AniListの英語説明をTMDBの日本語説明に置き換える' do
@@ -115,9 +119,8 @@ RSpec.describe WorkSearchService, type: :service do
       expect(results.first.description).to eq('巨人が支配する世界で人類が生き残りをかけて戦う')
     end
 
-    it 'TMDBで見つからない場合はAniListの英語説明をそのまま使う' do
-      allow(tmdb_double).to receive(:fetch_japanese_description)
-        .and_return(nil)
+    it 'TMDBでもWikipediaでも見つからない場合はAniListの英語説明をそのまま使う' do
+      allow(tmdb_double).to receive(:fetch_japanese_description).and_return(nil)
 
       results = service.search('マイナーアニメ')
       expect(results.first.description).to eq('In a world ruled by giants...')
@@ -136,6 +139,52 @@ RSpec.describe WorkSearchService, type: :service do
 
       results = service.search('シュタゲ')
       expect(results.first.description).to eq('タイムトラベルSF')
+    end
+
+    it '英語タイトルで見つからない場合、ローマ字→日本語の順にフォールバックする' do # rubocop:disable RSpec/ExampleLength
+      keion_result = ExternalApis::BaseAdapter::SearchResult.new(
+        'けいおん!', 'anime', 'K-ON! is a Japanese manga series.',
+        nil, 13, '5680', 'anilist',
+        { popularity: 0.7, title_english: 'K-ON!', title_romaji: 'K-ON!' }
+      )
+      allow(anilist_double).to receive(:safe_search).and_return([keion_result])
+      allow(tmdb_double).to receive(:fetch_japanese_description).with('K-ON!').and_return(nil)
+      allow(tmdb_double).to receive(:fetch_japanese_description)
+        .with('けいおん!').and_return('軽音部の日常を描いた作品')
+
+      results = service.search('けいおん')
+      expect(results.first.description).to eq('軽音部の日常を描いた作品')
+    end
+
+    context 'TMDBで見つからない場合のWikipedia補完' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+      let(:minor_anime) do
+        ExternalApis::BaseAdapter::SearchResult.new(
+          'マイナーアニメ', 'anime', 'A minor anime series.',
+          nil, 12, '99999', 'anilist',
+          { popularity: 0.1, title_english: 'Minor Anime', title_romaji: 'Minor Anime' }
+        )
+      end
+
+      before do
+        allow(anilist_double).to receive(:safe_search).and_return([minor_anime])
+        allow(tmdb_double).to receive(:fetch_japanese_description).and_return(nil)
+      end
+
+      it 'TMDBで見つからない場合、Wikipediaから日本語説明を取得する' do
+        allow(wikipedia_client_double).to receive(:fetch_extract)
+          .with('マイナーアニメ').and_return('マイナーアニメは、日本のテレビアニメ作品。')
+
+        results = service.search('マイナーアニメ')
+        expect(results.first.description).to eq('マイナーアニメは、日本のテレビアニメ作品。')
+      end
+
+      it 'TMDBでもWikipediaでも見つからない場合、英語説明をそのまま使う' do
+        allow(wikipedia_client_double).to receive(:fetch_extract)
+          .with('マイナーアニメ').and_return(nil)
+
+        results = service.search('マイナーアニメ')
+        expect(results.first.description).to eq('A minor anime series.')
+      end
     end
   end
 

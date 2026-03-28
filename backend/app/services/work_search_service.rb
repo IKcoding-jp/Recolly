@@ -46,20 +46,37 @@ class WorkSearchService
     ]
   end
 
-  # AniListの結果にTMDBから日本語説明を補完する
-  # AniListの説明は英語のため、TMDBの日本語概要で置き換える
-  # TMDBで見つからない場合はAniListの英語説明をそのまま使う（フォールバック）
+  # AniListの結果にTMDB→Wikipediaの順で日本語説明を補完する
+  # AniListの説明は英語のため、日本語の説明が見つかれば置き換える
   def enrich_anilist_descriptions(results)
     anilist_results = results.select { |r| r.external_api_source == 'anilist' }
     return if anilist_results.empty?
 
     tmdb = ExternalApis::TmdbAdapter.new
+    wikipedia = ExternalApis::WikipediaClient.new
+
     anilist_results.each do |result|
-      # 英語タイトルまたはローマ字タイトルでTMDB検索（日本語タイトルよりマッチ率が高い）
-      query = result.metadata[:title_english] || result.metadata[:title_romaji] || result.title
-      description = tmdb.fetch_japanese_description(query)
+      # ① TMDB検索（英語→ローマ字→日本語の順で複数パターンを試す）
+      description = fetch_japanese_description_from_tmdb(result, tmdb)
+      # ② TMDBで見つからなければWikipediaから取得
+      description ||= wikipedia.fetch_extract(result.title)
       result.description = description if description.present?
     end
+  end
+
+  # TMDBで日本語説明を検索（複数パターンを順番に試す）
+  def fetch_japanese_description_from_tmdb(result, tmdb)
+    queries = [
+      result.metadata[:title_english],
+      result.metadata[:title_romaji],
+      result.title
+    ].compact.uniq
+
+    queries.each do |query|
+      description = tmdb.fetch_japanese_description(query)
+      return description if description.present?
+    end
+    nil
   end
 
   # 各アダプターが返すmetadata[:popularity]（0.0〜1.0に正規化済み）で降順ソート
