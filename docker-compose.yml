@@ -44,6 +44,10 @@ services:
       RAILS_ENV: development
       REDIS_URL: redis://redis:6379/0
       FRONTEND_URL: http://localhost:5173
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ap-northeast-1
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-recolly-dev-images}
     volumes:
       - ./backend:/app
       - bundle_cache:/usr/local/bundle

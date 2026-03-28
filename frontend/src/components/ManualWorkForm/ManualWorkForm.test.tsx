@@ -3,6 +3,16 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ManualWorkForm } from './ManualWorkForm'
 
+vi.mock('../../lib/imagesApi', () => ({
+  imagesApi: {
+    presign: vi.fn().mockResolvedValue({
+      presigned_url: 'https://s3.example.com/presigned',
+      s3_key: 'uploads/images/test-uuid.jpg',
+    }),
+    uploadToS3: vi.fn().mockResolvedValue(undefined),
+  },
+}))
+
 describe('ManualWorkForm', () => {
   it('タイトルとジャンルの入力欄が表示される', () => {
     render(<ManualWorkForm onSubmit={vi.fn()} />)
@@ -19,7 +29,7 @@ describe('ManualWorkForm', () => {
     await user.selectOptions(screen.getByLabelText('ジャンル'), 'anime')
     await user.click(screen.getByRole('button', { name: '登録する' }))
 
-    expect(onSubmit).toHaveBeenCalledWith('テスト作品', 'anime', '')
+    expect(onSubmit).toHaveBeenCalledWith('テスト作品', 'anime', '', undefined)
   })
 
   it('タイトル未入力でバリデーションエラー', async () => {
@@ -39,5 +49,11 @@ describe('ManualWorkForm', () => {
 
     const titleInput = screen.getByLabelText('タイトル') as HTMLInputElement
     expect(titleInput.value).toBe('')
+  })
+
+  it('カバー画像の入力欄が表示される', () => {
+    render(<ManualWorkForm onSubmit={vi.fn()} />)
+    expect(screen.getByText('カバー画像（任意）')).toBeInTheDocument()
+    expect(screen.getByText('ドラッグ&ドロップ')).toBeInTheDocument()
   })
 })

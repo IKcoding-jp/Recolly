@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_26_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_28_100342) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -23,6 +23,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_26_000002) do
     t.integer "visibility", default: 0, null: false
     t.index ["record_id", "episode_number"], name: "index_episode_reviews_on_record_id_and_episode_number", unique: true
     t.index ["record_id"], name: "index_episode_reviews_on_record_id"
+  end
+
+  create_table "images", force: :cascade do |t|
+    t.string "content_type", null: false
+    t.datetime "created_at", null: false
+    t.string "file_name", null: false
+    t.integer "file_size", null: false
+    t.bigint "imageable_id", null: false
+    t.string "imageable_type", null: false
+    t.string "s3_key", null: false
+    t.datetime "updated_at", null: false
+    t.index ["imageable_type", "imageable_id"], name: "index_images_on_imageable"
+    t.index ["s3_key"], name: "index_images_on_s3_key", unique: true
   end
 
   create_table "record_tags", force: :cascade do |t|
