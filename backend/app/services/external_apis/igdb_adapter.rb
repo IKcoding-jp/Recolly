@@ -80,8 +80,8 @@ module ExternalApis
 
     # Wikipediaタイトル1件をIGDBで検索し、日本語情報を付与して返す
     def find_game_via_wikipedia(jp_title, wikipedia, existing_ids)
-      match = igdb_match_from_wikipedia(jp_title, wikipedia)
-      return nil if match.nil? || existing_ids.include?(match.external_api_id)
+      match = igdb_match_from_wikipedia(jp_title, wikipedia, existing_ids)
+      return nil if match.nil?
 
       match.title = jp_title
       match.description = wikipedia.fetch_extract(jp_title).presence || match.description
@@ -90,14 +90,16 @@ module ExternalApis
     end
 
     # Wikipedia言語間リンクで英語タイトル取得 → IGDBで検索
-    def igdb_match_from_wikipedia(jp_title, wikipedia)
+    # 既存IDと重複しない最初のマッチを返す（リメイク版とオリジナル版を区別）
+    def igdb_match_from_wikipedia(jp_title, wikipedia, existing_ids = Set.new)
       en_title = wikipedia.fetch_english_title(jp_title)
       return nil unless en_title
 
       # Wikipediaの曖昧さ回避テキストを除去: "Resident Evil 2 (2019 video game)" → "Resident Evil 2"
       clean_title = en_title.sub(/\s*\(.*\)\s*$/, '')
       sanitized = clean_title.gsub('"', '\\"').gsub(';', '')
-      search_by_keyword(sanitized).first
+      # 既存IDと重複しない最初のマッチを返す
+      search_by_keyword(sanitized).find { |r| existing_ids.exclude?(r.external_api_id) }
     end
 
     # 日本語文字（ひらがな・カタカナ・漢字）が含まれるか判定
