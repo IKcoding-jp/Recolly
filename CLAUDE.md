@@ -119,6 +119,6 @@ Git運用ルールは `recolly-git-rules` スキルを参照。
 
 ## 理解負債防止
 
-- 説明はプログラミング初学者を前提とする。専門用語は初出時に平易な説明を添える
+- 説明レベルはグローバルCLAUDE.mdの「説明・対話ルール」に従う
 - 設計判断は `docs/adr/` に記録、学習は `docs/learning/` に蓄積（自動発動ルール参照）
 - PR前セルフチェック → `recolly-git-rules` スキルの references/pr-self-check.md を参照
