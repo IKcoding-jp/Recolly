@@ -9,6 +9,7 @@ class WorkSearchService
     Rails.cache.fetch(cache_key, expires_in: CACHE_TTL) do
       adapters = select_adapters(media_type)
       results = adapters.flat_map { |adapter| adapter.safe_search(query) }
+      results = results.select { |r| r.media_type == media_type } if media_type.present?
       enrich_anilist_descriptions(results)
       sort_by_popularity(results)
     end

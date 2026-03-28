@@ -63,6 +63,30 @@ RSpec.describe WorkSearchService, type: :service do
       service.search('テスト', media_type: 'game')
       expect(anilist_double).not_to have_received(:safe_search)
     end
+
+    it 'media_type指定時にアダプターが返した別ジャンルの結果を除外する' do
+      manga_result = ExternalApis::BaseAdapter::SearchResult.new(
+        'けいおん!', 'manga', 'マンガ版', nil, nil, '2', 'anilist', { popularity: 0.3 }
+      )
+      anime_result = ExternalApis::BaseAdapter::SearchResult.new(
+        'けいおん!', 'anime', 'アニメ版', nil, 13, '3', 'anilist', { popularity: 0.7 }
+      )
+      allow(anilist_double).to receive(:safe_search).and_return([manga_result, anime_result])
+
+      results = service.search('けいおん', media_type: 'anime')
+      expect(results.map(&:media_type)).to all(eq('anime'))
+      expect(results.length).to eq(1)
+    end
+
+    it 'media_type未指定時は全ジャンルの結果を返す' do
+      manga_result = ExternalApis::BaseAdapter::SearchResult.new(
+        'けいおん!', 'manga', 'マンガ版', nil, nil, '2', 'anilist', { popularity: 0.3 }
+      )
+      allow(anilist_double).to receive(:safe_search).and_return([mock_result, manga_result])
+
+      results = service.search('けいおん')
+      expect(results.map(&:media_type)).to contain_exactly('anime', 'manga')
+    end
   end
 
   describe '人気順ソート' do # rubocop:disable RSpec/MultipleMemoizedHelpers
