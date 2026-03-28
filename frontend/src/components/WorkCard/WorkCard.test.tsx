@@ -49,4 +49,17 @@ describe('WorkCard', () => {
     const img = screen.getByRole('img')
     expect(img).toHaveAttribute('src', 'https://example.com/cover.jpg')
   })
+
+  it('「記録する」ボタンがaction領域に配置されている', () => {
+    const { container } = render(<WorkCard work={mockWork} onRecord={vi.fn()} />)
+    const action = container.querySelector('[class*="action"]')
+    expect(action).toBeInTheDocument()
+    expect(action?.querySelector('button')).toBeInTheDocument()
+  })
+
+  it('記録済みの場合は「記録済み」がaction領域に表示される', () => {
+    const { container } = render(<WorkCard work={mockWork} onRecord={vi.fn()} isRecorded />)
+    const action = container.querySelector('[class*="action"]')
+    expect(action?.textContent).toBe('記録済み')
+  })
 })
