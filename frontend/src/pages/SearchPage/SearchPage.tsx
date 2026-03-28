@@ -40,6 +40,8 @@ export function SearchPage() {
   const [error, setError] = useState('')
   const [showManualForm, setShowManualForm] = useState(false)
   const [modalWork, setModalWork] = useState<SearchResult | null>(null)
+  // 手動登録で作成したWorkのID（Record作成時に使用）
+  const [manualWorkId, setManualWorkId] = useState<number | null>(null)
 
   const handleSearch = async (e: FormEvent) => {
     e.preventDefault()
@@ -70,11 +72,20 @@ export function SearchPage() {
 
   const handleConfirmRecord = async (data: { status: RecordStatus; rating: number | null }) => {
     if (!modalWork) return
-    const workKey = `${modalWork.external_api_source}:${modalWork.external_api_id}`
-    setLoadingId(workKey)
+
     try {
-      await recordsApi.createFromSearchResult(modalWork, data)
-      setRecordedIds((prev) => new Set(prev).add(workKey))
+      if (manualWorkId) {
+        // 手動登録作品: work_idで直接Record作成
+        setLoadingId('manual')
+        await recordsApi.createFromWorkId(manualWorkId, data)
+        setManualWorkId(null)
+      } else {
+        // 検索結果作品: 既存のフロー
+        const workKey = `${modalWork.external_api_source}:${modalWork.external_api_id}`
+        setLoadingId(workKey)
+        await recordsApi.createFromSearchResult(modalWork, data)
+        setRecordedIds((prev) => new Set(prev).add(workKey))
+      }
       setModalWork(null)
     } catch (err) {
       if (err instanceof ApiError) {
@@ -102,6 +113,18 @@ export function SearchPage() {
         imageableId: work.id,
       })
     }
+    // 手動登録後、RecordModalを開いてステータスを選ばせる
+    setManualWorkId(work.id)
+    setModalWork({
+      title: work.title,
+      media_type: work.media_type,
+      description: work.description,
+      cover_image_url: work.cover_image_url,
+      total_episodes: work.total_episodes,
+      external_api_id: null,
+      external_api_source: null,
+      metadata: {},
+    })
     setShowManualForm(false)
   }
 
@@ -208,7 +231,10 @@ export function SearchPage() {
         mediaType={modalWork?.media_type ?? 'anime'}
         mediaTypeLabel={modalWork ? getGenreLabel(modalWork.media_type) : ''}
         onConfirm={handleConfirmRecord}
-        onCancel={() => setModalWork(null)}
+        onCancel={() => {
+          setModalWork(null)
+          setManualWorkId(null)
+        }}
         isLoading={loadingId !== null}
       />
     </div>
