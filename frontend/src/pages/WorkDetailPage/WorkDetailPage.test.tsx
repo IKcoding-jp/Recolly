@@ -139,6 +139,82 @@ describe('WorkDetailPage', () => {
     expect(screen.queryByPlaceholderText('この話数の感想を書く...')).not.toBeInTheDocument()
   })
 
+  it('アニメの場合は進捗セクションが表示される', async () => {
+    renderWithRouter('1')
+    await waitFor(() => {
+      expect(screen.getByText('進捗')).toBeInTheDocument()
+    })
+  })
+
+  it('映画の場合は進捗セクションが非表示', async () => {
+    vi.mocked(recordsApi.getAll).mockResolvedValue({
+      records: [
+        {
+          ...mockRecord,
+          work: { ...mockRecord.work, media_type: 'movie' as const, total_episodes: null },
+        },
+      ],
+    })
+    renderWithRouter('1')
+    await waitFor(() => {
+      expect(screen.getByText('進撃の巨人')).toBeInTheDocument()
+    })
+    expect(screen.queryByText('進捗')).not.toBeInTheDocument()
+  })
+
+  it('ゲームの場合は進捗セクションが非表示', async () => {
+    vi.mocked(recordsApi.getAll).mockResolvedValue({
+      records: [
+        {
+          ...mockRecord,
+          work: { ...mockRecord.work, media_type: 'game' as const, total_episodes: null },
+        },
+      ],
+    })
+    renderWithRouter('1')
+    await waitFor(() => {
+      expect(screen.getByText('進撃の巨人')).toBeInTheDocument()
+    })
+    expect(screen.queryByText('進捗')).not.toBeInTheDocument()
+  })
+
+  it('アニメの場合は「再視聴回数」ラベルが表示される', async () => {
+    renderWithRouter('1')
+    await waitFor(() => {
+      expect(screen.getByText('再視聴回数')).toBeInTheDocument()
+    })
+  })
+
+  it('ゲームの場合は「リプレイ回数」ラベルが表示される', async () => {
+    vi.mocked(recordsApi.getAll).mockResolvedValue({
+      records: [
+        {
+          ...mockRecord,
+          work: { ...mockRecord.work, media_type: 'game' as const, total_episodes: null },
+        },
+      ],
+    })
+    renderWithRouter('1')
+    await waitFor(() => {
+      expect(screen.getByText('リプレイ回数')).toBeInTheDocument()
+    })
+  })
+
+  it('本の場合は「再読回数」ラベルが表示される', async () => {
+    vi.mocked(recordsApi.getAll).mockResolvedValue({
+      records: [
+        {
+          ...mockRecord,
+          work: { ...mockRecord.work, media_type: 'book' as const, total_episodes: null },
+        },
+      ],
+    })
+    renderWithRouter('1')
+    await waitFor(() => {
+      expect(screen.getByText('再読回数')).toBeInTheDocument()
+    })
+  })
+
   it('記録が見つからない場合にメッセージを表示', async () => {
     vi.mocked(recordsApi.getAll).mockResolvedValue({ records: [] })
     renderWithRouter('999')

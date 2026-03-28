@@ -52,7 +52,8 @@
 }
 
 .emptyIcon {
-  font-size: var(--font-size-h1);
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-sm);
 }
 
 .emptyTitle {

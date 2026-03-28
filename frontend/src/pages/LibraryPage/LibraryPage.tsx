@@ -112,7 +112,22 @@ export function LibraryPage() {
             <p className={styles.emptyText}>条件に一致する記録がありません</p>
           ) : (
             <div className={styles.emptyGuide}>
-              <p className={styles.emptyIcon}>📚</p>
+              <svg
+                className={styles.emptyIcon}
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+                <path d="M8 7h6" />
+                <path d="M8 11h4" />
+              </svg>
               <p className={styles.emptyTitle}>作品を探して記録しましょう</p>
               <Button variant="primary" onClick={handleGoToSearch}>
                 作品を検索する

@@ -14,7 +14,7 @@ const ACTION_LABELS: Record<MediaType, string> = {
 const EPISODE_MEDIA_TYPES: ReadonlySet<MediaType> = new Set(['anime', 'drama', 'manga'])
 
 // 話数・巻数の単位ラベル
-const UNIT_LABELS: Partial<Record<MediaType, string>> = {
+export const UNIT_LABELS: Partial<Record<MediaType, string>> = {
   anime: '話',
   drama: '話',
   manga: '巻',
@@ -98,6 +98,18 @@ export function getStatusOptions(
       label: getStatusLabel(status, mediaType),
     })),
   ]
+}
+
+// 再視聴/再読/リプレイのラベル
+const REWATCH_LABELS: Record<'video' | 'reading' | 'game', string> = {
+  video: '再視聴回数',
+  reading: '再読回数',
+  game: 'リプレイ回数',
+}
+
+/** メディアタイプに応じた再視聴ラベルを返す */
+export function getRewatchLabel(mediaType: MediaType): string {
+  return REWATCH_LABELS[MEDIA_TYPE_GROUP[mediaType]]
 }
 
 /** 現在の進捗をテキストで返す（例: 「12 / 25話」「プレイ中」） */

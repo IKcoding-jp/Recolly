@@ -14,7 +14,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'ライブラリ', path: '/library' },
   { label: 'コミュニティ', path: null },
   { label: 'おすすめ', path: null },
-  { label: 'マイページ', path: '/mypage' },
 ]
 
 type NavBarProps = {

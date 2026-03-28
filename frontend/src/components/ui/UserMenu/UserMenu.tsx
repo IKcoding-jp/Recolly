@@ -49,11 +49,11 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
           <div className={styles.header}>{user.username}</div>
           <div className={styles.email}>{user.email}</div>
           <div className={styles.divider} />
-          <Link to="/settings" className={styles.item} onClick={() => setIsOpen(false)}>
-            設定
-          </Link>
           <Link to="/mypage" className={styles.item} onClick={() => setIsOpen(false)}>
             マイページ
+          </Link>
+          <Link to="/settings" className={styles.item} onClick={() => setIsOpen(false)}>
+            設定
           </Link>
           <div className={styles.divider} />
           <button className={styles.item} onClick={onLogout}>

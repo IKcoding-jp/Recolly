@@ -38,8 +38,14 @@ describe('NavBar', () => {
     renderNavBar()
     expect(screen.getByText('コミュニティ')).toBeInTheDocument()
     expect(screen.getByText('おすすめ')).toBeInTheDocument()
-    expect(screen.getByText('マイページ')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'コミュニティ' })).not.toBeInTheDocument()
+  })
+
+  it('ナビに「マイページ」リンクが表示されない', () => {
+    renderNavBar()
+    const navLinks = screen.getAllByRole('link')
+    const mypageLink = navLinks.find((link) => link.textContent === 'マイページ')
+    expect(mypageLink).toBeUndefined()
   })
 
   it('現在のパスに対応するナビ項目がアクティブ状態になる', () => {

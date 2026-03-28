@@ -6,6 +6,7 @@ import {
   hasEpisodes,
   getStatusLabel,
   getStatusOptions,
+  getRewatchLabel,
 } from './mediaTypeUtils'
 
 describe('getActionLabel', () => {
@@ -176,5 +177,26 @@ describe('getStatusOptions', () => {
   it('常に6つのオプション（すべて + 5ステータス）を返す', () => {
     expect(getStatusOptions()).toHaveLength(6)
     expect(getStatusOptions('game')).toHaveLength(6)
+  })
+})
+
+describe('getRewatchLabel', () => {
+  it('アニメは「再視聴回数」を返す', () => {
+    expect(getRewatchLabel('anime')).toBe('再視聴回数')
+  })
+  it('映画は「再視聴回数」を返す', () => {
+    expect(getRewatchLabel('movie')).toBe('再視聴回数')
+  })
+  it('ドラマは「再視聴回数」を返す', () => {
+    expect(getRewatchLabel('drama')).toBe('再視聴回数')
+  })
+  it('本は「再読回数」を返す', () => {
+    expect(getRewatchLabel('book')).toBe('再読回数')
+  })
+  it('漫画は「再読回数」を返す', () => {
+    expect(getRewatchLabel('manga')).toBe('再読回数')
+  })
+  it('ゲームは「リプレイ回数」を返す', () => {
+    expect(getRewatchLabel('game')).toBe('リプレイ回数')
   })
 })

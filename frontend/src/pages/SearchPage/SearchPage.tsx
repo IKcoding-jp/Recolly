@@ -8,7 +8,6 @@ import { WorkCard } from '../../components/WorkCard/WorkCard'
 import { ManualWorkForm } from '../../components/ManualWorkForm/ManualWorkForm'
 import { RecordModal } from '../../components/RecordModal/RecordModal'
 import { Typography } from '../../components/ui/Typography/Typography'
-import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import { Button } from '../../components/ui/Button/Button'
 import { getGenreLabel } from '../../lib/mediaTypeUtils'
 import { GenreDropdown } from './GenreDropdown'
@@ -176,10 +175,12 @@ export function SearchPage() {
         )}
 
         <div className={styles.manualSection}>
-          <SectionTitle>手動登録</SectionTitle>
-          <Button variant="ghost" onClick={() => setShowManualForm(!showManualForm)}>
-            {showManualForm ? '閉じる' : '作品を手動で登録する'}
-          </Button>
+          <div className={styles.manualCard}>
+            <p className={styles.manualGuide}>お探しの作品が見つかりませんか？</p>
+            <Button variant="secondary" onClick={() => setShowManualForm(!showManualForm)}>
+              {showManualForm ? '閉じる' : '+ 手動で登録する'}
+            </Button>
+          </div>
           {showManualForm && <ManualWorkForm onSubmit={handleManualSubmit} />}
         </div>
       </div>
