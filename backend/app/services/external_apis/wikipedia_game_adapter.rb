@@ -5,6 +5,8 @@ module ExternalApis
   # BaseAdapterを継承しない（単独で検索結果を返さず、IgdbAdapterの補完として使う）
   class WikipediaGameAdapter
     ENDPOINT = 'https://ja.wikipedia.org/w/api.php'
+    # ゲームソフト以外の記事を除外するパターン
+    NON_GAME_PATTERNS = /キャラクター|シリーズ|曖昧さ回避|登場人物|一覧|映画|テレビアニメ|劇場版|小説|ドラマ/
 
     # 日本語Wikipediaでキーワード検索し、ゲームソフトの記事タイトルのみ返す
     def search_titles(query)
@@ -44,10 +46,8 @@ module ExternalApis
 
     private
 
-    # ゲームソフト以外の記事を除外する判定
     def excluded_title?(title, query)
-      # 明らかにゲームソフト以外のパターン
-      return true if title.match?(/キャラクター|シリーズ|曖昧さ回避|登場人物|一覧/)
+      return true if title.match?(NON_GAME_PATTERNS)
       # 検索クエリとほぼ同じ（「ゼルダ」→「ゼルダ」のような曖昧さ回避ページ）
       return true if title == query
 
