@@ -8,9 +8,14 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
 
   let(:api_key) { 'test_tmdb_key' }
 
+  # WikipediaClientのデフォルトモック（Wikipedia経由フォールバック検索テストで上書きする）
+  let(:default_wikipedia_client) { instance_double(ExternalApis::WikipediaClient) }
+
   before do
     allow(ENV).to receive(:fetch).and_call_original
     allow(ENV).to receive(:fetch).with('TMDB_API_KEY').and_return(api_key)
+    allow(ExternalApis::WikipediaClient).to receive(:new).and_return(default_wikipedia_client)
+    allow(default_wikipedia_client).to receive(:search).and_return([])
   end
 
   describe '#media_types' do
@@ -102,7 +107,7 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
       expect(adapter.search('存在しない作品')).to eq([])
     end
 
-    context '日本のアニメーション作品' do
+    context '日本のアニメーション作品' do # rubocop:disable RSpec/MultipleMemoizedHelpers
       let(:anime_movie_response) do
         {
           'results' => []
@@ -167,8 +172,11 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
     end
   end
 
-  describe '中黒バリエーション検索' do
+  describe 'Wikipedia経由フォールバック検索' do
+    let(:wikipedia_client) { instance_double(ExternalApis::WikipediaClient) }
+
     before do
+      allow(ExternalApis::WikipediaClient).to receive(:new).and_return(wikipedia_client)
       stub_request(:get, %r{api.themoviedb.org/3/search/movie})
         .to_return(status: 200, body: { 'results' => [] }.to_json,
                    headers: { 'Content-Type' => 'application/json' })
@@ -176,22 +184,28 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
 
     context '結果が3件以下のとき' do
       before do
+        # 元クエリ → 0件
         stub_request(:get, %r{api.themoviedb.org/3/search/tv})
           .with(query: hash_including('query' => 'ウォーキングデッド'))
           .to_return(status: 200, body: { 'results' => [] }.to_json,
                      headers: { 'Content-Type' => 'application/json' })
-        # insert_nakaguro は「ー」の直後のカタカナに中黒を挿入する
-        # 「ウォーキングデッド」→「ウォー・キングデッド」（「ー」+「キ」の間に挿入）
+        # Wikipedia → 正式タイトル取得
+        allow(wikipedia_client).to receive(:search).with('ウォーキングデッド', limit: 5).and_return(['ウォーキング・デッド'])
+        # 正式タイトルでTMDB再検索 → ヒット
         stub_request(:get, %r{api.themoviedb.org/3/search/tv})
-          .with(query: hash_including('query' => 'ウォー・キングデッド'))
+          .with(query: hash_including('query' => 'ウォーキング・デッド'))
           .to_return(status: 200, body: { 'results' => [{
             'id' => 1402, 'name' => 'ウォーキング・デッド',
             'overview' => 'ゾンビが蔓延する世界', 'poster_path' => '/twd.jpg',
             'genre_ids' => [18], 'original_language' => 'en', 'popularity' => 95.0
           }] }.to_json, headers: { 'Content-Type' => 'application/json' })
+        stub_request(:get, %r{api.themoviedb.org/3/search/movie})
+          .with(query: hash_including('query' => 'ウォーキング・デッド'))
+          .to_return(status: 200, body: { 'results' => [] }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
       end
 
-      it '中黒挿入版で追加検索して結果を返す' do
+      it 'Wikipedia経由で正式タイトルを取得して追加検索する' do
         results = adapter.search('ウォーキングデッド')
         expect(results.map(&:title)).to include('ウォーキング・デッド')
       end
@@ -207,27 +221,43 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
       end
 
       before do
+        allow(wikipedia_client).to receive(:search)
         stub_request(:get, %r{api.themoviedb.org/3/search/tv})
           .to_return(status: 200, body: { 'results' => enough_results }.to_json,
                      headers: { 'Content-Type' => 'application/json' })
       end
 
-      it '追加検索を実行しない' do
-        adapter.search('テスター作品')
-        expect(WebMock).to have_requested(:get, %r{api.themoviedb.org/3/search/tv}).once
+      it 'Wikipedia検索を実行しない' do
+        adapter.search('テスト作品')
+        expect(wikipedia_client).not_to have_received(:search)
       end
     end
 
-    context '中黒挿入で変化がないクエリ' do
+    context 'Wikipediaでヒットしない場合' do
       before do
         stub_request(:get, %r{api.themoviedb.org/3/search/tv})
           .to_return(status: 200, body: { 'results' => [] }.to_json,
                      headers: { 'Content-Type' => 'application/json' })
+        allow(wikipedia_client).to receive(:search).and_return([])
       end
 
-      it '漢字のみのクエリでは追加検索しない' do
-        adapter.search('半沢直樹')
-        expect(WebMock).to have_requested(:get, %r{api.themoviedb.org/3/search/tv}).once
+      it 'エラーにならず空配列を返す' do
+        results = adapter.search('完全に存在しない作品')
+        expect(results).to eq([])
+      end
+    end
+
+    context 'Wikipediaでエラーが発生した場合' do
+      before do
+        stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+          .to_return(status: 200, body: { 'results' => [] }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+        allow(wikipedia_client).to receive(:search).and_raise(StandardError, 'Wikipedia API error')
+      end
+
+      it 'エラーを握りつぶして元の結果を返す' do
+        results = adapter.search('テスト')
+        expect(results).to eq([])
       end
     end
 
@@ -239,6 +269,7 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
         stub_request(:get, %r{api.themoviedb.org/3/search/tv})
           .to_return(status: 200, body: { 'results' => [same_result] }.to_json,
                      headers: { 'Content-Type' => 'application/json' })
+        allow(wikipedia_client).to receive(:search).and_return(['テスト・ドラマ'])
       end
 
       it '同じIDの結果は重複しない' do

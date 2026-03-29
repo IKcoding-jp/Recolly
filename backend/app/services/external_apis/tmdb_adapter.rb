@@ -6,7 +6,7 @@ module ExternalApis
     IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
     # TMDBのジャンルID: Animation
     ANIMATION_GENRE_ID = 16
-    # 中黒バリエーション検索を試みる閾値（この件数以下なら追加検索する）
+    # Wikipedia経由フォールバック検索を試みる閾値（この件数以下なら追加検索する）
     NAKAGURO_RETRY_THRESHOLD = 3
 
     def media_types
@@ -16,15 +16,9 @@ module ExternalApis
     def search(query, media_type: nil) # rubocop:disable Lint/UnusedMethodArgument -- BaseAdapterインターフェース準拠
       results = search_movies(query) + search_tv(query)
 
-      # 結果が少ない場合、中黒「・」を挿入したバリエーションで追加検索する
-      # 例: 「ウォーキングデッド」→「ウォーキング・デッド」
-      if results.length <= NAKAGURO_RETRY_THRESHOLD
-        nakaguro_query = insert_nakaguro(query)
-        if nakaguro_query != query
-          additional = search_movies(nakaguro_query) + search_tv(nakaguro_query)
-          results = merge_results(results, additional)
-        end
-      end
+      # 結果が少ない場合、WikipediaClientで正式タイトルを取得してTMDB再検索する
+      # 例: 「ウォーキングデッド」→ Wikipedia「ウォーキング・デッド」→ TMDB再検索
+      results = search_via_wikipedia(query, results) if results.length <= NAKAGURO_RETRY_THRESHOLD
 
       results
     end
@@ -47,10 +41,23 @@ module ExternalApis
 
     private
 
-    # 長音「ー」の直後にカタカナが続く場合、中黒「・」を挿入する
-    # 例: 「ウォーキングデッド」→「ウォーキング・デッド」
-    def insert_nakaguro(query)
-      query.gsub(/ー([ァ-ヶ])/, 'ー・\1')
+    # Wikipedia検索で正式タイトルを取得し、TMDBで追加検索する
+    # 例: 「ウォーキングデッド」→ Wikipedia「ウォーキング・デッド」→ TMDB再検索
+    def search_via_wikipedia(query, existing_results)
+      wikipedia = ExternalApis::WikipediaClient.new
+      titles = wikipedia.search(query, limit: 5)
+      return existing_results if titles.empty?
+
+      additional = titles.flat_map do |title|
+        next [] if title == query
+
+        search_movies(title) + search_tv(title)
+      end
+
+      merge_results(existing_results, additional)
+    rescue StandardError => e
+      Rails.logger.error("[TmdbAdapter] Wikipedia補完エラー: #{e.message}")
+      existing_results
     end
 
     # TMDB IDで重複除去しながら結果をマージする
