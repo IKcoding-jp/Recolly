@@ -1,0 +1,30 @@
+/* UserProfilePage.module.css */
+
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--spacing-xl) var(--spacing-md);
+}
+
+.loading {
+  text-align: center;
+  padding: var(--spacing-3xl) 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+}
+
+.error {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--color-error);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+}
+
+@media (max-width: 768px) {
+  .page {
+    max-width: 100%;
+    padding: var(--spacing-md);
+  }
+}

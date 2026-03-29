@@ -1,0 +1,58 @@
+/* UserStats.module.css */
+
+.section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: var(--spacing-md);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  background-color: #f9fafb;
+  border-radius: 8px;
+}
+
+.cardValue {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  line-height: var(--line-height-tight);
+}
+
+.cardLabel {
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.genreChip {
+  display: inline-block;
+  padding: 4px 12px;
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+  background-color: var(--color-border-light);
+  border-radius: 999px;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
