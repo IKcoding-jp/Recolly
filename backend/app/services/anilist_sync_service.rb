@@ -28,7 +28,7 @@ class AniListSyncService
     new_total = work.manga? ? data['volumes'] : data['episodes']
     work.update!(
       total_episodes: new_total || work.total_episodes,
-      metadata: work.metadata.merge('status' => data['status']),
+      metadata: (work.metadata || {}).merge('status' => data['status']),
       last_synced_at: Time.current
     )
   end

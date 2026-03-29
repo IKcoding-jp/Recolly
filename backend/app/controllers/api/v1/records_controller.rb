@@ -141,9 +141,12 @@ module Api
       end
 
       # metadata はネストされたハッシュのため、params.expect の配列指定では取得できない
-      # params.dig で別途取得し、permit! で全キーを許可してからハッシュに変換する
+      # 受け入れるキーを明示的に列挙し、Mass Assignment を防止する
       def work_metadata
-        params.dig(:record, :work_data, :metadata)&.permit!&.to_h
+        meta = params.dig(:record, :work_data, :metadata)
+        return nil unless meta.respond_to?(:permit)
+
+        meta.permit(:status, :season_year, :popularity, :title_english, :title_romaji, genres: []).to_h
       end
 
       def external_api_present?(data)
