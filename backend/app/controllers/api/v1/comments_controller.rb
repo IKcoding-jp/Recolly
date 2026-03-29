@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Api::V1::CommentsController < ApplicationController
+  # indexは公開API（未ログインでも閲覧可能）。create/update/destroyのみ認証必須
   before_action :authenticate_user!, only: %i[create update destroy]
   before_action :set_discussion, only: %i[index create]
   before_action :set_comment, only: %i[update destroy]

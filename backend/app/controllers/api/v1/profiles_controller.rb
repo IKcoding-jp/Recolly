@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class Api::V1::ProfilesController < ApplicationController
+  # 公開API: 未ログインでもプロフィール閲覧を許可する
+  # （CLAUDE.md「全APIエンドポイントに認証チェック必須」の意図的な例外）
+
   # GET /api/v1/users/:id
   def show
     user = User.find(params[:id])

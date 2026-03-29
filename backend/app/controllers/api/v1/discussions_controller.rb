@@ -5,6 +5,7 @@ module Api
     class DiscussionsController < ApplicationController
       include DiscussionFilterable
 
+      # index/showは公開API（未ログインでも閲覧可能）。create/update/destroyのみ認証必須
       before_action :authenticate_user!, only: %i[create update destroy]
       before_action :authorize_record_owner!, only: [:create]
       before_action :set_discussion, only: %i[show update destroy]

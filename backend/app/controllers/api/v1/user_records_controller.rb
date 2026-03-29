@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class Api::V1::UserRecordsController < ApplicationController
+  # 公開API: 未ログインでも公開記録の閲覧を許可する
+  # （CLAUDE.md「全APIエンドポイントに認証チェック必須」の意図的な例外）
+
   # GET /api/v1/users/:user_id/records
   def index
     user = User.find(params[:user_id])
