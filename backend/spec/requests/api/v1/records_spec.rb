@@ -6,6 +6,14 @@ RSpec.describe 'Api::V1::Records', type: :request do
   let(:user) { User.create!(username: 'testuser', email: 'test@example.com', password: 'password123') }
   let(:existing_work) { Work.create!(title: '既存作品', media_type: 'anime') }
 
+  # RSpec/ExampleLength対策: work_dataのテストデータをヘルパーに抽出
+  def work_data_with_metadata
+    { title: 'ONE PIECE', media_type: 'manga', description: '海賊王を目指す',
+      cover_image_url: 'https://example.com/op.jpg', total_episodes: 110,
+      external_api_id: '21', external_api_source: 'anilist',
+      metadata: { status: 'RELEASING', genres: ['Action'] } }
+  end
+
   describe 'POST /api/v1/records' do
     context '認証済み' do
       before { sign_in user }
@@ -46,6 +54,13 @@ RSpec.describe 'Api::V1::Records', type: :request do
           post '/api/v1/records', params: params, as: :json
         end.not_to change(Work, :count)
         expect(Record.count).to eq(1)
+      end
+
+      it '外部API作品作成時に metadata を保存する' do
+        post '/api/v1/records', params: { record: { work_data: work_data_with_metadata } }
+        expect(response).to have_http_status(:created)
+        work = Work.find_by(external_api_id: '21')
+        expect(work.metadata['status']).to eq('RELEASING')
       end
 
       it '同じ作品を二重記録しようとすると422' do
