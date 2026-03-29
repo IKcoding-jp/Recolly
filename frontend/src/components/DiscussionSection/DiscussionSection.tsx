@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Discussion } from '../../lib/types'
 import { discussionsApi } from '../../lib/discussionsApi'
-import { useAuth } from '../../contexts/useAuth'
 import { SectionTitle } from '../ui/SectionTitle/SectionTitle'
 import { DiscussionCard } from '../DiscussionCard/DiscussionCard'
 import { DiscussionCreateModal } from '../DiscussionCreateModal/DiscussionCreateModal'
@@ -19,7 +18,6 @@ type Props = {
 }
 
 export function DiscussionSection({ workId, totalEpisodes, hasRecord }: Props) {
-  const { user } = useAuth()
   const [discussions, setDiscussions] = useState<Discussion[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [episodeFilter, setEpisodeFilter] = useState<number | undefined>(undefined)
@@ -68,8 +66,8 @@ export function DiscussionSection({ workId, totalEpisodes, hasRecord }: Props) {
     }
   }
 
-  const isAuthenticated = user !== null
-  const canCreate = isAuthenticated && hasRecord
+  // hasRecordがtrueなら認証済み+記録済みは自明（記録にはログインが必要なため）
+  const canCreate = hasRecord
 
   return (
     <div className={styles.section}>

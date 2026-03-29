@@ -32,13 +32,13 @@ describe('NavBar', () => {
     expect(screen.getByRole('link', { name: 'ホーム' })).toHaveAttribute('href', '/dashboard')
     expect(screen.getByRole('link', { name: '検索' })).toHaveAttribute('href', '/search')
     expect(screen.getByRole('link', { name: 'ライブラリ' })).toHaveAttribute('href', '/library')
+    expect(screen.getByRole('link', { name: 'コミュニティ' })).toHaveAttribute('href', '/community')
   })
 
   it('未実装のナビ項目はリンクではなくグレーアウトで表示する', () => {
     renderNavBar()
-    expect(screen.getByText('コミュニティ')).toBeInTheDocument()
     expect(screen.getByText('おすすめ')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'コミュニティ' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'おすすめ' })).not.toBeInTheDocument()
   })
 
   it('ナビに「マイページ」リンクが表示されない', () => {
