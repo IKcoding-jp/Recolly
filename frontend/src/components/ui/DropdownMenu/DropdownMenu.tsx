@@ -34,7 +34,7 @@ export function DropdownMenu({ items }: Props) {
         onClick={() => setIsOpen((p) => !p)}
         aria-label="メニューを開く"
       >
-        &ctdot;
+        ⋯
       </button>
       {isOpen && (
         <div className={styles.menu}>
