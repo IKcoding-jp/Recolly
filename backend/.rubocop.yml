@@ -24,6 +24,11 @@ Metrics/ClassLength:
 Metrics/MethodLength:
   Max: 20
 
+# Rakeタスクのnamespaceブロックは長くなりがちなので除外
+Metrics/BlockLength:
+  Exclude:
+    - "lib/tasks/**/*.rake"
+
 # 日本語コメントを許可
 Style/AsciiComments:
   Enabled: false

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
+require 'webmock/rspec'
 
 RSpec.describe 'Api::V1::Works', type: :request do
   let(:user) { User.create!(username: 'testuser', email: 'test@example.com', password: 'password123') }
@@ -83,6 +84,72 @@ RSpec.describe 'Api::V1::Works', type: :request do
     context '未認証' do
       it '401を返す' do
         post '/api/v1/works', params: work_params, as: :json
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
+
+  describe 'POST /api/v1/works/:id/sync' do
+    let(:user) { User.create!(username: 'syncuser', email: 'sync@example.com', password: 'password123') }
+    let(:work) do
+      Work.create!(
+        title: 'ONE PIECE', media_type: 'manga',
+        total_episodes: 100, external_api_id: '21',
+        external_api_source: 'anilist',
+        metadata: { 'status' => 'RELEASING' },
+        last_synced_at: 25.hours.ago
+      )
+    end
+
+    before { sign_in user }
+
+    context 'sync が必要な場合（24時間経過）' do
+      before do
+        stub_request(:post, 'https://graphql.anilist.co')
+          .to_return(
+            status: 200,
+            body: {
+              'data' => {
+                'Media' => {
+                  'id' => 21, 'volumes' => 110, 'episodes' => nil,
+                  'chapters' => 1100, 'status' => 'RELEASING'
+                }
+              }
+            }.to_json,
+            headers: { 'Content-Type' => 'application/json' }
+          )
+      end
+
+      it 'AniListからデータを同期して更新後の作品を返す' do
+        post "/api/v1/works/#{work.id}/sync"
+        expect(response).to have_http_status(:ok)
+        json = response.parsed_body
+        expect(json['work']['total_episodes']).to eq(110)
+      end
+    end
+
+    context 'sync が不要な場合（24時間以内）' do
+      let(:work) do
+        Work.create!(
+          title: 'ONE PIECE', media_type: 'manga',
+          total_episodes: 110, external_api_id: '21',
+          external_api_source: 'anilist',
+          last_synced_at: 1.hour.ago
+        )
+      end
+
+      it 'AniListに問い合わせずに現在のデータを返す' do
+        post "/api/v1/works/#{work.id}/sync"
+        expect(response).to have_http_status(:ok)
+        expect(WebMock).not_to have_requested(:post, 'https://graphql.anilist.co')
+      end
+    end
+
+    context '未認証の場合' do
+      before { sign_out user }
+
+      it '401を返す' do
+        post "/api/v1/works/#{work.id}/sync"
         expect(response).to have_http_status(:unauthorized)
       end
     end

@@ -2,14 +2,22 @@ import { useState, useCallback } from 'react'
 import { useEpisodeReviews } from '../../hooks/useEpisodeReviews'
 import { Button } from '../ui/Button/Button'
 import { EpisodeReviewCard } from './EpisodeReviewCard'
+import type { MediaType } from '../../lib/types'
+import { UNIT_LABELS } from '../../lib/mediaTypeUtils'
 import styles from './EpisodeReviewSection.module.css'
 
 type EpisodeReviewSectionProps = {
   recordId: number
   currentEpisode: number
+  mediaType?: MediaType
 }
 
-export function EpisodeReviewSection({ recordId, currentEpisode }: EpisodeReviewSectionProps) {
+export function EpisodeReviewSection({
+  recordId,
+  currentEpisode,
+  mediaType,
+}: EpisodeReviewSectionProps) {
+  const unit = (mediaType && UNIT_LABELS[mediaType]) ?? '話'
   const { reviews, isLoading, createReview, updateReview, deleteReview } =
     useEpisodeReviews(recordId)
 
@@ -50,13 +58,13 @@ export function EpisodeReviewSection({ recordId, currentEpisode }: EpisodeReview
             onChange={(e) => setEpisodeNumber(Number(e.target.value))}
             min={1}
           />
-          <span className={styles.episodeLabel}>話</span>
+          <span className={styles.episodeLabel}>{unit}</span>
         </div>
         <textarea
           className={styles.textarea}
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder="この話数の感想を書く..."
+          placeholder={`この${unit}の感想を書く...`}
           rows={3}
         />
         <div className={styles.formActions}>
@@ -79,6 +87,7 @@ export function EpisodeReviewSection({ recordId, currentEpisode }: EpisodeReview
               review={review}
               onUpdate={updateReview}
               onDelete={deleteReview}
+              unit={unit}
             />
           ))}
         </div>

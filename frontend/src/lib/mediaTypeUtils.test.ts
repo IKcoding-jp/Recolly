@@ -7,6 +7,8 @@ import {
   getStatusLabel,
   getStatusOptions,
   getRewatchLabel,
+  isOngoing,
+  getUnreadCount,
 } from './mediaTypeUtils'
 
 describe('getActionLabel', () => {
@@ -198,5 +200,33 @@ describe('getRewatchLabel', () => {
   })
   it('ゲームは「リプレイ回数」を返す', () => {
     expect(getRewatchLabel('game')).toBe('リプレイ回数')
+  })
+})
+
+describe('isOngoing', () => {
+  it('metadata.status が RELEASING なら true', () => {
+    expect(isOngoing({ status: 'RELEASING' })).toBe(true)
+  })
+
+  it('metadata.status が FINISHED なら false', () => {
+    expect(isOngoing({ status: 'FINISHED' })).toBe(false)
+  })
+
+  it('metadata が空なら false', () => {
+    expect(isOngoing({})).toBe(false)
+  })
+})
+
+describe('getUnreadCount', () => {
+  it('未読巻数を返す', () => {
+    expect(getUnreadCount(108, 110)).toBe(2)
+  })
+
+  it('追いついている場合は 0', () => {
+    expect(getUnreadCount(110, 110)).toBe(0)
+  })
+
+  it('total が null の場合は 0', () => {
+    expect(getUnreadCount(5, null)).toBe(0)
   })
 })

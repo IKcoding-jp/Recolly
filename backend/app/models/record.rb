@@ -60,14 +60,21 @@ class Record < ApplicationRecord
   end
 
   def auto_complete_on_episode_reach
-    return unless current_episode_changed?
-    return if status == 'completed'
-    return if work.total_episodes.blank?
-    return unless current_episode >= work.total_episodes
+    return unless should_auto_complete?
 
     self.status = 'completed'
     self.completed_at ||= Date.current
     self.started_at ||= Date.current
+  end
+
+  # エピソード到達による自動完了の判定
+  # 連載中（RELEASING）の作品では自動完了しない（完結済み・status未設定のみ対象）
+  def should_auto_complete?
+    current_episode_changed? &&
+      status != 'completed' &&
+      work.total_episodes.present? &&
+      current_episode >= work.total_episodes &&
+      work.metadata&.dig('status') != 'RELEASING'
   end
 
   def started_at_before_completed_at

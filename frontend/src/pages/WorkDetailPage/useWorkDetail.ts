@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import type { UserRecord, RecordStatus } from '../../lib/types'
 import { recordsApi } from '../../lib/recordsApi'
+import { worksApi } from '../../lib/worksApi'
 
 type WorkDetailState = {
   record: UserRecord | null
@@ -31,11 +32,29 @@ export function useWorkDetail() {
       try {
         const res = await recordsApi.getAll({ workId })
         if (!cancelled) {
+          const record = res.records[0] ?? null
           setState((prev) => ({
             ...prev,
-            record: res.records[0] ?? null,
+            record,
             isLoading: false,
           }))
+          // 作品データの同期（AniListソースの場合）
+          if (record?.work.external_api_source === 'anilist') {
+            try {
+              const syncRes = await worksApi.sync(record.work.id)
+              if (!cancelled && syncRes.work) {
+                setState((prev) => {
+                  if (!prev.record) return prev
+                  return {
+                    ...prev,
+                    record: { ...prev.record, work: syncRes.work },
+                  }
+                })
+              }
+            } catch {
+              // sync失敗は無視（データ表示に影響しない）
+            }
+          }
         }
       } catch {
         if (!cancelled) {

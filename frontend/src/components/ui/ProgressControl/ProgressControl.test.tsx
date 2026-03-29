@@ -70,4 +70,24 @@ describe('ProgressControl', () => {
     render(<ProgressControl current={5} total={24} onChange={() => {}} />)
     expect(screen.getByText('5 / 24話')).toBeInTheDocument()
   })
+
+  describe('連載中バッジ', () => {
+    it('isOngoing が true のとき「連載中」バッジを表示する', () => {
+      render(
+        <ProgressControl
+          current={110}
+          total={110}
+          onChange={() => {}}
+          mediaType="manga"
+          isOngoing
+        />,
+      )
+      expect(screen.getByText('連載中')).toBeInTheDocument()
+    })
+
+    it('isOngoing が false のとき「連載中」バッジを表示しない', () => {
+      render(<ProgressControl current={72} total={72} onChange={() => {}} mediaType="manga" />)
+      expect(screen.queryByText('連載中')).not.toBeInTheDocument()
+    })
+  })
 })

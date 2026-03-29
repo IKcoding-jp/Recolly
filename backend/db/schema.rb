@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_28_100342) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_29_062109) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -106,6 +106,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_28_100342) do
     t.text "description"
     t.string "external_api_id"
     t.string "external_api_source"
+    t.datetime "last_synced_at"
     t.integer "media_type", null: false
     t.jsonb "metadata", default: {}
     t.string "title", null: false

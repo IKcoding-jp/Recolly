@@ -34,13 +34,19 @@ vi.mock('../../hooks/useEpisodeReviews', () => ({
 describe('EpisodeReviewSection', () => {
   it('話数感想一覧を表示する', () => {
     render(<EpisodeReviewSection recordId={1} currentEpisode={5} />)
-    expect(screen.getByText('第1話')).toBeInTheDocument()
-    expect(screen.getByText('第2話')).toBeInTheDocument()
+    expect(screen.getByText(/第1話/)).toBeInTheDocument()
+    expect(screen.getByText(/第2話/)).toBeInTheDocument()
   })
 
   it('感想入力フォームを表示する', () => {
     render(<EpisodeReviewSection recordId={1} currentEpisode={5} />)
-    expect(screen.getByPlaceholderText('この話数の感想を書く...')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('この話の感想を書く...')).toBeInTheDocument()
+  })
+
+  it('漫画の場合は「巻」と表示する', () => {
+    render(<EpisodeReviewSection recordId={1} currentEpisode={5} mediaType="manga" />)
+    expect(screen.getByPlaceholderText('この巻の感想を書く...')).toBeInTheDocument()
+    expect(screen.getByText(/第1巻/)).toBeInTheDocument()
   })
 
   it('感想の本文を表示する', () => {

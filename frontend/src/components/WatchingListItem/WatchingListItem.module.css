@@ -55,6 +55,16 @@
   color: var(--color-text-muted);
   margin-top: 2px;
 }
+.unreadBadge {
+  display: inline-block;
+  font-size: var(--font-size-meta);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: var(--font-weight-bold);
+  margin-left: 6px;
+  background: var(--color-manga);
+  color: var(--color-bg-white);
+}
 .actionButton {
   width: 72px;
   padding: var(--spacing-xs) 0;

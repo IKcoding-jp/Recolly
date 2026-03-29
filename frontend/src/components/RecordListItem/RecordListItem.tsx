@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { UserRecord } from '../../lib/types'
-import { getStatusLabel } from '../../lib/mediaTypeUtils'
+import { getStatusLabel, UNIT_LABELS } from '../../lib/mediaTypeUtils'
 import styles from './RecordListItem.module.css'
 
 type RecordListItemProps = {
@@ -61,7 +61,8 @@ export function RecordListItem({ record }: RecordListItemProps) {
           {hasEpisodes && (
             <div className={styles.progress}>
               <span className={styles.progressText}>
-                {record.current_episode} / {work.total_episodes}話
+                {record.current_episode} / {work.total_episodes}
+                {UNIT_LABELS[work.media_type] ?? '話'}
               </span>
               <div className={styles.progressBar}>
                 <div className={styles.progressFill} style={{ width: `${progressPercent}%` }} />

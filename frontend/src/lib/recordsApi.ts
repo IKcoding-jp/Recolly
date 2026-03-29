@@ -63,6 +63,7 @@ export const recordsApi = {
       | 'total_episodes'
       | 'external_api_id'
       | 'external_api_source'
+      | 'metadata'
     >,
     options?: RecordCreateOptions,
   ): Promise<RecordResponse> {

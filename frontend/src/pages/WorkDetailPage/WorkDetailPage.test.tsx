@@ -125,7 +125,7 @@ describe('WorkDetailPage', () => {
   it('アニメの場合は話数ごとの感想セクションが表示される', async () => {
     renderWithRouter('1')
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('この話数の感想を書く...')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('この話の感想を書く...')).toBeInTheDocument()
     })
   })
 
@@ -137,7 +137,7 @@ describe('WorkDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByText('進撃の巨人')).toBeInTheDocument()
     })
-    expect(screen.queryByPlaceholderText('この話数の感想を書く...')).not.toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('この話の感想を書く...')).not.toBeInTheDocument()
   })
 
   it('アニメの場合は進捗セクションが表示される', async () => {

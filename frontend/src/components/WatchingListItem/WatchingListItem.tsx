@@ -1,6 +1,12 @@
 import { Link } from 'react-router-dom'
 import type { UserRecord } from '../../lib/types'
-import { getActionLabel, getGenreLabel, getProgressText } from '../../lib/mediaTypeUtils'
+import {
+  getActionLabel,
+  getGenreLabel,
+  getProgressText,
+  isOngoing,
+  getUnreadCount,
+} from '../../lib/mediaTypeUtils'
 import styles from './WatchingListItem.module.css'
 
 const GENRE_COLOR_VAR: Record<string, string> = {
@@ -21,6 +27,11 @@ export function WatchingListItem({ record, onAction }: WatchingListItemProps) {
   const { work } = record
   const color = GENRE_COLOR_VAR[work.media_type]
   const progressText = getProgressText(work.media_type, record.current_episode, work.total_episodes)
+  // 連載中の漫画のみ未読巻数を計算する
+  const unreadCount =
+    work.media_type === 'manga' && isOngoing(work.metadata)
+      ? getUnreadCount(record.current_episode, work.total_episodes)
+      : 0
 
   return (
     <div className={styles.row}>
@@ -35,7 +46,10 @@ export function WatchingListItem({ record, onAction }: WatchingListItemProps) {
           <div className={styles.genre} style={{ color }}>
             {getGenreLabel(work.media_type)}
           </div>
-          <div className={styles.progress}>{progressText}</div>
+          <div className={styles.progress}>
+            {progressText}
+            {unreadCount > 0 && <span className={styles.unreadBadge}>未読 {unreadCount}巻</span>}
+          </div>
         </div>
       </Link>
       <button
