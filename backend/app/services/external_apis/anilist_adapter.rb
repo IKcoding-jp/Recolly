@@ -16,6 +16,7 @@ module ExternalApis
             coverImage { large }
             episodes
             chapters
+            volumes
             type
             format
             genres
@@ -69,9 +70,18 @@ module ExternalApis
       SearchResult.new(
         title, media_type, item['description'],
         item.dig('coverImage', 'large'),
-        item['episodes'] || item['chapters'],
+        total_episodes_for(item, media_type),
         item['id'].to_s, 'anilist', build_metadata(item)
       )
+    end
+
+    # 漫画は volumes（巻数）、それ以外は episodes を使用
+    def total_episodes_for(item, media_type)
+      if media_type == 'manga'
+        item['volumes']
+      else
+        item['episodes']
+      end
     end
 
     def build_metadata(item)

@@ -43,6 +43,7 @@ RSpec.describe ExternalApis::AniListAdapter, type: :service do
                     'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx53390.jpg'
                 },
                 'chapters' => 139,
+                'volumes' => 34,
                 'type' => 'MANGA',
                 'format' => 'MANGA',
                 'genres' => %w[Action Drama],
@@ -79,6 +80,18 @@ RSpec.describe ExternalApis::AniListAdapter, type: :service do
     it 'native タイトルを優先する' do
       results = adapter.search('進撃の巨人')
       expect(results.first.title).to eq('進撃の巨人')
+    end
+
+    it '漫画の total_episodes に volumes（巻数）を使用する' do
+      results = adapter.search('進撃の巨人')
+      manga = results.find { |r| r.media_type == 'manga' }
+      expect(manga.total_episodes).to eq(34)
+    end
+
+    it 'アニメの total_episodes は episodes のまま' do
+      results = adapter.search('進撃の巨人')
+      anime = results.find { |r| r.media_type == 'anime' }
+      expect(anime.total_episodes).to eq(25)
     end
 
     it 'popularity（正規化済み）をmetadataに含める' do
