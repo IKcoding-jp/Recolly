@@ -35,10 +35,13 @@ Rails.application.routes.draw do
         end
       end
 
-      # 作品検索・手動登録
+      # 作品検索・手動登録・同期
       resources :works, only: [:create] do
         collection do
           get :search
+        end
+        member do
+          post :sync
         end
       end
 

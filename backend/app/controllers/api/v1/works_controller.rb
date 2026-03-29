@@ -25,6 +25,17 @@ module Api
         end
       end
 
+      # POST /api/v1/works/:id/sync
+      # AniListからデータを再取得して更新する
+      def sync
+        work = Work.find(params[:id])
+        sync_service = AniListSyncService.new
+
+        sync_service.sync_work(work) if sync_service.needs_sync?(work)
+
+        render json: { work: work.reload.as_json }
+      end
+
       private
 
       def work_params
