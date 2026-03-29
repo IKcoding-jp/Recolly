@@ -8,9 +8,14 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
 
   let(:api_key) { 'test_tmdb_key' }
 
+  # WikipediaClientのデフォルトモック（Wikipedia経由フォールバック検索テストで上書きする）
+  let(:default_wikipedia_client) { instance_double(ExternalApis::WikipediaClient) }
+
   before do
     allow(ENV).to receive(:fetch).and_call_original
     allow(ENV).to receive(:fetch).with('TMDB_API_KEY').and_return(api_key)
+    allow(ExternalApis::WikipediaClient).to receive(:new).and_return(default_wikipedia_client)
+    allow(default_wikipedia_client).to receive(:search).and_return([])
   end
 
   describe '#media_types' do
@@ -20,7 +25,8 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
   end
 
   describe '#search' do
-    let(:tmdb_response) do
+    # search/movie用レスポンス（media_typeフィールドなし、タイトルはtitleキー）
+    let(:movie_response) do
       {
         'results' => [
           {
@@ -28,38 +34,41 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
             'title' => 'ファイト・クラブ',
             'overview' => '空虚な生活を送る男の物語',
             'poster_path' => '/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg',
-            'media_type' => 'movie',
             'release_date' => '1999-10-15',
             'genre_ids' => [18, 53],
             'original_language' => 'en',
             'popularity' => 61.5
-          },
+          }
+        ]
+      }
+    end
+
+    # search/tv用レスポンス（media_typeフィールドなし、タイトルはnameキー）
+    let(:tv_response) do
+      {
+        'results' => [
           {
             'id' => 1396,
             'name' => 'ブレイキング・バッド',
             'overview' => '化学教師が犯罪に手を染める',
             'poster_path' => '/ggFHVNu6YYI5L9pCfOacjizRGt.jpg',
-            'media_type' => 'tv',
             'first_air_date' => '2008-01-20',
             'genre_ids' => [18],
             'original_language' => 'en',
             'popularity' => 120.3
-          },
-          {
-            'id' => 999,
-            'name' => 'ある人物',
-            'media_type' => 'person'
           }
         ]
       }
     end
 
     before do
-      stub_request(:get, %r{api.themoviedb.org/3/search/multi})
-        .to_return(status: 200, body: tmdb_response.to_json, headers: { 'Content-Type' => 'application/json' })
+      stub_request(:get, %r{api.themoviedb.org/3/search/movie})
+        .to_return(status: 200, body: movie_response.to_json, headers: { 'Content-Type' => 'application/json' })
+      stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+        .to_return(status: 200, body: tv_response.to_json, headers: { 'Content-Type' => 'application/json' })
     end
 
-    it 'movie と tv の結果を返す（person は除外）' do
+    it 'movie と tv の結果を両方返す' do
       results = adapter.search('ファイト・クラブ')
       expect(results.length).to eq(2)
     end
@@ -98,8 +107,14 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
       expect(adapter.search('存在しない作品')).to eq([])
     end
 
-    context '日本のアニメーション作品' do
-      let(:anime_response) do
+    context '日本のアニメーション作品' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+      let(:anime_movie_response) do
+        {
+          'results' => []
+        }
+      end
+
+      let(:anime_tv_response) do
         {
           'results' => [
             {
@@ -107,7 +122,6 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
               'name' => 'けいおん！',
               'overview' => '軽音部の日常',
               'poster_path' => '/keion.jpg',
-              'media_type' => 'tv',
               'genre_ids' => [16, 35],
               'original_language' => 'ja',
               'popularity' => 45.0
@@ -117,7 +131,6 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
               'name' => 'ブレイキング・バッド',
               'overview' => '化学教師が犯罪に手を染める',
               'poster_path' => '/bb.jpg',
-              'media_type' => 'tv',
               'genre_ids' => [18],
               'original_language' => 'en',
               'popularity' => 120.0
@@ -127,7 +140,6 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
               'name' => 'スポンジ・ボブ',
               'overview' => '海底の冒険',
               'poster_path' => '/sponge.jpg',
-              'media_type' => 'tv',
               'genre_ids' => [16, 35],
               'original_language' => 'en',
               'popularity' => 80.0
@@ -137,8 +149,11 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
       end
 
       before do
-        stub_request(:get, %r{api.themoviedb.org/3/search/multi})
-          .to_return(status: 200, body: anime_response.to_json,
+        stub_request(:get, %r{api.themoviedb.org/3/search/movie})
+          .to_return(status: 200, body: anime_movie_response.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+        stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+          .to_return(status: 200, body: anime_tv_response.to_json,
                      headers: { 'Content-Type' => 'application/json' })
       end
 
@@ -157,17 +172,132 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
     end
   end
 
+  describe 'Wikipedia経由フォールバック検索' do
+    let(:wikipedia_client) { instance_double(ExternalApis::WikipediaClient) }
+
+    before do
+      allow(ExternalApis::WikipediaClient).to receive(:new).and_return(wikipedia_client)
+      stub_request(:get, %r{api.themoviedb.org/3/search/movie})
+        .to_return(status: 200, body: { 'results' => [] }.to_json,
+                   headers: { 'Content-Type' => 'application/json' })
+    end
+
+    context '結果が3件以下のとき' do
+      before do
+        # 元クエリ → 0件
+        stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+          .with(query: hash_including('query' => 'ウォーキングデッド'))
+          .to_return(status: 200, body: { 'results' => [] }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+        # Wikipedia → 正式タイトル取得
+        allow(wikipedia_client).to receive(:search).with('ウォーキングデッド', limit: 5).and_return(['ウォーキング・デッド'])
+        # 正式タイトルでTMDB再検索 → ヒット
+        stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+          .with(query: hash_including('query' => 'ウォーキング・デッド'))
+          .to_return(status: 200, body: { 'results' => [{
+            'id' => 1402, 'name' => 'ウォーキング・デッド',
+            'overview' => 'ゾンビが蔓延する世界', 'poster_path' => '/twd.jpg',
+            'genre_ids' => [18], 'original_language' => 'en', 'popularity' => 95.0
+          }] }.to_json, headers: { 'Content-Type' => 'application/json' })
+        stub_request(:get, %r{api.themoviedb.org/3/search/movie})
+          .with(query: hash_including('query' => 'ウォーキング・デッド'))
+          .to_return(status: 200, body: { 'results' => [] }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it 'Wikipedia経由で正式タイトルを取得して追加検索する' do
+        results = adapter.search('ウォーキングデッド')
+        expect(results.map(&:title)).to include('ウォーキング・デッド')
+      end
+    end
+
+    context '結果が4件以上のとき' do
+      let(:enough_results) do
+        4.times.map do |i|
+          { 'id' => i + 1, 'name' => "ドラマ#{i}", 'overview' => '説明',
+            'poster_path' => '/img.jpg', 'genre_ids' => [], 'original_language' => 'ja',
+            'popularity' => 50.0 }
+        end
+      end
+
+      before do
+        allow(wikipedia_client).to receive(:search)
+        stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+          .to_return(status: 200, body: { 'results' => enough_results }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it 'Wikipedia検索を実行しない' do
+        adapter.search('テスト作品')
+        expect(wikipedia_client).not_to have_received(:search)
+      end
+    end
+
+    context 'Wikipediaでヒットしない場合' do
+      before do
+        stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+          .to_return(status: 200, body: { 'results' => [] }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+        allow(wikipedia_client).to receive(:search).and_return([])
+      end
+
+      it 'エラーにならず空配列を返す' do
+        results = adapter.search('完全に存在しない作品')
+        expect(results).to eq([])
+      end
+    end
+
+    context 'Wikipediaでエラーが発生した場合' do
+      before do
+        stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+          .to_return(status: 200, body: { 'results' => [] }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+        allow(wikipedia_client).to receive(:search).and_raise(StandardError, 'Wikipedia API error')
+      end
+
+      it 'エラーを握りつぶして元の結果を返す' do
+        results = adapter.search('テスト')
+        expect(results).to eq([])
+      end
+    end
+
+    context '重複除去' do
+      before do
+        same_result = { 'id' => 100, 'name' => 'テスト・ドラマ', 'overview' => '説明',
+                        'poster_path' => '/img.jpg', 'genre_ids' => [], 'original_language' => 'ja',
+                        'popularity' => 50.0 }
+        stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+          .to_return(status: 200, body: { 'results' => [same_result] }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+        allow(wikipedia_client).to receive(:search).and_return(['テスト・ドラマ'])
+      end
+
+      it '同じIDの結果は重複しない' do
+        results = adapter.search('テストドラマ')
+        ids = results.map(&:external_api_id)
+        expect(ids.uniq.length).to eq(ids.length)
+      end
+    end
+  end
+
   describe 'リトライミドルウェア' do
-    let(:retry_success_body) do
+    let(:movie_retry_body) do
       { 'results' => [{ 'id' => 550, 'title' => 'テスト映画', 'overview' => 'テスト概要',
-                        'poster_path' => '/test.jpg', 'media_type' => 'movie' }] }
+                        'poster_path' => '/test.jpg' }] }
+    end
+
+    let(:tv_retry_body) do
+      { 'results' => [] }
     end
 
     it 'サーバーエラー時にリトライして成功する' do
-      stub_request(:get, /api.themoviedb.org/)
+      stub_request(:get, %r{api.themoviedb.org/3/search/movie})
         .to_return(status: 500, body: '{}', headers: { 'Content-Type' => 'application/json' })
-        .then.to_return(status: 200, body: retry_success_body.to_json,
+        .then.to_return(status: 200, body: movie_retry_body.to_json,
                         headers: { 'Content-Type' => 'application/json' })
+      stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+        .to_return(status: 200, body: tv_retry_body.to_json,
+                   headers: { 'Content-Type' => 'application/json' })
 
       results = adapter.search('テスト')
       expect(results.length).to eq(1)

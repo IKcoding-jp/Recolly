@@ -19,13 +19,14 @@ module ExternalApis
     end
 
     # キーワード検索（子クラスで実装）
-    def search(query)
+    # media_type: 呼び出し元が指定したジャンル（AniListのtype絞り込み等に使用）
+    def search(query, media_type: nil)
       raise NotImplementedError, "#{self.class}#search を実装してください"
     end
 
     # エラーハンドリング付き検索（コントローラーから呼ぶ）
-    def safe_search(query)
-      search(query)
+    def safe_search(query, media_type: nil)
+      search(query, media_type: media_type)
     rescue Faraday::Error => e
       Rails.logger.error("[#{self.class.name}] API通信エラー: #{e.message}")
       []

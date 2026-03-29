@@ -4,12 +4,13 @@ module ExternalApis
   class AniListAdapter < BaseAdapter
     ENDPOINT = 'https://graphql.anilist.co'
 
-    # GraphQL: anime/manga両方を一括検索（typeパラメータをnullにして絞り込まない）
+    # GraphQL: $type（ANIME/MANGA）を指定すると該当ジャンルのみ取得
+    # $typeがnullの場合はanime/manga両方を一括検索
     # sort: POPULARITY_DESC で人気順に並べる
     SEARCH_QUERY = <<~GRAPHQL
-      query ($search: String) {
-        Page(perPage: 20) {
-          media(search: $search, isAdult: false, sort: POPULARITY_DESC) {
+      query ($search: String, $type: MediaType) {
+        Page(perPage: 50) {
+          media(search: $search, type: $type, isAdult: false, sort: POPULARITY_DESC) {
             id
             title { romaji native english }
             description(asHtml: false)
@@ -28,12 +29,21 @@ module ExternalApis
       }
     GRAPHQL
 
+    # Recollyのmedia_type → AniListのMediaType（GraphQLのenum値）
+    # movieはAniListではANIME type + MOVIE formatで管理されている
+    ANILIST_TYPE_MAP = {
+      'anime' => 'ANIME',
+      'manga' => 'MANGA',
+      'movie' => 'ANIME'
+    }.freeze
+
     def media_types
       %w[anime manga]
     end
 
-    def search(query)
-      body = { query: SEARCH_QUERY, variables: { search: query } }
+    def search(query, media_type: nil)
+      variables = { search: query, type: ANILIST_TYPE_MAP[media_type] }.compact
+      body = { query: SEARCH_QUERY, variables: variables }
       response = anilist_connection.post('/', body)
 
       media_list = response.body.dig('data', 'Page', 'media') || []

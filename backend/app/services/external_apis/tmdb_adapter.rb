@@ -6,21 +6,21 @@ module ExternalApis
     IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
     # TMDBのジャンルID: Animation
     ANIMATION_GENRE_ID = 16
+    # Wikipedia経由フォールバック検索を試みる閾値（この件数以下なら追加検索する）
+    NAKAGURO_RETRY_THRESHOLD = 3
 
     def media_types
       %w[movie drama]
     end
 
-    def search(query)
-      response = tmdb_connection.get('/3/search/multi',
-                                     api_key: ENV.fetch('TMDB_API_KEY'),
-                                     query: query,
-                                     language: 'ja')
+    def search(query, media_type: nil) # rubocop:disable Lint/UnusedMethodArgument -- BaseAdapterインターフェース準拠
+      results = search_movies(query) + search_tv(query)
 
-      response.body['results']
-              .select { |item| %w[movie tv].include?(item['media_type']) }
-              .reject { |item| japanese_animation?(item) }
-              .map { |item| normalize(item) }
+      # 結果が少ない場合、WikipediaClientで正式タイトルを取得してTMDB再検索する
+      # 例: 「ウォーキングデッド」→ Wikipedia「ウォーキング・デッド」→ TMDB再検索
+      results = search_via_wikipedia(query, results) if results.length <= NAKAGURO_RETRY_THRESHOLD
+
+      results
     end
 
     # AniListの結果に対して、TMDBから日本語の説明文を取得する
@@ -41,6 +41,38 @@ module ExternalApis
 
     private
 
+    # Wikipedia検索で正式タイトルを取得し、TMDBで追加検索する
+    # 例: 「ウォーキングデッド」→ Wikipedia「ウォーキング・デッド」→ TMDB再検索
+    def search_via_wikipedia(query, existing_results)
+      wikipedia = ExternalApis::WikipediaClient.new
+      titles = wikipedia.search(query, limit: 5)
+      return existing_results if titles.empty?
+
+      additional = titles.flat_map do |title|
+        next [] if title == query
+
+        search_movies(title) + search_tv(title)
+      end
+
+      merge_results(existing_results, additional)
+    rescue StandardError => e
+      Rails.logger.error("[TmdbAdapter] Wikipedia補完エラー: #{e.message}")
+      existing_results
+    end
+
+    # TMDB IDで重複除去しながら結果をマージする
+    def merge_results(primary, additional)
+      seen_ids = primary.to_set(&:external_api_id)
+      combined = primary.dup
+      additional.each do |r|
+        next if seen_ids.include?(r.external_api_id)
+
+        seen_ids.add(r.external_api_id)
+        combined << r
+      end
+      combined
+    end
+
     # 日本のアニメーション作品を判定（AniListで取得するため、TMDBからは除外する）
     # genre_ids に Animation(16) が含まれ、かつ原語が日本語の場合はアニメとみなす
     # 日本語原語の作品を優先してoverviewを返す（同名の外国作品との誤マッチを防止）
@@ -48,6 +80,28 @@ module ExternalApis
       candidates = results.select { |item| %w[movie tv].include?(item['media_type']) }
       match = candidates.find { |item| item['original_language'] == 'ja' } || candidates.first
       match&.dig('overview').presence
+    end
+
+    # search/movie エンドポイントで映画を検索
+    def search_movies(query)
+      response = tmdb_connection.get('/3/search/movie',
+                                     api_key: ENV.fetch('TMDB_API_KEY'),
+                                     query: query,
+                                     language: 'ja')
+      (response.body['results'] || [])
+        .reject { |item| japanese_animation?(item) }
+        .map { |item| normalize_movie(item) }
+    end
+
+    # search/tv エンドポイントでTV番組を検索
+    def search_tv(query)
+      response = tmdb_connection.get('/3/search/tv',
+                                     api_key: ENV.fetch('TMDB_API_KEY'),
+                                     query: query,
+                                     language: 'ja')
+      (response.body['results'] || [])
+        .reject { |item| japanese_animation?(item) }
+        .map { |item| normalize_tv(item) }
     end
 
     def japanese_animation?(item)
@@ -59,17 +113,36 @@ module ExternalApis
       @tmdb_connection ||= connection(url: BASE_URL)
     end
 
-    def normalize(item)
+    def normalize_movie(item)
       SearchResult.new(
-        item['title'] || item['name'],
-        item['media_type'] == 'tv' ? 'drama' : 'movie',
+        item['title'],
+        'movie',
         item['overview'],
         item['poster_path'] ? "#{IMAGE_BASE_URL}#{item['poster_path']}" : nil,
         nil,
         item['id'].to_s,
         'tmdb',
         {
-          release_date: item['release_date'] || item['first_air_date'],
+          release_date: item['release_date'],
+          original_language: item['original_language'],
+          vote_average: item['vote_average'],
+          # TMDBのpopularityは0〜数百の範囲。100で割って0〜1に正規化
+          popularity: normalize_popularity(item['popularity'])
+        }.compact
+      )
+    end
+
+    def normalize_tv(item)
+      SearchResult.new(
+        item['name'],
+        'drama',
+        item['overview'],
+        item['poster_path'] ? "#{IMAGE_BASE_URL}#{item['poster_path']}" : nil,
+        nil,
+        item['id'].to_s,
+        'tmdb',
+        {
+          release_date: item['first_air_date'],
           original_language: item['original_language'],
           vote_average: item['vote_average'],
           # TMDBのpopularityは0〜数百の範囲。100で割って0〜1に正規化

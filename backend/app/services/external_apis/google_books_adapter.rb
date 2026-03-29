@@ -8,9 +8,9 @@ module ExternalApis
       %w[book]
     end
 
-    def search(query)
+    def search(query, media_type: nil) # rubocop:disable Lint/UnusedMethodArgument -- BaseAdapterインターフェース準拠
       # intitle: でタイトル検索に限定し、無関係な結果を除外する
-      params = { q: "intitle:#{query}", key: ENV.fetch('GOOGLE_BOOKS_API_KEY'), maxResults: 20, langRestrict: 'ja' }
+      params = { q: "intitle:#{query}", key: ENV.fetch('GOOGLE_BOOKS_API_KEY'), maxResults: 40, langRestrict: 'ja' }
       response = books_connection.get('/books/v1/volumes', params)
 
       items = response.body['items'] || []
