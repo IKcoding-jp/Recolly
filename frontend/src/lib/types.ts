@@ -162,3 +162,95 @@ export interface Statistics {
     volumes_read: number
   }
 }
+
+// --- フェーズ3: コミュニティ機能 ---
+
+export interface UserSummary {
+  id: number
+  username: string
+  avatar_url: string | null
+}
+
+export interface WorkSummary {
+  id: number
+  title: string
+  media_type: MediaType
+  total_episodes: number | null
+  cover_image_url: string | null
+}
+
+export interface Discussion {
+  id: number
+  title: string
+  body: string
+  episode_number: number | null
+  has_spoiler: boolean
+  comments_count: number
+  created_at: string
+  updated_at: string
+  user: UserSummary
+  work: WorkSummary
+}
+
+export interface DiscussionsResponse {
+  discussions: Discussion[]
+  meta: PaginationMeta
+}
+
+export interface DiscussionResponse {
+  discussion: Discussion
+}
+
+export interface DiscussionComment {
+  id: number
+  body: string
+  created_at: string
+  updated_at: string
+  edited: boolean
+  user: UserSummary
+}
+
+export interface CommentsResponse {
+  comments: DiscussionComment[]
+  meta: PaginationMeta
+}
+
+export interface CommentResponse {
+  comment: DiscussionComment
+}
+
+export interface UserProfile {
+  id: number
+  username: string
+  bio: string | null
+  avatar_url: string | null
+  created_at: string
+}
+
+export interface UserStatistics {
+  total_records: number
+  completed_count: number
+  watching_count: number
+  average_rating: number | null
+  by_genre: Record<string, number>
+  by_status: Record<string, number>
+}
+
+export interface UserProfileResponse {
+  user: UserProfile
+  statistics: UserStatistics
+}
+
+export interface PublicRecord {
+  id: number
+  status: RecordStatus
+  rating: number | null
+  current_episode: number
+  updated_at: string
+  work: WorkSummary
+}
+
+export interface PublicRecordsResponse {
+  records: PublicRecord[]
+  meta: PaginationMeta
+}
