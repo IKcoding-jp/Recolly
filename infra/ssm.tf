@@ -82,7 +82,7 @@ resource "aws_ssm_parameter" "google_client_secret" {
 resource "aws_ssm_parameter" "frontend_url" {
   name  = "/${var.project_name}/${var.environment}/FRONTEND_URL"
   type  = "String"
-  value = "https://${aws_cloudfront_distribution.main.domain_name}"
+  value = "https://${var.domain_name}"
 }
 
 # === S3画像アップロード用 ===
