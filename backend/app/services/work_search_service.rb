@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class WorkSearchService
-  CACHE_TTL = 30.minutes
+  CACHE_TTL = 12.hours
 
   def search(query, media_type: nil)
     cache_key = "work_search:#{media_type || 'all'}:#{query}"

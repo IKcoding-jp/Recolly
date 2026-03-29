@@ -261,6 +261,10 @@ RSpec.describe WorkSearchService, type: :service do
       Rails.cache = original_store
     end
 
+    it 'キャッシュTTLが12時間に設定されている' do
+      expect(WorkSearchService::CACHE_TTL).to eq(12.hours)
+    end
+
     it '同じクエリの2回目はキャッシュから返す（APIを再呼び出ししない）' do
       service.search('テスト')
       results = service.search('テスト')
