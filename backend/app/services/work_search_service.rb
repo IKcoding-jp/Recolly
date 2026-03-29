@@ -8,7 +8,7 @@ class WorkSearchService
 
     Rails.cache.fetch(cache_key, expires_in: CACHE_TTL) do
       adapters = select_adapters(media_type)
-      results = adapters.flat_map { |adapter| adapter.safe_search(query) }
+      results = fetch_from_adapters_in_parallel(adapters, query)
       results = results.select { |r| r.media_type == media_type } if media_type.present?
       enrich_anilist_descriptions(results)
       remove_english_descriptions(results)
@@ -29,6 +29,16 @@ class WorkSearchService
       'book' => [ExternalApis::GoogleBooksAdapter],
       'game' => [ExternalApis::IgdbAdapter]
     }
+  end
+
+  # 複数のアダプターを並列にAPI呼び出しし、結果を統合する
+  # 各アダプターのsafe_searchは個別にエラーハンドリング済みのため、
+  # 1つのスレッドが失敗しても他のスレッドには影響しない
+  def fetch_from_adapters_in_parallel(adapters, query)
+    threads = adapters.map do |adapter|
+      Thread.new { adapter.safe_search(query) }
+    end
+    threads.flat_map(&:value)
   end
 
   def select_adapters(media_type)

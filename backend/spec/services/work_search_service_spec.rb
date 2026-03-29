@@ -88,6 +88,20 @@ RSpec.describe WorkSearchService, type: :service do
       results = service.search('けいおん')
       expect(results.map(&:media_type)).to contain_exactly('anime', 'manga')
     end
+
+    it 'ジャンル指定なしで全アダプタを並列に呼び出し結果を統合する' do # rubocop:disable RSpec/MultipleExpectations
+      movie_result = ExternalApis::BaseAdapter::SearchResult.new(
+        'テスト映画', 'movie', '映画の説明', nil, nil, '100', 'tmdb', { popularity: 0.6 }
+      )
+      allow(tmdb_double).to receive(:safe_search).and_return([movie_result])
+
+      results = service.search('テスト')
+      expect(tmdb_double).to have_received(:safe_search).with('テスト')
+      expect(anilist_double).to have_received(:safe_search).with('テスト')
+      expect(google_books_double).to have_received(:safe_search).with('テスト')
+      expect(igdb_double).to have_received(:safe_search).with('テスト')
+      expect(results.length).to eq(2)
+    end
   end
 
   describe '人気順ソート' do # rubocop:disable RSpec/MultipleMemoizedHelpers
