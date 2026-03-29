@@ -86,10 +86,11 @@ describe('WorkDetailPage', () => {
     })
   })
 
-  it('評価が表示される', async () => {
+  it('評価ボタンがアクティブ状態で表示される', async () => {
     renderWithRouter('1')
     await waitFor(() => {
-      expect(screen.getByText('7 / 10')).toBeInTheDocument()
+      const button7 = screen.getByRole('button', { name: '7' })
+      expect(button7.className).toContain('active')
     })
   })
 
