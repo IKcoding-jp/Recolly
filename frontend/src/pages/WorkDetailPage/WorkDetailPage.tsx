@@ -1,5 +1,11 @@
 import type { MediaType } from '../../lib/types'
-import { hasEpisodes, getRewatchLabel, isOngoing, getUnreadCount } from '../../lib/mediaTypeUtils'
+import {
+  hasEpisodes,
+  getRewatchLabel,
+  isOngoing,
+  getUnreadCount,
+  UNIT_LABELS,
+} from '../../lib/mediaTypeUtils'
 import { StatusSelector } from '../../components/ui/StatusSelector/StatusSelector'
 import { RatingInput } from '../../components/ui/RatingInput/RatingInput'
 import { ProgressControl } from '../../components/ui/ProgressControl/ProgressControl'
@@ -152,10 +158,13 @@ export function WorkDetailPage() {
 
             {HAS_EPISODES.includes(work.media_type) && (
               <div className={styles.section}>
-                <div className={styles.label}>話数ごとの感想</div>
+                <div className={styles.label}>
+                  {UNIT_LABELS[work.media_type] === '巻' ? '巻数ごとの感想' : '話数ごとの感想'}
+                </div>
                 <EpisodeReviewSection
                   recordId={record.id}
                   currentEpisode={record.current_episode}
+                  mediaType={work.media_type}
                 />
               </div>
             )}

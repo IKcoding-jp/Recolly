@@ -7,9 +7,15 @@ type EpisodeReviewCardProps = {
   review: EpisodeReview
   onUpdate: (reviewId: number, body: string) => Promise<void>
   onDelete: (reviewId: number) => Promise<void>
+  unit?: string
 }
 
-export function EpisodeReviewCard({ review, onUpdate, onDelete }: EpisodeReviewCardProps) {
+export function EpisodeReviewCard({
+  review,
+  onUpdate,
+  onDelete,
+  unit = '話',
+}: EpisodeReviewCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editBody, setEditBody] = useState(review.body)
   const [isSaving, setIsSaving] = useState(false)
@@ -26,16 +32,19 @@ export function EpisodeReviewCard({ review, onUpdate, onDelete }: EpisodeReviewC
   }, [editBody, review.id, onUpdate])
 
   const handleDelete = useCallback(async () => {
-    if (!window.confirm(`第${review.episode_number}話の感想を削除しますか？`)) return
+    if (!window.confirm(`第${review.episode_number}${unit}の感想を削除しますか？`)) return
     await onDelete(review.id)
-  }, [review.id, review.episode_number, onDelete])
+  }, [review.id, review.episode_number, onDelete, unit])
 
   const formattedDate = new Date(review.created_at).toLocaleDateString('ja-JP')
 
   return (
     <div className={styles.card}>
       <div className={styles.cardHeader}>
-        <span className={styles.episodeTag}>第{review.episode_number}話</span>
+        <span className={styles.episodeTag}>
+          第{review.episode_number}
+          {unit}
+        </span>
         <span className={styles.cardDate}>{formattedDate}</span>
         <div className={styles.cardActions}>
           {!isEditing && (
