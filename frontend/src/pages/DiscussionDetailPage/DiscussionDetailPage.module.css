@@ -1,0 +1,321 @@
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--spacing-xl) var(--spacing-md);
+}
+
+/* 作品情報バー */
+.workBar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: #f9fafb;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  margin-bottom: var(--spacing-lg);
+  transition: background-color var(--transition-fast);
+}
+
+.workBar:hover {
+  background: #f3f4f6;
+}
+
+.workCoverWrapper {
+  flex-shrink: 0;
+  width: 40px;
+  height: 56px;
+}
+
+.workCover {
+  width: 40px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.workCoverPlaceholder {
+  width: 40px;
+  height: 56px;
+  border-radius: 4px;
+  background: var(--color-bg);
+  border: var(--border-width-thin) solid var(--color-border-light);
+}
+
+.workInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.workTitle {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.genreBadge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-medium);
+  padding: 2px var(--spacing-sm);
+  border-radius: 4px;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-normal);
+  white-space: nowrap;
+}
+
+/* スレッド本文 */
+.thread {
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: 8px;
+  padding: var(--spacing-lg);
+  background: var(--color-bg-white);
+  margin-bottom: var(--spacing-lg);
+}
+
+.threadHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.threadAvatarLink {
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+}
+
+.threadHeaderInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.threadAuthor {
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.threadAuthor:hover {
+  text-decoration: underline;
+}
+
+.threadTime {
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.threadMenu {
+  flex-shrink: 0;
+}
+
+.threadContent {
+  padding-left: calc(36px + var(--spacing-sm));
+}
+
+.threadTitle {
+  font-family: var(--font-body);
+  font-size: var(--font-size-h4);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--spacing-sm);
+}
+
+.threadBody {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  line-height: var(--line-height-normal);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* スレッド編集フォーム */
+.threadEditForm {
+  padding-left: calc(36px + var(--spacing-sm));
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.threadEditTitle {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  background: var(--color-bg-white);
+}
+
+.threadEditTitle:focus {
+  outline: 2px solid var(--color-text);
+  outline-offset: 1px;
+}
+
+.threadEditBody {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-normal);
+  color: var(--color-text);
+  background: var(--color-bg-white);
+  resize: vertical;
+}
+
+.threadEditBody:focus {
+  outline: 2px solid var(--color-text);
+  outline-offset: 1px;
+}
+
+.threadEditActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+}
+
+.cancelButton {
+  padding: var(--spacing-xs) var(--spacing-md);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: 4px;
+  background: var(--color-bg-white);
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.cancelButton:hover:not(:disabled) {
+  border-color: var(--color-border);
+}
+
+.cancelButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.saveButton {
+  padding: var(--spacing-xs) var(--spacing-md);
+  border: var(--border-width) solid var(--color-text);
+  border-radius: 4px;
+  background: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  color: var(--color-bg-white);
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.saveButton:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.saveButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* コメントセクション */
+.commentsSection {
+  margin-top: var(--spacing-lg);
+}
+
+.commentsHeading {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin-bottom: var(--spacing-md);
+}
+
+.commentList {
+  margin-bottom: var(--spacing-md);
+}
+
+.emptyComments {
+  text-align: center;
+  padding: var(--spacing-xl) 0;
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  color: var(--color-text-muted);
+}
+
+/* ローディング・エラー */
+.loading {
+  text-align: center;
+  padding: var(--spacing-3xl) 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+}
+
+.error {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--color-error);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+}
+
+@media (max-width: 768px) {
+  .page {
+    max-width: 100%;
+    padding: var(--spacing-md);
+  }
+
+  .thread {
+    padding: var(--spacing-md);
+  }
+
+  .threadContent {
+    padding-left: 0;
+  }
+
+  .threadEditForm {
+    padding-left: 0;
+  }
+}
