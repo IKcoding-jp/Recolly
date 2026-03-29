@@ -136,6 +136,6 @@
 - [x] 本番環境の環境変数設定（SSM Parameter Store）— PR #26
 - [x] HTTPS設定（CloudFrontが自動提供）— PR #26
 - [x] 本番用Dockerfile（マルチステージビルド）— PR #26
-- [x] 初回デプロイ完了（https://d1libv2nochxfe.cloudfront.net）
+- [x] 初回デプロイ完了（https://recolly.net）
 - [x] GitHub Secrets設定（CI/CD自動デプロイの有効化）
-- [ ] ドメイン取得・DNS設定
+- [x] ドメイン取得・DNS設定（recolly.net）— PR #74, ADR-0034
