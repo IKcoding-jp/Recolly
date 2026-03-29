@@ -4,7 +4,7 @@
 
 アニメ、映画、ドラマ、本、漫画、ゲーム — 好きなコンテンツを1つのアプリでまとめて管理できるWebアプリケーションです。
 
-**本番環境:** https://d1libv2nochxfe.cloudfront.net
+**本番環境:** https://recolly.net
 
 ---
 

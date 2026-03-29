@@ -39,3 +39,8 @@ output "s3_images_bucket_name" {
   description = "画像アップロード用S3バケット名"
   value       = aws_s3_bucket.images.id
 }
+
+output "domain_url" {
+  description = "独自ドメインURL"
+  value       = "https://${var.domain_name}"
+}

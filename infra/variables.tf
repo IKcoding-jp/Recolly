@@ -52,3 +52,14 @@ variable "github_repo" {
   type        = string
   default     = "Recolly"
 }
+
+variable "domain_name" {
+  description = "独自ドメイン名"
+  type        = string
+  default     = "recolly.net"
+}
+
+variable "route53_zone_id" {
+  description = "Route 53ホストゾーンID（ドメイン購入時に自動作成される）"
+  type        = string
+}
