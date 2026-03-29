@@ -48,7 +48,7 @@ describe('RecordModal', () => {
     render(<RecordModal {...defaultProps} onConfirm={handleConfirm} />)
     await user.click(screen.getByRole('button', { name: '記録する' }))
     expect(handleConfirm).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 'plan_to_watch', rating: null }),
+      expect.objectContaining({ status: 'watching', rating: null }),
     )
   })
 

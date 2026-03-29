@@ -32,8 +32,9 @@ describe('RatingInput', () => {
     expect(handleChange).toHaveBeenCalledWith(null)
   })
 
-  it('値が設定されている場合「N / 10」のテキストが表示される', () => {
+  it('値が設定されている場合、該当ボタンまでがアクティブになる', () => {
     render(<RatingInput value={7} onChange={() => {}} />)
-    expect(screen.getByText('7 / 10')).toBeInTheDocument()
+    const button7 = screen.getByRole('button', { name: '7' })
+    expect(button7.className).toContain('active')
   })
 })
