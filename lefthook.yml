@@ -14,9 +14,6 @@ pre-commit:
       glob: "*.{ts,tsx,css,json}"
       run: docker compose exec -T frontend npx prettier --check {staged_files}
 
-pre-push:
-  commands:
-    rspec:
-      run: docker compose run --rm -e RAILS_ENV=test backend bundle exec rspec
-    vitest:
-      run: docker compose run --rm frontend npm test
+# pre-push: CIで同じテストを実行しているため無効化（プッシュ高速化）
+# 必要に応じて手動で実行: docker compose run --rm -e RAILS_ENV=test backend bundle exec rspec
+# 必要に応じて手動で実行: docker compose run --rm frontend npm test
