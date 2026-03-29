@@ -138,6 +138,42 @@ RSpec.describe Record, type: :model do
         expect(record.status).to eq('completed')
         expect(record.completed_at).to eq(Date.current)
       end
+
+      it '連載中（RELEASING）の作品では自動完了しない' do
+        ongoing_manga = Work.create!(
+          title: 'ONE PIECE', media_type: 'manga',
+          total_episodes: 110,
+          metadata: { 'status' => 'RELEASING' }
+        )
+        record = described_class.create!(user: user, work: ongoing_manga,
+                                         status: :watching, current_episode: 109)
+        record.update!(current_episode: 110)
+        expect(record.status).to eq('watching')
+        expect(record.completed_at).to be_nil
+      end
+
+      it '完結済み（FINISHED）の作品では自動完了する' do
+        finished_manga = Work.create!(
+          title: 'ナルト', media_type: 'manga',
+          total_episodes: 72,
+          metadata: { 'status' => 'FINISHED' }
+        )
+        record = described_class.create!(user: user, work: finished_manga,
+                                         status: :watching, current_episode: 71)
+        record.update!(current_episode: 72)
+        expect(record.status).to eq('completed')
+      end
+
+      it 'metadata に status がない作品では自動完了する（後方互換性）' do
+        old_work = Work.create!(
+          title: '古い作品', media_type: 'anime',
+          total_episodes: 12, metadata: {}
+        )
+        record = described_class.create!(user: user, work: old_work,
+                                         status: :watching, current_episode: 11)
+        record.update!(current_episode: 12)
+        expect(record.status).to eq('completed')
+      end
     end
 
     describe 'started_at と completed_at の整合性' do
