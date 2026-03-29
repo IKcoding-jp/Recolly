@@ -29,6 +29,12 @@ export function useDashboard() {
     const mediaType = record.work.media_type
 
     if (hasEpisodes(mediaType)) {
+      // 上限に達している場合は何もしない（連打で超過するのを防止）
+      const totalEpisodes = record.work.total_episodes
+      if (totalEpisodes !== null && record.current_episode >= totalEpisodes) {
+        return
+      }
+
       const newEpisode = record.current_episode + 1
       setRecords((prev) =>
         prev.map((r) => (r.id === record.id ? { ...r, current_episode: newEpisode } : r)),
