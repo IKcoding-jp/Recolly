@@ -10,9 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_29_115207) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_29_120058) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "comments", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.bigint "discussion_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["discussion_id", "created_at"], name: "index_comments_on_discussion_id_and_created_at"
+    t.index ["discussion_id"], name: "index_comments_on_discussion_id"
+    t.index ["user_id"], name: "index_comments_on_user_id"
+  end
 
   create_table "discussions", force: :cascade do |t|
     t.text "body", null: false
@@ -262,6 +273,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_29_115207) do
     t.index ["external_api_id", "external_api_source"], name: "index_works_on_external_api_id_and_external_api_source", unique: true, where: "(external_api_id IS NOT NULL)"
   end
 
+  add_foreign_key "comments", "discussions"
+  add_foreign_key "comments", "users"
   add_foreign_key "discussions", "users"
   add_foreign_key "discussions", "works"
   add_foreign_key "episode_reviews", "records"
