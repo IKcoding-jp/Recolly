@@ -87,9 +87,13 @@ export function DiscussionDetailPage() {
 
   const handleDeleteThread = () => {
     if (window.confirm('このスレッドを削除しますか？')) {
-      void deleteDiscussion().then(() => {
-        void navigate('/community')
-      })
+      void deleteDiscussion()
+        .then(() => {
+          void navigate('/community')
+        })
+        .catch(() => {
+          setError('削除に失敗しました')
+        })
     }
   }
 
