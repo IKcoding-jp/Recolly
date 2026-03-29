@@ -92,3 +92,69 @@ describe('WatchingListItem', () => {
     expect(link).toHaveAttribute('href', '/works/10')
   })
 })
+
+// 未読バッジのテスト用データ
+const mangaRecord: UserRecord = {
+  id: 3,
+  work_id: 30,
+  status: 'watching',
+  rating: null,
+  current_episode: 108,
+  rewatch_count: 0,
+  review_text: null,
+  visibility: 'private_record',
+  started_at: null,
+  completed_at: null,
+  created_at: '2026-01-01',
+  work: {
+    id: 30,
+    title: 'ONE PIECE',
+    media_type: 'manga',
+    description: null,
+    cover_image_url: null,
+    total_episodes: 110,
+    external_api_id: '21',
+    external_api_source: 'anilist',
+    metadata: { status: 'RELEASING' },
+    last_synced_at: null,
+    created_at: '2026-01-01',
+  },
+}
+
+describe('未読バッジ', () => {
+  it('連載中の漫画で未読がある場合「未読 2巻」を表示する', () => {
+    renderItem(mangaRecord)
+    expect(screen.getByText('未読 2巻')).toBeInTheDocument()
+  })
+
+  it('追いついている場合はバッジを表示しない', () => {
+    const caughtUp = {
+      ...mangaRecord,
+      current_episode: 110,
+    }
+    renderItem(caughtUp)
+    expect(screen.queryByText(/未読/)).not.toBeInTheDocument()
+  })
+
+  it('完結済み作品ではバッジを表示しない', () => {
+    const finished = {
+      ...mangaRecord,
+      work: { ...mangaRecord.work, metadata: { status: 'FINISHED' as const } },
+    }
+    renderItem(finished)
+    expect(screen.queryByText(/未読/)).not.toBeInTheDocument()
+  })
+
+  it('アニメではバッジを表示しない', () => {
+    const anime = {
+      ...mangaRecord,
+      work: {
+        ...mangaRecord.work,
+        media_type: 'anime' as const,
+        metadata: { status: 'RELEASING' as const },
+      },
+    }
+    renderItem(anime)
+    expect(screen.queryByText(/未読/)).not.toBeInTheDocument()
+  })
+})
