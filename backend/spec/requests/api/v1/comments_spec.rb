@@ -92,4 +92,67 @@ RSpec.describe 'Api::V1::Comments', type: :request do
       end
     end
   end
+
+  describe 'PATCH /api/v1/comments/:id' do
+    let!(:comment) { Comment.create!(body: '元のコメント', user: user, discussion: discussion) }
+
+    context '投稿者本人' do
+      before { sign_in user }
+
+      it 'コメントを編集できる' do
+        patch "/api/v1/comments/#{comment.id}",
+              params: { comment: { body: '編集後のコメント' } },
+              as: :json
+        expect(response).to have_http_status(:ok)
+        json = response.parsed_body
+        expect(json['comment']['body']).to eq('編集後のコメント')
+        expect(json['comment']['edited']).to be true
+      end
+    end
+
+    context '投稿者以外' do
+      let(:other_user) { User.create!(username: 'other', email: 'other@example.com', password: 'password123') }
+
+      before { sign_in other_user }
+
+      it '403を返す' do
+        patch "/api/v1/comments/#{comment.id}",
+              params: { comment: { body: '不正な編集' } },
+              as: :json
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
+  describe 'DELETE /api/v1/comments/:id' do
+    let!(:comment) { Comment.create!(body: 'テスト', user: user, discussion: discussion) }
+
+    context '投稿者本人' do
+      before { sign_in user }
+
+      it 'コメントを削除できる' do
+        expect do
+          delete "/api/v1/comments/#{comment.id}"
+        end.to change(Comment, :count).by(-1)
+        expect(response).to have_http_status(:no_content)
+      end
+
+      it 'discussion の comments_count が減少する' do
+        expect do
+          delete "/api/v1/comments/#{comment.id}"
+        end.to change { discussion.reload.comments_count }.by(-1)
+      end
+    end
+
+    context '投稿者以外' do
+      let(:other_user) { User.create!(username: 'other', email: 'other@example.com', password: 'password123') }
+
+      before { sign_in other_user }
+
+      it '403を返す' do
+        delete "/api/v1/comments/#{comment.id}"
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
 end
