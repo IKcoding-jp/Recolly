@@ -16,4 +16,10 @@ export const worksApi = {
       }),
     })
   },
+
+  sync(workId: number): Promise<WorkResponse> {
+    return request<WorkResponse>(`/works/${workId}/sync`, {
+      method: 'POST',
+    })
+  },
 }

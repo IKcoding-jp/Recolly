@@ -27,6 +27,17 @@ export type MediaType = 'anime' | 'movie' | 'drama' | 'book' | 'manga' | 'game'
 // 記録ステータス
 export type RecordStatus = 'watching' | 'completed' | 'on_hold' | 'dropped' | 'plan_to_watch'
 
+// AniList等の外部APIから取得したメタデータ
+export interface WorkMetadata {
+  status?: 'FINISHED' | 'RELEASING' | 'NOT_YET_RELEASED' | 'CANCELLED' | 'HIATUS'
+  genres?: string[]
+  season_year?: number
+  popularity?: number
+  title_english?: string
+  title_romaji?: string
+  [key: string]: unknown
+}
+
 // 作品（DBに保存済み）
 export interface Work {
   id: number
@@ -37,7 +48,8 @@ export interface Work {
   total_episodes: number | null
   external_api_id: string | null
   external_api_source: string | null
-  metadata: Record<string, unknown>
+  metadata: WorkMetadata
+  last_synced_at: string | null
   created_at: string
 }
 
@@ -50,7 +62,7 @@ export interface SearchResult {
   total_episodes: number | null
   external_api_id: string | null
   external_api_source: string | null
-  metadata: Record<string, unknown>
+  metadata: WorkMetadata
 }
 
 // 記録

@@ -1,4 +1,4 @@
-import type { MediaType, RecordStatus } from './types'
+import type { MediaType, RecordStatus, WorkMetadata } from './types'
 
 // ジャンル別のアクションボタンラベル
 const ACTION_LABELS: Record<MediaType, string> = {
@@ -110,6 +110,17 @@ const REWATCH_LABELS: Record<'video' | 'reading' | 'game', string> = {
 /** メディアタイプに応じた再視聴ラベルを返す */
 export function getRewatchLabel(mediaType: MediaType): string {
   return REWATCH_LABELS[MEDIA_TYPE_GROUP[mediaType]]
+}
+
+/** 作品が連載中（RELEASING）かどうかを返す */
+export function isOngoing(metadata: WorkMetadata): boolean {
+  return metadata?.status === 'RELEASING'
+}
+
+/** 未読巻数を返す（total が null の場合は 0） */
+export function getUnreadCount(currentEpisode: number, totalEpisodes: number | null): number {
+  if (totalEpisodes === null) return 0
+  return Math.max(0, totalEpisodes - currentEpisode)
 }
 
 /** 現在の進捗をテキストで返す（例: 「12 / 25話」「プレイ中」） */
