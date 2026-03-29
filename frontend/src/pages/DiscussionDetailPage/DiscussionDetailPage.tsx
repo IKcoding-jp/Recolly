@@ -21,8 +21,15 @@ export function DiscussionDetailPage() {
   const { user, isAuthenticated } = useAuth()
 
   const discussionId = Number(id)
-  const { discussion, isLoading, error, updateDiscussion, deleteDiscussion } =
-    useDiscussion(discussionId)
+  const {
+    discussion,
+    isLoading,
+    error: fetchError,
+    updateDiscussion,
+    deleteDiscussion,
+  } = useDiscussion(discussionId)
+  const [localError, setLocalError] = useState<string | null>(null)
+  const error = localError ?? fetchError
   const {
     comments,
     totalPages,
@@ -92,7 +99,7 @@ export function DiscussionDetailPage() {
           void navigate('/community')
         })
         .catch(() => {
-          setError('削除に失敗しました')
+          setLocalError('削除に失敗しました')
         })
     }
   }
