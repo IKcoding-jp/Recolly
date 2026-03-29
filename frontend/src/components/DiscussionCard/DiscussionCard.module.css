@@ -104,6 +104,10 @@
     padding: var(--spacing-sm);
   }
 
+  .coverWrapper {
+    display: none;
+  }
+
   .workTitle {
     max-width: 100px;
   }

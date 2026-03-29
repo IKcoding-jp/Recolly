@@ -141,3 +141,15 @@
   color: #e53e3e;
   margin-bottom: var(--spacing-md);
 }
+
+@media (max-width: 768px) {
+  .modal {
+    width: calc(100% - var(--spacing-lg) * 2);
+    max-width: 100%;
+    padding: var(--spacing-lg);
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+}

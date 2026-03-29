@@ -38,3 +38,21 @@
   white-space: nowrap;
   max-width: 240px;
 }
+
+@media (max-width: 768px) {
+  .breadcrumb {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+
+  .breadcrumb::-webkit-scrollbar {
+    display: none;
+  }
+
+  .current {
+    max-width: 160px;
+  }
+}

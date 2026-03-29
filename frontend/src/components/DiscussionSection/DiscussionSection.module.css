@@ -69,3 +69,18 @@
   color: var(--color-text-muted);
   padding: var(--spacing-lg) 0;
 }
+
+@media (max-width: 768px) {
+  .header {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  .filters {
+    width: 100%;
+  }
+
+  .episodeFilter {
+    flex: 1;
+  }
+}

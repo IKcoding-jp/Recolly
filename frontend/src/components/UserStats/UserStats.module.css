@@ -55,4 +55,12 @@
   .grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .cardValue {
+    font-size: var(--font-size-h4);
+  }
+
+  .cardLabel {
+    font-size: 11px;
+  }
 }
