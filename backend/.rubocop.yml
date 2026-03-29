@@ -77,3 +77,7 @@ RSpec/ExampleLength:
 # let!のセットアップを許可（テストのDB状態構築に使用）
 RSpec/LetSetup:
   Enabled: false
+
+# テストデータを複数letで定義するパターンが多いため上限を緩和
+RSpec/MultipleMemoizedHelpers:
+  Max: 8
