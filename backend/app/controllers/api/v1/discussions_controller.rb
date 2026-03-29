@@ -5,9 +5,10 @@ module Api
     class DiscussionsController < ApplicationController
       include DiscussionFilterable
 
-      before_action :authenticate_user!, only: [:create]
+      before_action :authenticate_user!, only: %i[create update destroy]
       before_action :authorize_record_owner!, only: [:create]
-      before_action :set_discussion, only: [:show]
+      before_action :set_discussion, only: %i[show update destroy]
+      before_action :authorize_discussion_author!, only: %i[update destroy]
 
       # GET /api/v1/works/:work_id/discussions
       # GET /api/v1/discussions
@@ -37,6 +38,21 @@ module Api
         else
           render json: { errors: discussion.errors.full_messages }, status: :unprocessable_content
         end
+      end
+
+      # PATCH /api/v1/discussions/:id
+      def update
+        if @discussion.update(discussion_params)
+          render json: { discussion: discussion_detail_json(@discussion) }
+        else
+          render json: { errors: @discussion.errors.full_messages }, status: :unprocessable_content
+        end
+      end
+
+      # DELETE /api/v1/discussions/:id
+      def destroy
+        @discussion.destroy!
+        head :no_content
       end
 
       private
@@ -72,6 +88,13 @@ module Api
       def pagination_meta(total_count, page, per_page)
         total_pages = [(total_count.to_f / per_page).ceil, 1].max
         { current_page: page, total_pages: total_pages, total_count: total_count, per_page: per_page }
+      end
+
+      # 投稿者本人のみ編集・削除を許可する
+      def authorize_discussion_author!
+        return if @discussion.user_id == current_user.id
+
+        render json: { error: '編集権限がありません' }, status: :forbidden
       end
 
       # 指定作品を記録済みのユーザーのみ投稿を許可する

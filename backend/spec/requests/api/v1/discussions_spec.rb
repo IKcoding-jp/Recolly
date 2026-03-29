@@ -199,4 +199,60 @@ RSpec.describe 'Api::V1::Discussions', type: :request do
       expect(response).to have_http_status(:not_found)
     end
   end
+
+  describe 'PATCH /api/v1/discussions/:id' do
+    let!(:discussion) { Discussion.create!(title: 'テスト', body: 'テスト本文', user: user, work: anime_work) }
+
+    context '投稿者本人' do
+      before { sign_in user }
+
+      it 'スレッドを編集できる' do
+        patch "/api/v1/discussions/#{discussion.id}",
+              params: { discussion: { title: '更新タイトル', body: '更新本文' } },
+              as: :json
+        expect(response).to have_http_status(:ok)
+        json = response.parsed_body
+        expect(json['discussion']['title']).to eq('更新タイトル')
+      end
+    end
+
+    context '投稿者以外' do
+      let(:other_user) { User.create!(username: 'other', email: 'other@example.com', password: 'password123') }
+
+      before { sign_in other_user }
+
+      it '403を返す' do
+        patch "/api/v1/discussions/#{discussion.id}",
+              params: { discussion: { title: '不正な更新' } },
+              as: :json
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
+  describe 'DELETE /api/v1/discussions/:id' do
+    let!(:discussion) { Discussion.create!(title: 'テスト', body: 'テスト本文', user: user, work: anime_work) }
+
+    context '投稿者本人' do
+      before { sign_in user }
+
+      it 'スレッドを削除できる' do
+        expect do
+          delete "/api/v1/discussions/#{discussion.id}"
+        end.to change(Discussion, :count).by(-1)
+        expect(response).to have_http_status(:no_content)
+      end
+    end
+
+    context '投稿者以外' do
+      let(:other_user) { User.create!(username: 'other', email: 'other@example.com', password: 'password123') }
+
+      before { sign_in other_user }
+
+      it '403を返す' do
+        delete "/api/v1/discussions/#{discussion.id}"
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
 end
