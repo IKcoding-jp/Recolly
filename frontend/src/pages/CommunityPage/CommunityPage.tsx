@@ -1,7 +1,8 @@
 import { useDiscussions } from '../../hooks/useDiscussions'
 import type { DiscussionSort } from '../../hooks/useDiscussions'
 import { DiscussionCard } from '../../components/DiscussionCard/DiscussionCard'
-import { MediaTypeFilter } from '../../components/MediaTypeFilter/MediaTypeFilter'
+import { GENRE_FILTERS } from '../SearchPage/genreFilters'
+import type { MediaType } from '../../lib/types'
 import { Pagination } from '../../components/ui/Pagination/Pagination'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import styles from './CommunityPage.module.css'
@@ -34,7 +35,20 @@ export function CommunityPage() {
       <SectionTitle>コミュニティ</SectionTitle>
 
       <div className={styles.filters}>
-        <MediaTypeFilter value={mediaType} onChange={setMediaType} />
+        <div className={styles.genreFilters}>
+          {GENRE_FILTERS.map((filter) => (
+            <button
+              key={filter.value}
+              type="button"
+              className={`${styles.filterButton} ${(mediaType ?? 'all') === filter.value ? styles.filterActive : ''}`}
+              onClick={() =>
+                setMediaType(filter.value === 'all' ? null : (filter.value as MediaType))
+              }
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
         <div className={styles.sortWrapper}>
           <label htmlFor="sort-select" className={styles.sortLabel}>
             並び替え
