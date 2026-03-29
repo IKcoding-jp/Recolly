@@ -11,16 +11,8 @@ module ExternalApis
       %w[movie drama]
     end
 
-    def search(query)
-      response = tmdb_connection.get('/3/search/multi',
-                                     api_key: ENV.fetch('TMDB_API_KEY'),
-                                     query: query,
-                                     language: 'ja')
-
-      response.body['results']
-              .select { |item| %w[movie tv].include?(item['media_type']) }
-              .reject { |item| japanese_animation?(item) }
-              .map { |item| normalize(item) }
+    def search(query, media_type: nil) # rubocop:disable Lint/UnusedMethodArgument -- BaseAdapterインターフェース準拠
+      search_movies(query) + search_tv(query)
     end
 
     # AniListの結果に対して、TMDBから日本語の説明文を取得する
@@ -50,6 +42,28 @@ module ExternalApis
       match&.dig('overview').presence
     end
 
+    # search/movie エンドポイントで映画を検索
+    def search_movies(query)
+      response = tmdb_connection.get('/3/search/movie',
+                                     api_key: ENV.fetch('TMDB_API_KEY'),
+                                     query: query,
+                                     language: 'ja')
+      (response.body['results'] || [])
+        .reject { |item| japanese_animation?(item) }
+        .map { |item| normalize_movie(item) }
+    end
+
+    # search/tv エンドポイントでTV番組を検索
+    def search_tv(query)
+      response = tmdb_connection.get('/3/search/tv',
+                                     api_key: ENV.fetch('TMDB_API_KEY'),
+                                     query: query,
+                                     language: 'ja')
+      (response.body['results'] || [])
+        .reject { |item| japanese_animation?(item) }
+        .map { |item| normalize_tv(item) }
+    end
+
     def japanese_animation?(item)
       genre_ids = item['genre_ids'] || []
       genre_ids.include?(ANIMATION_GENRE_ID) && item['original_language'] == 'ja'
@@ -59,17 +73,36 @@ module ExternalApis
       @tmdb_connection ||= connection(url: BASE_URL)
     end
 
-    def normalize(item)
+    def normalize_movie(item)
       SearchResult.new(
-        item['title'] || item['name'],
-        item['media_type'] == 'tv' ? 'drama' : 'movie',
+        item['title'],
+        'movie',
         item['overview'],
         item['poster_path'] ? "#{IMAGE_BASE_URL}#{item['poster_path']}" : nil,
         nil,
         item['id'].to_s,
         'tmdb',
         {
-          release_date: item['release_date'] || item['first_air_date'],
+          release_date: item['release_date'],
+          original_language: item['original_language'],
+          vote_average: item['vote_average'],
+          # TMDBのpopularityは0〜数百の範囲。100で割って0〜1に正規化
+          popularity: normalize_popularity(item['popularity'])
+        }.compact
+      )
+    end
+
+    def normalize_tv(item)
+      SearchResult.new(
+        item['name'],
+        'drama',
+        item['overview'],
+        item['poster_path'] ? "#{IMAGE_BASE_URL}#{item['poster_path']}" : nil,
+        nil,
+        item['id'].to_s,
+        'tmdb',
+        {
+          release_date: item['first_air_date'],
           original_language: item['original_language'],
           vote_average: item['vote_average'],
           # TMDBのpopularityは0〜数百の範囲。100で割って0〜1に正規化

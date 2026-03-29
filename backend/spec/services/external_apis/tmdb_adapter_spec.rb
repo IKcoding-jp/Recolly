@@ -20,7 +20,8 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
   end
 
   describe '#search' do
-    let(:tmdb_response) do
+    # search/movie用レスポンス（media_typeフィールドなし、タイトルはtitleキー）
+    let(:movie_response) do
       {
         'results' => [
           {
@@ -28,38 +29,41 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
             'title' => 'ファイト・クラブ',
             'overview' => '空虚な生活を送る男の物語',
             'poster_path' => '/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg',
-            'media_type' => 'movie',
             'release_date' => '1999-10-15',
             'genre_ids' => [18, 53],
             'original_language' => 'en',
             'popularity' => 61.5
-          },
+          }
+        ]
+      }
+    end
+
+    # search/tv用レスポンス（media_typeフィールドなし、タイトルはnameキー）
+    let(:tv_response) do
+      {
+        'results' => [
           {
             'id' => 1396,
             'name' => 'ブレイキング・バッド',
             'overview' => '化学教師が犯罪に手を染める',
             'poster_path' => '/ggFHVNu6YYI5L9pCfOacjizRGt.jpg',
-            'media_type' => 'tv',
             'first_air_date' => '2008-01-20',
             'genre_ids' => [18],
             'original_language' => 'en',
             'popularity' => 120.3
-          },
-          {
-            'id' => 999,
-            'name' => 'ある人物',
-            'media_type' => 'person'
           }
         ]
       }
     end
 
     before do
-      stub_request(:get, %r{api.themoviedb.org/3/search/multi})
-        .to_return(status: 200, body: tmdb_response.to_json, headers: { 'Content-Type' => 'application/json' })
+      stub_request(:get, %r{api.themoviedb.org/3/search/movie})
+        .to_return(status: 200, body: movie_response.to_json, headers: { 'Content-Type' => 'application/json' })
+      stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+        .to_return(status: 200, body: tv_response.to_json, headers: { 'Content-Type' => 'application/json' })
     end
 
-    it 'movie と tv の結果を返す（person は除外）' do
+    it 'movie と tv の結果を両方返す' do
       results = adapter.search('ファイト・クラブ')
       expect(results.length).to eq(2)
     end
@@ -99,7 +103,13 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
     end
 
     context '日本のアニメーション作品' do
-      let(:anime_response) do
+      let(:anime_movie_response) do
+        {
+          'results' => []
+        }
+      end
+
+      let(:anime_tv_response) do
         {
           'results' => [
             {
@@ -107,7 +117,6 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
               'name' => 'けいおん！',
               'overview' => '軽音部の日常',
               'poster_path' => '/keion.jpg',
-              'media_type' => 'tv',
               'genre_ids' => [16, 35],
               'original_language' => 'ja',
               'popularity' => 45.0
@@ -117,7 +126,6 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
               'name' => 'ブレイキング・バッド',
               'overview' => '化学教師が犯罪に手を染める',
               'poster_path' => '/bb.jpg',
-              'media_type' => 'tv',
               'genre_ids' => [18],
               'original_language' => 'en',
               'popularity' => 120.0
@@ -127,7 +135,6 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
               'name' => 'スポンジ・ボブ',
               'overview' => '海底の冒険',
               'poster_path' => '/sponge.jpg',
-              'media_type' => 'tv',
               'genre_ids' => [16, 35],
               'original_language' => 'en',
               'popularity' => 80.0
@@ -137,8 +144,11 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
       end
 
       before do
-        stub_request(:get, %r{api.themoviedb.org/3/search/multi})
-          .to_return(status: 200, body: anime_response.to_json,
+        stub_request(:get, %r{api.themoviedb.org/3/search/movie})
+          .to_return(status: 200, body: anime_movie_response.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+        stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+          .to_return(status: 200, body: anime_tv_response.to_json,
                      headers: { 'Content-Type' => 'application/json' })
       end
 
@@ -158,16 +168,23 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
   end
 
   describe 'リトライミドルウェア' do
-    let(:retry_success_body) do
+    let(:movie_retry_body) do
       { 'results' => [{ 'id' => 550, 'title' => 'テスト映画', 'overview' => 'テスト概要',
-                        'poster_path' => '/test.jpg', 'media_type' => 'movie' }] }
+                        'poster_path' => '/test.jpg' }] }
+    end
+
+    let(:tv_retry_body) do
+      { 'results' => [] }
     end
 
     it 'サーバーエラー時にリトライして成功する' do
-      stub_request(:get, /api.themoviedb.org/)
+      stub_request(:get, %r{api.themoviedb.org/3/search/movie})
         .to_return(status: 500, body: '{}', headers: { 'Content-Type' => 'application/json' })
-        .then.to_return(status: 200, body: retry_success_body.to_json,
+        .then.to_return(status: 200, body: movie_retry_body.to_json,
                         headers: { 'Content-Type' => 'application/json' })
+      stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+        .to_return(status: 200, body: tv_retry_body.to_json,
+                   headers: { 'Content-Type' => 'application/json' })
 
       results = adapter.search('テスト')
       expect(results.length).to eq(1)
