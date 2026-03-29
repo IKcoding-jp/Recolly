@@ -1,5 +1,5 @@
 import type { MediaType } from '../../lib/types'
-import { hasEpisodes, getRewatchLabel } from '../../lib/mediaTypeUtils'
+import { hasEpisodes, getRewatchLabel, isOngoing, getUnreadCount } from '../../lib/mediaTypeUtils'
 import { StatusSelector } from '../../components/ui/StatusSelector/StatusSelector'
 import { RatingInput } from '../../components/ui/RatingInput/RatingInput'
 import { ProgressControl } from '../../components/ui/ProgressControl/ProgressControl'
@@ -109,7 +109,15 @@ export function WorkDetailPage() {
                   onChange={handleEpisodeChange}
                   showFullControls
                   mediaType={work.media_type}
+                  isOngoing={work.media_type === 'manga' && isOngoing(work.metadata)}
                 />
+                {work.media_type === 'manga' &&
+                  isOngoing(work.metadata) &&
+                  getUnreadCount(record.current_episode, work.total_episodes) > 0 && (
+                    <div className={styles.newVolumeAlert}>
+                      📖 <strong>新刊</strong>が出ています！ {work.total_episodes}巻
+                    </div>
+                  )}
               </div>
             )}
 
