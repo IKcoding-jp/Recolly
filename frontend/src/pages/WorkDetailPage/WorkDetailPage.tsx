@@ -109,7 +109,6 @@ export function WorkDetailPage() {
                   onChange={handleEpisodeChange}
                   showFullControls
                   mediaType={work.media_type}
-                  isOngoing={work.media_type === 'manga' && isOngoing(work.metadata)}
                 />
                 {work.media_type === 'manga' &&
                   isOngoing(work.metadata) &&
