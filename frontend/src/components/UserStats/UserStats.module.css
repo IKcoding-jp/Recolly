@@ -2,23 +2,25 @@
 
 .section {
   margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+  border-bottom: var(--border-width-thin) var(--border-style) var(--color-border-light);
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: var(--spacing-md);
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
 }
 
 .card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-xs);
+  justify-content: center;
+  gap: 6px;
   padding: var(--spacing-lg) var(--spacing-md);
-  background-color: var(--color-border-light, #f3f4f6);
-  border-radius: 8px;
+  border: var(--border-width-thin) var(--border-style) var(--color-border-light);
 }
 
 .cardValue {
@@ -26,29 +28,32 @@
   font-size: var(--font-size-h3);
   font-weight: var(--font-weight-bold);
   color: var(--color-text);
-  line-height: var(--line-height-tight);
+  line-height: 1;
 }
 
 .cardLabel {
   font-family: var(--font-body);
   font-size: var(--font-size-meta);
   color: var(--color-text-muted);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
 }
 
 .genres {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
 }
 
 .genreChip {
-  display: inline-block;
-  padding: 4px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
   font-family: var(--font-body);
   font-size: var(--font-size-meta);
   color: var(--color-text-muted);
-  background-color: var(--color-border-light);
-  border-radius: 999px;
+  border: var(--border-width-thin) var(--border-style) var(--color-border-light);
 }
 
 @media (max-width: 768px) {

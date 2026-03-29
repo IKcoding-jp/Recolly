@@ -2,21 +2,24 @@
 
 .header {
   display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-xl);
+  align-items: center;
+  gap: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
+  border-bottom: var(--border-width-thin) var(--border-style) var(--color-border-light);
 }
 
 .avatar {
   flex-shrink: 0;
-  width: 80px;
-  height: 80px;
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
   overflow: hidden;
   background-color: var(--color-border-light);
   display: flex;
   align-items: center;
   justify-content: center;
+  border: var(--border-width) var(--border-style) var(--color-border-light);
 }
 
 .avatarImage {
@@ -36,13 +39,13 @@
 .info {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: 6px;
   min-width: 0;
 }
 
 .username {
   font-family: var(--font-heading);
-  font-size: var(--font-size-h3);
+  font-size: 1.75rem;
   font-weight: var(--font-weight-bold);
   color: var(--color-text);
   margin: 0;
@@ -51,8 +54,8 @@
 
 .bio {
   font-family: var(--font-body);
-  font-size: var(--font-size-body);
-  color: var(--color-text);
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
   margin: 0;
   line-height: var(--line-height-normal);
 }
@@ -61,6 +64,7 @@
   font-family: var(--font-body);
   font-size: var(--font-size-meta);
   color: var(--color-text-muted);
+  letter-spacing: 0.02em;
 }
 
 @media (max-width: 768px) {
@@ -69,8 +73,8 @@
   }
 
   .avatar {
-    width: 60px;
-    height: 60px;
+    width: 64px;
+    height: 64px;
   }
 
   .avatarInitial {
