@@ -37,6 +37,9 @@ resource "aws_instance" "api" {
     volume_type = "gp3"
   }
 
+  # AMIの更新でインスタンスが破壊・再作成されるのを防ぐ
+  lifecycle { ignore_changes = [ami, user_data] }
+
   tags = { Name = "${var.project_name}-api" }
 }
 

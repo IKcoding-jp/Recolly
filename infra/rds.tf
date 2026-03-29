@@ -39,5 +39,8 @@ resource "aws_db_instance" "main" {
   # パフォーマンスインサイト（無料枠内）
   performance_insights_enabled = true
 
+  # terraform apply時にパスワードが意図せず変更されるのを防ぐ
+  lifecycle { ignore_changes = [password] }
+
   tags = { Name = "${var.project_name}-db" }
 }
