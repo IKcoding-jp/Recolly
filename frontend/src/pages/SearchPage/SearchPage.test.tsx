@@ -92,6 +92,94 @@ describe('SearchPage', () => {
     })
   })
 
+  it('ジャンル「アニメ」選択時にゲーム英語検索ヒントが表示されない', async () => {
+    renderSearchPage()
+    const user = userEvent.setup()
+
+    // アニメフィルタをクリック（検索前なのでAPI呼び出しなし）
+    const animeButtons = await screen.findAllByText('アニメ')
+    await user.click(animeButtons[0])
+
+    // 検索API: アニメ結果のみ返す（ゲーム結果0件）
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: '進撃の巨人',
+              media_type: 'anime',
+              description: 'アニメ作品',
+              cover_image_url: null,
+              total_episodes: 25,
+              external_api_id: '1',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+          ],
+        }),
+    })
+
+    const searchInput = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(searchInput, '進撃の巨人')
+    await user.click(screen.getByRole('button', { name: '検索' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('進撃の巨人')).toBeInTheDocument()
+    })
+
+    // ゲーム英語検索ヒントが表示されないことを確認
+    expect(
+      screen.queryByText('海外ゲームは英語タイトルでも検索してみてください'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('ジャンル「すべて」で日本語検索＋ゲーム結果が少ない時にヒントが表示される', async () => {
+    renderSearchPage()
+    const user = userEvent.setup()
+
+    // 検索API: ゲーム結果が少ない（3件以下）
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: 'テストアニメ',
+              media_type: 'anime',
+              description: 'アニメ',
+              cover_image_url: null,
+              total_episodes: 12,
+              external_api_id: '1',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+            {
+              title: 'テストゲーム',
+              media_type: 'game',
+              description: 'ゲーム',
+              cover_image_url: null,
+              total_episodes: null,
+              external_api_id: '2',
+              external_api_source: 'igdb',
+              metadata: {},
+            },
+          ],
+        }),
+    })
+
+    const searchInput = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(searchInput, 'テスト作品')
+    await user.click(screen.getByRole('button', { name: '検索' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('テストアニメ')).toBeInTheDocument()
+    })
+
+    // ジャンル「すべて」なのでヒントが表示される
+    expect(screen.getByText('海外ゲームは英語タイトルでも検索してみてください')).toBeInTheDocument()
+  })
+
   it('検索中にスケルトンUIとプログレスが表示される', async () => {
     renderSearchPage()
     const user = userEvent.setup()
