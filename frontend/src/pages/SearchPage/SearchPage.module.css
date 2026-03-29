@@ -71,13 +71,6 @@
   margin-top: var(--spacing-md);
 }
 
-.loading {
-  text-align: center;
-  color: var(--color-text-muted);
-  font-family: var(--font-body);
-  margin-top: var(--spacing-xl);
-}
-
 .empty {
   text-align: center;
   margin-top: var(--spacing-xl);
