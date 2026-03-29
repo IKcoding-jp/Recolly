@@ -67,6 +67,49 @@ describe('useDashboard', () => {
     expect(recordsApi.update).toHaveBeenCalledWith(1, { current_episode: 13 })
   })
 
+  it('handleAction: current_episodeがtotal_episodesに達している場合はAPIを呼ばない', async () => {
+    const atLimitRecords = [
+      {
+        ...mockRecords[0],
+        current_episode: 25,
+        work: { ...mockRecords[0].work, total_episodes: 25 },
+      },
+    ]
+    vi.mocked(recordsApi.getAll).mockResolvedValue({ records: atLimitRecords })
+    const { result } = renderHook(() => useDashboard())
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+    await act(async () => {
+      await result.current.handleAction(atLimitRecords[0])
+    })
+    expect(recordsApi.update).not.toHaveBeenCalled()
+    // current_episodeが変わっていないことも確認
+    expect(result.current.records[0].current_episode).toBe(25)
+  })
+
+  it('handleAction: total_episodesがnullの場合は制限なくインクリメントできる', async () => {
+    const noLimitRecords = [
+      {
+        ...mockRecords[0],
+        current_episode: 100,
+        work: { ...mockRecords[0].work, total_episodes: null },
+      },
+    ]
+    vi.mocked(recordsApi.getAll).mockResolvedValue({ records: noLimitRecords })
+    vi.mocked(recordsApi.update).mockResolvedValue({
+      record: { ...noLimitRecords[0], current_episode: 101 },
+    })
+    const { result } = renderHook(() => useDashboard())
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+    await act(async () => {
+      await result.current.handleAction(noLimitRecords[0])
+    })
+    expect(recordsApi.update).toHaveBeenCalledWith(1, { current_episode: 101 })
+  })
+
   it('エラー時にエラーメッセージを設定する', async () => {
     vi.mocked(recordsApi.getAll).mockRejectedValue(new Error('Network error'))
     const { result } = renderHook(() => useDashboard())
