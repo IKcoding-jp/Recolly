@@ -104,7 +104,7 @@ RSpec.describe WorkSearchService, type: :service do
     end
   end
 
-  describe '人気順ソート' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+  describe '人気順ソート' do
     let(:low_pop) do
       ExternalApis::BaseAdapter::SearchResult.new(
         'あまり人気ない作品', 'movie', '説明', nil, nil, '10', 'tmdb', { popularity: 0.1 }
@@ -161,7 +161,7 @@ RSpec.describe WorkSearchService, type: :service do
     end
   end
 
-  describe 'AniList日本語説明補完' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+  describe 'AniList日本語説明補完' do
     let(:anilist_result) do
       ExternalApis::BaseAdapter::SearchResult.new(
         '進撃の巨人', 'anime', 'In a world ruled by giants...',
@@ -221,7 +221,7 @@ RSpec.describe WorkSearchService, type: :service do
       expect(results.first.description).to eq('軽音部の日常を描いた作品')
     end
 
-    context 'TMDBで見つからない場合のWikipedia補完' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+    context 'TMDBで見つからない場合のWikipedia補完' do
       let(:minor_anime) do
         ExternalApis::BaseAdapter::SearchResult.new(
           'マイナーアニメ', 'anime', 'A minor anime series.',
