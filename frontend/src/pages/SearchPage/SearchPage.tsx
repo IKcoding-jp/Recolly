@@ -24,8 +24,13 @@ function containsJapanese(text: string): boolean {
   return /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]/.test(text)
 }
 
-// ゲーム検索結果が少ない＋日本語クエリのとき英語検索ヒントを表示すべきか判定
-function shouldShowEnglishHint(results: SearchResult[], searchQuery: string): boolean {
+// ゲーム検索結果が少ない＋日本語クエリ＋ゲーム関連ジャンルのとき英語検索ヒントを表示すべきか判定
+function shouldShowEnglishHint(
+  results: SearchResult[],
+  searchQuery: string,
+  genre: GenreFilter,
+): boolean {
+  if (genre !== 'all' && genre !== 'game') return false
   if (!containsJapanese(searchQuery)) return false
   const gameCount = results.filter((r) => r.media_type === 'game').length
   return gameCount <= 3
@@ -205,7 +210,7 @@ export function SearchPage() {
         {!isSearching &&
           hasSearched &&
           results.length > 0 &&
-          shouldShowEnglishHint(results, query) && (
+          shouldShowEnglishHint(results, query, genre) && (
             <p className={styles.hint}>海外ゲームは英語タイトルでも検索してみてください</p>
           )}
 
