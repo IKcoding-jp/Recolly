@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import { useUserRecords } from '../../hooks/useUserRecords'
 import { getStatusLabel } from '../../lib/mediaTypeUtils'
-import { MediaTypeFilter } from '../MediaTypeFilter/MediaTypeFilter'
+import type { MediaType } from '../../lib/types'
+import { GENRE_FILTERS } from '../../pages/SearchPage/genreFilters'
 import { Pagination } from '../ui/Pagination/Pagination'
 import { SectionTitle } from '../ui/SectionTitle/SectionTitle'
 import styles from './PublicLibrary.module.css'
@@ -30,7 +31,20 @@ export function PublicLibrary({ userId }: PublicLibraryProps) {
       <SectionTitle>公開ライブラリ</SectionTitle>
 
       <div className={styles.filters}>
-        <MediaTypeFilter value={mediaType} onChange={setMediaType} />
+        <div className={styles.genreFilters}>
+          {GENRE_FILTERS.map((filter) => (
+            <button
+              key={filter.value}
+              type="button"
+              className={`${styles.filterButton} ${(mediaType ?? 'all') === filter.value ? styles.filterActive : ''}`}
+              onClick={() =>
+                setMediaType(filter.value === 'all' ? null : (filter.value as MediaType))
+              }
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
         <div className={styles.sortWrapper}>
           <label htmlFor="library-sort" className={styles.sortLabel}>
             並び替え
