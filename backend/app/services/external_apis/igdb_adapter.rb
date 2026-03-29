@@ -17,7 +17,7 @@ module ExternalApis
       %w[game]
     end
 
-    def search(query)
+    def search(query, media_type: nil) # rubocop:disable Lint/UnusedMethodArgument -- BaseAdapterインターフェース準拠
       sanitized = query.gsub('"', '\\"').gsub(';', '')
       if japanese?(query)
         search_japanese(sanitized)
@@ -38,14 +38,14 @@ module ExternalApis
     end
 
     def search_by_keyword(sanitized)
-      body = "search \"#{sanitized}\"; fields #{SEARCH_FIELDS}; limit 20;"
+      body = "search \"#{sanitized}\"; fields #{SEARCH_FIELDS}; limit 50;"
       response = igdb_connection.post('/v4/games', body)
       (response.body || []).map { |item| normalize(item) }
     end
 
     def search_by_pattern(sanitized)
       where_clause = "name ~ *\"#{sanitized}\"* | alternative_names.name ~ *\"#{sanitized}\"*"
-      body = "fields #{SEARCH_FIELDS}; where #{where_clause}; limit 20;"
+      body = "fields #{SEARCH_FIELDS}; where #{where_clause}; limit 50;"
       response = igdb_connection.post('/v4/games', body)
       (response.body || []).map { |item| normalize(item) }
     end

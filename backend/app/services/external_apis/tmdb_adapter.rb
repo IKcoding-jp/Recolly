@@ -64,7 +64,12 @@ module ExternalApis
     def merge_results(primary, additional)
       seen_ids = primary.to_set(&:external_api_id)
       combined = primary.dup
-      additional.each { |r| combined << r unless seen_ids.include?(r.external_api_id) }
+      additional.each do |r|
+        next if seen_ids.include?(r.external_api_id)
+
+        seen_ids.add(r.external_api_id)
+        combined << r
+      end
       combined
     end
 

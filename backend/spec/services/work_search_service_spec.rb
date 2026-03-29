@@ -96,10 +96,10 @@ RSpec.describe WorkSearchService, type: :service do
       allow(tmdb_double).to receive(:safe_search).and_return([movie_result])
 
       results = service.search('テスト')
-      expect(tmdb_double).to have_received(:safe_search).with('テスト')
-      expect(anilist_double).to have_received(:safe_search).with('テスト')
-      expect(google_books_double).to have_received(:safe_search).with('テスト')
-      expect(igdb_double).to have_received(:safe_search).with('テスト')
+      expect(tmdb_double).to have_received(:safe_search).with('テスト', media_type: nil)
+      expect(anilist_double).to have_received(:safe_search).with('テスト', media_type: nil)
+      expect(google_books_double).to have_received(:safe_search).with('テスト', media_type: nil)
+      expect(igdb_double).to have_received(:safe_search).with('テスト', media_type: nil)
       expect(results.length).to eq(2)
     end
   end
