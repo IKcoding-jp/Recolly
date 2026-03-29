@@ -29,10 +29,17 @@ class Api::V1::ProfilesController < ApplicationController
   end
 
   def count_by_genre(records)
-    records.joins(:work).group('works.media_type').count.transform_keys { |k| Work.media_types.key(k) }
+    # group結果のキーがIntegerかStringかはRails/DB環境に依存するため両方対応
+    records.joins(:work).group('works.media_type').count.each_with_object({}) do |(k, v), hash|
+      name = k.is_a?(Integer) ? Work.media_types.key(k) : k.to_s
+      hash[name] = v if name.present?
+    end
   end
 
   def count_by_status(records)
-    records.group(:status).count.transform_keys { |k| Record.statuses.key(k) }
+    records.group(:status).count.each_with_object({}) do |(k, v), hash|
+      name = k.is_a?(Integer) ? Record.statuses.key(k) : k.to_s
+      hash[name] = v if name.present?
+    end
   end
 end
