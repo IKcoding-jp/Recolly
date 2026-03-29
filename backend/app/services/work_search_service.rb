@@ -2,6 +2,7 @@
 
 class WorkSearchService
   CACHE_TTL = 12.hours
+  ENRICHMENT_BATCH_SIZE = 5
 
   def search(query, media_type: nil)
     cache_key = "work_search:#{media_type || 'all'}:#{query}"
@@ -61,18 +62,27 @@ class WorkSearchService
 
   # AniListの結果にTMDB→Wikipediaの順で日本語説明を補完する
   # AniListの説明は英語のため、日本語の説明が見つかれば置き換える
+  # 外部APIへの同時接続数を制限するため、5件ずつのバッチで並列処理する
   def enrich_anilist_descriptions(results)
     anilist_results = results.select { |r| r.external_api_source == 'anilist' }
     return if anilist_results.empty?
 
+    anilist_results.each_slice(ENRICHMENT_BATCH_SIZE) do |batch|
+      threads = batch.map do |result|
+        Thread.new { enrich_single_description(result) }
+      end
+      threads.each(&:join)
+    end
+  end
+
+  # スレッドごとに独立したアダプターインスタンスを使用する
+  # （Faradayコネクションの共有を避けるため）
+  def enrich_single_description(result)
     tmdb = ExternalApis::TmdbAdapter.new
     wikipedia = ExternalApis::WikipediaClient.new
-
-    anilist_results.each do |result|
-      description = fetch_japanese_description_from_tmdb(result, tmdb)
-      description ||= wikipedia.fetch_extract(result.title)
-      result.description = resolve_description(description, result.description)
-    end
+    description = fetch_japanese_description_from_tmdb(result, tmdb)
+    description ||= wikipedia.fetch_extract(result.title)
+    result.description = resolve_description(description, result.description)
   end
 
   # TMDBで日本語説明を検索（日本語タイトル優先で複数パターンを順番に試す）

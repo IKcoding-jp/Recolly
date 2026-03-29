@@ -264,6 +264,42 @@ RSpec.describe WorkSearchService, type: :service do
       results = service.search('マイナーOVA')
       expect(results.first.description).to be_nil
     end
+
+    context '複数AniList結果の並列補完' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+      let(:result_a) do
+        ExternalApis::BaseAdapter::SearchResult.new(
+          '作品A', 'anime', 'English desc A',
+          nil, 12, '100', 'anilist',
+          { popularity: 0.8, title_english: 'Work A', title_romaji: 'Work A' }
+        )
+      end
+
+      let(:result_b) do
+        ExternalApis::BaseAdapter::SearchResult.new(
+          '作品B', 'anime', 'English desc B',
+          nil, 24, '200', 'anilist',
+          { popularity: 0.6, title_english: 'Work B', title_romaji: 'Work B' }
+        )
+      end
+
+      before do
+        allow(anilist_double).to receive(:safe_search).and_return([result_a, result_b])
+        allow(tmdb_double).to receive(:fetch_japanese_description)
+          .with('作品A').and_return('作品Aの日本語説明')
+        allow(tmdb_double).to receive(:fetch_japanese_description)
+          .with('Work A').and_return(nil)
+        allow(tmdb_double).to receive(:fetch_japanese_description)
+          .with('作品B').and_return('作品Bの日本語説明')
+        allow(tmdb_double).to receive(:fetch_japanese_description)
+          .with('Work B').and_return(nil)
+      end
+
+      it '複数のAniList結果をすべて日本語補完する' do
+        results = service.search('作品')
+        descriptions = results.map(&:description)
+        expect(descriptions).to contain_exactly('作品Aの日本語説明', '作品Bの日本語説明')
+      end
+    end
   end
 
   describe 'キャッシュ' do
