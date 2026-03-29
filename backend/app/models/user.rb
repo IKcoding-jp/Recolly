@@ -8,6 +8,7 @@ class User < ApplicationRecord
   has_many :user_providers, dependent: :destroy
   has_many :records, dependent: :destroy
   has_many :tags, dependent: :destroy
+  has_many :discussions, dependent: :destroy
 
   validates :username, presence: true, uniqueness: true,
                        length: { minimum: 2, maximum: 30 }

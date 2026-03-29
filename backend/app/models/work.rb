@@ -2,6 +2,7 @@
 
 class Work < ApplicationRecord
   has_many :records, dependent: :destroy
+  has_many :discussions, dependent: :destroy
   has_many :images, as: :imageable, dependent: :destroy
 
   # 仕様書セクション4.3: media_type enum

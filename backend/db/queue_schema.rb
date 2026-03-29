@@ -10,9 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_29_062109) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_29_115207) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "discussions", force: :cascade do |t|
+    t.text "body", null: false
+    t.integer "comments_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.integer "episode_number"
+    t.boolean "has_spoiler", default: false, null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.bigint "work_id", null: false
+    t.index ["user_id"], name: "index_discussions_on_user_id"
+    t.index ["work_id", "created_at"], name: "index_discussions_on_work_id_and_created_at"
+    t.index ["work_id"], name: "index_discussions_on_work_id"
+  end
 
   create_table "episode_reviews", force: :cascade do |t|
     t.text "body", null: false
@@ -247,6 +262,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_29_062109) do
     t.index ["external_api_id", "external_api_source"], name: "index_works_on_external_api_id_and_external_api_source", unique: true, where: "(external_api_id IS NOT NULL)"
   end
 
+  add_foreign_key "discussions", "users"
+  add_foreign_key "discussions", "works"
   add_foreign_key "episode_reviews", "records"
   add_foreign_key "record_tags", "records"
   add_foreign_key "record_tags", "tags"
