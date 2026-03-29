@@ -44,6 +44,7 @@ class Api::V1::UserRecordsController < ApplicationController
 
   def filter_by_media_type(records)
     return records if params[:media_type].blank?
+    return records unless Work.media_types.key?(params[:media_type])
 
     records.joins(:work).where(works: { media_type: params[:media_type] })
   end

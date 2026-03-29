@@ -20,6 +20,7 @@ module DiscussionFilterable
 
   def filter_by_media_type(discussions)
     return discussions if params[:media_type].blank?
+    return discussions unless Work.media_types.key?(params[:media_type])
 
     discussions.joins(:work).where(works: { media_type: params[:media_type] })
   end

@@ -14,7 +14,7 @@ class Api::V1::ProfilesController < ApplicationController
         id: user.id, username: user.username, bio: user.bio,
         avatar_url: user.avatar_url, created_at: user.created_at
       },
-      statistics: build_statistics(records)
+      statistics: build_statistics(records.where(visibility: :public_record))
     }
   end
 
