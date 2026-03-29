@@ -6,9 +6,42 @@
 
 .filters {
   display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.filterItem {
+  flex: 1;
+  display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-xl);
+  gap: 2px;
+}
+
+.filterLabel {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--color-text-muted);
+  letter-spacing: 0.3px;
+}
+
+.filterSelect {
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  padding: 6px 12px;
+  border: var(--border-width) var(--border-style) var(--color-border-light);
+  background: var(--color-bg-white);
+  color: var(--color-text);
+  cursor: pointer;
+  min-height: 36px;
+}
+
+.filterSelect:hover {
+  border-color: var(--color-border);
+}
+
+.filterSelect:focus {
+  outline: 2px solid var(--color-text);
+  outline-offset: 1px;
 }
 
 .list {
@@ -63,12 +96,11 @@
   color: var(--color-text);
 }
 
-/* --- タグフィルタ --- */
-
 .tagFilter {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
 }
 
 .tagFilterLabel {
@@ -110,80 +142,9 @@
   color: var(--color-bg-white);
 }
 
-/* モバイル用: フィルタサマリー（PCでは非表示） */
-.filterSummary {
-  display: none;
-}
-
-.filterChips {
-  display: flex;
-  gap: var(--spacing-xs);
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.chip {
-  font-family: var(--font-body);
-  font-size: var(--font-size-meta);
-  font-weight: var(--font-weight-bold);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: var(--color-text);
-  color: var(--color-bg-white);
-  border-radius: 999px;
-}
-
-.chipMuted {
-  font-family: var(--font-body);
-  font-size: var(--font-size-meta);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border: var(--border-width-thin) solid var(--color-border-light);
-  color: var(--color-text-muted);
-  border-radius: 999px;
-}
-
-.filterToggle {
-  font-family: var(--font-body);
-  font-size: var(--font-size-label);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-muted);
-  background: none;
-  border: var(--border-width-thin) solid var(--color-border-light);
-  padding: var(--spacing-xs) var(--spacing-md);
-  border-radius: 4px;
-  cursor: pointer;
-  white-space: nowrap;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  transition: all var(--transition-fast);
-}
-
-.filterToggle:hover {
-  border-color: var(--color-border);
-  color: var(--color-text);
-}
-
 @media (max-width: 768px) {
   .page {
     max-width: 100%;
     padding: var(--spacing-md);
-  }
-
-  .filterSummary {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
-  }
-
-  .filters {
-    display: none;
-  }
-
-  .filtersOpen {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
   }
 }

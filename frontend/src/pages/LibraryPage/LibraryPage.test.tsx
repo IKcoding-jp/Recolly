@@ -85,38 +85,39 @@ describe('LibraryPage', () => {
     })
   })
 
-  it('フィルタボタンのクリックでAPIが再呼び出しされる', async () => {
+  it('ステータスドロップダウンが表示される', () => {
+    renderPage()
+    const statusSelect = screen.getByLabelText('ステータス')
+    expect(statusSelect).toBeInTheDocument()
+    expect(statusSelect.tagName).toBe('SELECT')
+  })
+
+  it('ジャンルドロップダウンが表示される', () => {
+    renderPage()
+    const mediaTypeSelect = screen.getByLabelText('ジャンル')
+    expect(mediaTypeSelect).toBeInTheDocument()
+    expect(mediaTypeSelect.tagName).toBe('SELECT')
+  })
+
+  it('並び替えドロップダウンが表示される', () => {
+    renderPage()
+    const sortSelect = screen.getByLabelText('並び替え')
+    expect(sortSelect).toBeInTheDocument()
+    expect(sortSelect.tagName).toBe('SELECT')
+  })
+
+  it('ステータス変更でAPIが再呼び出しされる', async () => {
     const user = userEvent.setup()
     renderPage()
     await waitFor(() => {
       expect(screen.getByText('進撃の巨人')).toBeInTheDocument()
     })
-    await user.click(screen.getByRole('button', { name: '完了' }))
+    const statusSelect = screen.getByLabelText('ステータス')
+    await user.selectOptions(statusSelect, 'completed')
     await waitFor(() => {
       expect(recordsApi.getAll).toHaveBeenCalledWith(
         expect.objectContaining({ status: 'completed' }),
       )
     })
-  })
-
-  it('絞り込みボタンが存在し、クリックでフィルタが表示される', async () => {
-    const user = userEvent.setup()
-    renderPage()
-    await waitFor(() => {
-      expect(screen.getByText('進撃の巨人')).toBeInTheDocument()
-    })
-
-    // フィルタサマリーのチップがDOMに存在する（jsdomではCSSメディアクエリが適用されないため、display:noneでも要素自体は存在する）
-    // 「進行中」はチップ・ステータスフィルタの複数箇所に存在するため、getAllByTextで検証
-    // mediaType 未指定時は汎用ラベル（「進行中」）を使用する
-    expect(screen.getAllByText('進行中').length).toBeGreaterThanOrEqual(1)
-
-    // 絞り込みボタンが存在する
-    const toggleButton = screen.getByRole('button', { name: '絞り込み' })
-    expect(toggleButton).toBeInTheDocument()
-
-    // クリックするとボタンテキストが「閉じる」に変わる
-    await user.click(toggleButton)
-    expect(screen.getByRole('button', { name: '閉じる' })).toBeInTheDocument()
   })
 })
