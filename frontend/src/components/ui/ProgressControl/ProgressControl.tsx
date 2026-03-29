@@ -9,6 +9,7 @@ type ProgressControlProps = {
   onChange: (episode: number) => void
   showFullControls?: boolean
   mediaType?: MediaType
+  isOngoing?: boolean
 }
 
 export function ProgressControl({
@@ -17,6 +18,7 @@ export function ProgressControl({
   onChange,
   showFullControls = false,
   mediaType,
+  isOngoing = false,
 }: ProgressControlProps) {
   const unit = (mediaType && UNIT_LABELS[mediaType]) ?? '話'
   const canIncrement = total === null || current < total
@@ -47,6 +49,7 @@ export function ProgressControl({
         <span className={styles.display}>
           {total !== null ? `${current} / ${total}${unit}` : `${current}${unit}`}
         </span>
+        {isOngoing && <span className={styles.ongoingBadge}>連載中</span>}
         <button
           type="button"
           className={`${styles.button} ${styles.increment}`}

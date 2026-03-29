@@ -80,3 +80,13 @@
   border-radius: 2px;
   transition: width var(--transition-normal);
 }
+
+.ongoingBadge {
+  display: inline-block;
+  font-size: var(--font-size-meta);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: var(--font-weight-bold);
+  background: #fff3e0;
+  color: #e65100;
+}
