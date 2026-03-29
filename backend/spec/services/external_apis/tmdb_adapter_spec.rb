@@ -107,7 +107,7 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
       expect(adapter.search('存在しない作品')).to eq([])
     end
 
-    context '日本のアニメーション作品' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+    context '日本のアニメーション作品' do
       let(:anime_movie_response) do
         {
           'results' => []

@@ -31,19 +31,19 @@ describe('UserMenu', () => {
     expect(screen.getByText('IK')).toBeInTheDocument()
   })
 
-  it('クリックでドロップダウンを表示する（マイページ→設定の順）', async () => {
+  it('クリックでドロップダウンを表示する（プロフィール→設定の順）', async () => {
     const user = userEvent.setup()
     renderMenu()
     await user.click(screen.getByRole('button', { name: 'ユーザーメニュー' }))
     expect(screen.getByText('ik@example.com')).toBeInTheDocument()
     expect(screen.getByText('ログアウト')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'マイページ' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'プロフィール' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '設定' })).toBeInTheDocument()
 
     const links = screen.getAllByRole('link')
-    const mypageIndex = links.findIndex((l) => l.textContent === 'マイページ')
+    const profileIndex = links.findIndex((l) => l.textContent === 'プロフィール')
     const settingsIndex = links.findIndex((l) => l.textContent === '設定')
-    expect(mypageIndex).toBeLessThan(settingsIndex)
+    expect(profileIndex).toBeLessThan(settingsIndex)
   })
 
   it('ログアウトをクリックするとonLogoutが呼ばれる', async () => {

@@ -49,8 +49,8 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
           <div className={styles.header}>{user.username}</div>
           <div className={styles.email}>{user.email}</div>
           <div className={styles.divider} />
-          <Link to="/mypage" className={styles.item} onClick={() => setIsOpen(false)}>
-            マイページ
+          <Link to={`/users/${user.id}`} className={styles.item} onClick={() => setIsOpen(false)}>
+            プロフィール
           </Link>
           <Link to="/settings" className={styles.item} onClick={() => setIsOpen(false)}>
             設定

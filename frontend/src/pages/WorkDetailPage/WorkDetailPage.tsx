@@ -13,6 +13,7 @@ import { RewatchControl } from '../../components/RewatchControl/RewatchControl'
 import { ReviewSection } from '../../components/ReviewSection/ReviewSection'
 import { EpisodeReviewSection } from '../../components/EpisodeReviewSection/EpisodeReviewSection'
 import { TagSection } from '../../components/TagSection/TagSection'
+import { DiscussionSection } from '../../components/DiscussionSection/DiscussionSection'
 import { RecordDeleteDialog } from '../../components/RecordDeleteDialog/RecordDeleteDialog'
 import { Button } from '../../components/ui/Button/Button'
 import { useWorkDetail } from './useWorkDetail'
@@ -168,6 +169,12 @@ export function WorkDetailPage() {
                 />
               </div>
             )}
+
+            <DiscussionSection
+              workId={work.id}
+              totalEpisodes={work.total_episodes}
+              hasRecord={!!record}
+            />
 
             <div className={styles.deleteSection}>
               <Button variant="secondary" onClick={openDeleteDialog}>

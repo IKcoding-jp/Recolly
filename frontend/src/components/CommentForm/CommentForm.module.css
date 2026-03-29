@@ -1,0 +1,72 @@
+.container {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: 8px;
+  background: var(--color-bg-white);
+}
+
+.message {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--spacing-md) 0;
+}
+
+.link {
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+  text-decoration: underline;
+  margin: 0 var(--spacing-xs);
+}
+
+.link:hover {
+  color: var(--color-text-muted);
+}
+
+.textarea {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-normal);
+  color: var(--color-text);
+  background: var(--color-bg-white);
+  resize: vertical;
+}
+
+.textarea:focus {
+  outline: 2px solid var(--color-text);
+  outline-offset: 1px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--spacing-sm);
+}
+
+.submitButton {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: var(--border-width) solid var(--color-text);
+  border-radius: 4px;
+  background: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-bg-white);
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.submitButton:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -123,6 +123,21 @@ export function getUnreadCount(currentEpisode: number, totalEpisodes: number | n
   return Math.max(0, totalEpisodes - currentEpisode)
 }
 
+// メディアタイプの日本語ラベル（string型キー版。APIレスポンス等で使用）
+const MEDIA_TYPE_LABELS: Record<string, string> = {
+  anime: 'アニメ',
+  movie: '映画',
+  drama: 'ドラマ',
+  book: '本',
+  manga: '漫画',
+  game: 'ゲーム',
+}
+
+/** メディアタイプの日本語ラベルを返す（string型キーを受け付ける汎用版） */
+export function getMediaTypeLabel(mediaType: string): string {
+  return MEDIA_TYPE_LABELS[mediaType] ?? mediaType
+}
+
 /** 現在の進捗をテキストで返す（例: 「12 / 25話」「プレイ中」） */
 export function getProgressText(
   mediaType: MediaType,

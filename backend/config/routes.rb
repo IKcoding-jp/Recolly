@@ -43,6 +43,20 @@ Rails.application.routes.draw do
         member do
           post :sync
         end
+        resources :discussions, only: %i[index create]
+      end
+
+      # ディスカッション（全体一覧・詳細・編集・削除）
+      resources :discussions, only: %i[index show update destroy] do
+        resources :comments, only: %i[index create]
+      end
+
+      # コメント（編集・削除）
+      resources :comments, only: %i[update destroy]
+
+      # ユーザープロフィール・記録一覧
+      resources :users, only: [:show], controller: 'profiles' do
+        resources :records, only: [:index], controller: 'user_records'
       end
 
       # タグ管理（ユーザー所有タグの一覧・削除）

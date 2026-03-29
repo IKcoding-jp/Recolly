@@ -36,8 +36,13 @@
   }
 
   .label {
-    font-size: var(--font-size-tab);
+    font-size: 10px;
     font-weight: var(--font-weight-bold);
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    text-align: center;
   }
 }

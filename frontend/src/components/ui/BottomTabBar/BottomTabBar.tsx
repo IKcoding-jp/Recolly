@@ -4,13 +4,14 @@ import styles from './BottomTabBar.module.css'
 type TabItem = {
   label: string
   path: string
-  iconKey: 'home' | 'search' | 'library' | 'settings'
+  iconKey: 'home' | 'search' | 'library' | 'community' | 'settings'
 }
 
 const TAB_ITEMS: TabItem[] = [
   { label: 'ホーム', path: '/dashboard', iconKey: 'home' },
   { label: '検索', path: '/search', iconKey: 'search' },
   { label: 'ライブラリ', path: '/library', iconKey: 'library' },
+  { label: 'コミュニティ', path: '/community', iconKey: 'community' },
   { label: '設定', path: '/settings', iconKey: 'settings' },
 ]
 
@@ -52,6 +53,15 @@ function TabIcon({ iconKey, active }: { iconKey: TabItem['iconKey']; active: boo
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
         </svg>
       )
+    case 'community':
+      return (
+        <svg {...props}>
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 00-3-3.87" />
+          <path d="M16 3.13a4 4 0 010 7.75" />
+        </svg>
+      )
     case 'settings':
       return (
         <svg {...props}>
@@ -66,8 +76,14 @@ export function BottomTabBar() {
   const { pathname } = useLocation()
 
   // startsWithで判定し、/settings/account等のサブパスでも親タブをアクティブにする。
+  // コミュニティは /discussions/* のサブパスでもアクティブ表示にする。
   // どのタブにもマッチしないパス（例: /works/:id）では全タブ非アクティブになる。
-  const isActive = (tabPath: string) => pathname === tabPath || pathname.startsWith(tabPath + '/')
+  const isActive = (tabPath: string) => {
+    if (tabPath === '/community') {
+      return pathname === '/community' || pathname.startsWith('/discussions/')
+    }
+    return pathname === tabPath || pathname.startsWith(tabPath + '/')
+  }
 
   return (
     <nav className={styles.tabBar}>
