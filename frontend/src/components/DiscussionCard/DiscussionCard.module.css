@@ -1,0 +1,110 @@
+.card {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: 8px;
+  background: var(--color-bg-white);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--transition-fast);
+}
+
+.card:hover {
+  border-color: var(--color-border);
+}
+
+.coverWrapper {
+  flex-shrink: 0;
+  width: 48px;
+  height: 64px;
+}
+
+.cover {
+  width: 48px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.coverPlaceholder {
+  width: 48px;
+  height: 64px;
+  border-radius: 4px;
+  background: var(--color-bg);
+  border: var(--border-width-thin) solid var(--color-border-light);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.genreBadge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-medium);
+  padding: 2px var(--spacing-sm);
+  border-radius: 4px;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-normal);
+  white-space: nowrap;
+}
+
+.title {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  line-height: var(--line-height-tight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.workTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 160px;
+}
+
+.dot {
+  color: var(--color-text-muted);
+}
+
+.commentCount {
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: var(--spacing-sm);
+  }
+
+  .workTitle {
+    max-width: 100px;
+  }
+}
