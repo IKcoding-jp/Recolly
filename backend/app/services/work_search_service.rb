@@ -1,14 +1,15 @@
 # frozen_string_literal: true
 
 class WorkSearchService
-  CACHE_TTL = 30.minutes
+  CACHE_TTL = 12.hours
+  ENRICHMENT_BATCH_SIZE = 5
 
   def search(query, media_type: nil)
     cache_key = "work_search:#{media_type || 'all'}:#{query}"
 
     Rails.cache.fetch(cache_key, expires_in: CACHE_TTL) do
       adapters = select_adapters(media_type)
-      results = adapters.flat_map { |adapter| adapter.safe_search(query) }
+      results = fetch_from_adapters_in_parallel(adapters, query)
       results = results.select { |r| r.media_type == media_type } if media_type.present?
       enrich_anilist_descriptions(results)
       remove_english_descriptions(results)
@@ -31,6 +32,16 @@ class WorkSearchService
     }
   end
 
+  # 複数のアダプターを並列にAPI呼び出しし、結果を統合する
+  # 各アダプターのsafe_searchは個別にエラーハンドリング済みのため、
+  # 1つのスレッドが失敗しても他のスレッドには影響しない
+  def fetch_from_adapters_in_parallel(adapters, query)
+    threads = adapters.map do |adapter|
+      Thread.new { adapter.safe_search(query) }
+    end
+    threads.flat_map(&:value)
+  end
+
   def select_adapters(media_type)
     if media_type.present?
       classes = adapter_map[media_type]
@@ -51,18 +62,27 @@ class WorkSearchService
 
   # AniListの結果にTMDB→Wikipediaの順で日本語説明を補完する
   # AniListの説明は英語のため、日本語の説明が見つかれば置き換える
+  # 外部APIへの同時接続数を制限するため、5件ずつのバッチで並列処理する
   def enrich_anilist_descriptions(results)
     anilist_results = results.select { |r| r.external_api_source == 'anilist' }
     return if anilist_results.empty?
 
+    anilist_results.each_slice(ENRICHMENT_BATCH_SIZE) do |batch|
+      threads = batch.map do |result|
+        Thread.new { enrich_single_description(result) }
+      end
+      threads.each(&:join)
+    end
+  end
+
+  # スレッドごとに独立したアダプターインスタンスを使用する
+  # （Faradayコネクションの共有を避けるため）
+  def enrich_single_description(result)
     tmdb = ExternalApis::TmdbAdapter.new
     wikipedia = ExternalApis::WikipediaClient.new
-
-    anilist_results.each do |result|
-      description = fetch_japanese_description_from_tmdb(result, tmdb)
-      description ||= wikipedia.fetch_extract(result.title)
-      result.description = resolve_description(description, result.description)
-    end
+    description = fetch_japanese_description_from_tmdb(result, tmdb)
+    description ||= wikipedia.fetch_extract(result.title)
+    result.description = resolve_description(description, result.description)
   end
 
   # TMDBで日本語説明を検索（日本語タイトル優先で複数パターンを順番に試す）

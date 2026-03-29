@@ -91,4 +91,25 @@ describe('SearchPage', () => {
       expect(screen.getByText('作品が見つかりませんでした')).toBeInTheDocument()
     })
   })
+
+  it('検索中にスケルトンUIとプログレスが表示される', async () => {
+    renderSearchPage()
+    const user = userEvent.setup()
+
+    // 検索APIが解決しないPromiseを返す（ローディング状態を維持）
+    mockFetch.mockReturnValueOnce(new Promise(() => {}))
+
+    const searchInput = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(searchInput, 'テスト')
+    await user.click(screen.getByRole('button', { name: '検索' }))
+
+    // スケルトンカードが表示される
+    await waitFor(() => {
+      expect(screen.getAllByRole('status')).toHaveLength(4)
+    })
+    // プログレスメッセージが表示される
+    expect(screen.getByText('作品を検索しています...')).toBeInTheDocument()
+    // プログレスバーが表示される
+    expect(screen.getByRole('progressbar')).toBeInTheDocument()
+  })
 })

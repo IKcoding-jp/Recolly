@@ -6,6 +6,8 @@ import { recordsApi } from '../../lib/recordsApi'
 import { imagesApi } from '../../lib/imagesApi'
 import { ApiError } from '../../lib/api'
 import { WorkCard } from '../../components/WorkCard/WorkCard'
+import { SearchSkeleton } from '../../components/SearchSkeleton/SearchSkeleton'
+import { SearchProgress } from '../../components/SearchProgress/SearchProgress'
 import { ManualWorkForm } from '../../components/ManualWorkForm/ManualWorkForm'
 import type { UploadResult } from '../../components/ImageUploader'
 import { RecordModal } from '../../components/RecordModal/RecordModal'
@@ -184,7 +186,12 @@ export function SearchPage() {
 
         {error && <p className={styles.error}>{error}</p>}
 
-        {isSearching && <p className={styles.loading}>検索中...</p>}
+        {isSearching && (
+          <>
+            <SearchProgress />
+            <SearchSkeleton />
+          </>
+        )}
 
         {!isSearching && hasSearched && results.length === 0 && (
           <div className={styles.empty}>

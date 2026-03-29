@@ -1,0 +1,103 @@
+.container {
+  margin-top: var(--spacing-lg);
+}
+
+.card {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-bottom: var(--border-width-thin) var(--border-style) var(--color-border-light);
+  align-items: flex-start;
+}
+
+.card:last-child {
+  opacity: 0.5;
+  border-bottom: none;
+}
+
+.coverPlaceholder {
+  flex-shrink: 0;
+  width: 80px;
+  height: 120px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--color-border-light) 25%,
+    #f1f3f5 50%,
+    var(--color-border-light) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding-top: var(--spacing-xs);
+}
+
+.line {
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--color-border-light) 25%,
+    #f1f3f5 50%,
+    var(--color-border-light) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.lineGenre {
+  height: 10px;
+  width: 50px;
+}
+
+.lineTitle {
+  height: 16px;
+  width: 65%;
+}
+
+.lineDesc {
+  height: 12px;
+  width: 85%;
+}
+
+.lineDescShort {
+  height: 12px;
+  width: 60%;
+}
+
+.buttonPlaceholder {
+  flex-shrink: 0;
+  width: 72px;
+  height: 32px;
+  border-radius: 4px;
+  margin-top: var(--spacing-lg);
+  background: linear-gradient(
+    90deg,
+    var(--color-border-light) 25%,
+    #f1f3f5 50%,
+    var(--color-border-light) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .coverPlaceholder {
+    width: 48px;
+    height: 68px;
+  }
+}
