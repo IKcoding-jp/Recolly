@@ -1,26 +1,18 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
-import { StatusFilter } from '../../components/StatusFilter/StatusFilter'
 import { getStatusOptions } from '../../components/StatusFilter/statusOptions'
-import { MediaTypeFilter } from '../../components/MediaTypeFilter/MediaTypeFilter'
 import { MEDIA_TYPE_OPTIONS } from '../../components/MediaTypeFilter/mediaTypeOptions'
-import { SortSelector } from '../../components/SortSelector/SortSelector'
 import { SORT_OPTIONS } from '../../components/SortSelector/sortOptions'
+import type { SortOption } from '../../components/SortSelector/sortOptions'
+import type { RecordStatus, MediaType } from '../../lib/types'
 import { RecordListItem } from '../../components/RecordListItem/RecordListItem'
 import { Pagination } from '../../components/ui/Pagination/Pagination'
 import { Button } from '../../components/ui/Button/Button'
 import { useLibrary } from './useLibrary'
 import styles from './LibraryPage.module.css'
 
-/** オプション配列から値に対応するラベルを取得する */
-function findLabel<T>(options: { value: T; label: string }[], value: T): string | undefined {
-  return options.find((o) => o.value === value)?.label
-}
-
 export function LibraryPage() {
   const navigate = useNavigate()
-  const [filtersOpen, setFiltersOpen] = useState(false)
   const {
     records,
     totalPages,
@@ -46,7 +38,6 @@ export function LibraryPage() {
     setTags(next)
   }
 
-  // 空状態の判定: status=all かつ mediaType=null のときのみガイド表示
   const isUnfilteredEmpty = status === null && mediaType === null
 
   const handleGoToSearch = () => {
@@ -54,53 +45,98 @@ export function LibraryPage() {
   }
 
   const statusOptions = getStatusOptions(mediaType)
-  const statusLabel = findLabel(statusOptions, status) ?? 'すべて'
-  const mediaTypeLabel = findLabel(MEDIA_TYPE_OPTIONS, mediaType) ?? '全ジャンル'
-  const sortLabel = findLabel(SORT_OPTIONS, sort) ?? '更新日'
+
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value
+    setStatus(value === 'all' ? null : (value as RecordStatus))
+  }
+
+  const handleMediaTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value
+    setMediaType(value === 'all' ? null : (value as MediaType))
+  }
+
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSort(e.target.value as SortOption)
+  }
 
   return (
     <div className={styles.page}>
       <SectionTitle>マイライブラリ</SectionTitle>
 
-      {/* モバイル用: フィルタサマリー + 折りたたみトグル */}
-      <div className={styles.filterSummary}>
-        <div className={styles.filterChips}>
-          <span className={styles.chip}>{statusLabel}</span>
-          <span className={styles.chip}>{mediaTypeLabel}</span>
-          <span className={styles.chipMuted}>{sortLabel}順</span>
+      <div className={styles.filters}>
+        <div className={styles.filterItem}>
+          <label htmlFor="status-filter" className={styles.filterLabel}>
+            ステータス
+          </label>
+          <select
+            id="status-filter"
+            className={styles.filterSelect}
+            value={status ?? 'all'}
+            onChange={handleStatusChange}
+          >
+            {statusOptions.map((option) => (
+              <option key={option.value ?? 'all'} value={option.value ?? 'all'}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
-        <button
-          type="button"
-          className={styles.filterToggle}
-          onClick={() => setFiltersOpen(!filtersOpen)}
-        >
-          {filtersOpen ? '閉じる' : '絞り込み'}
-        </button>
+
+        <div className={styles.filterItem}>
+          <label htmlFor="media-type-filter" className={styles.filterLabel}>
+            ジャンル
+          </label>
+          <select
+            id="media-type-filter"
+            className={styles.filterSelect}
+            value={mediaType ?? 'all'}
+            onChange={handleMediaTypeChange}
+          >
+            {MEDIA_TYPE_OPTIONS.map((option) => (
+              <option key={option.value ?? 'all'} value={option.value ?? 'all'}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className={styles.filterItem}>
+          <label htmlFor="sort-filter" className={styles.filterLabel}>
+            並び替え
+          </label>
+          <select
+            id="sort-filter"
+            className={styles.filterSelect}
+            value={sort}
+            onChange={handleSortChange}
+          >
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* PC: 常に表示 / モバイル: filtersOpen時のみ表示 */}
-      <div className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ''}`}>
-        <StatusFilter value={status} onChange={setStatus} mediaType={mediaType} />
-        <MediaTypeFilter value={mediaType} onChange={setMediaType} />
-        {allTags.length > 0 && (
-          <div className={styles.tagFilter}>
-            <div className={styles.tagFilterLabel}>タグ</div>
-            <div className={styles.tagChips}>
-              {allTags.map((tag) => (
-                <button
-                  key={tag.id}
-                  type="button"
-                  className={`${styles.tagChip} ${selectedTags.includes(tag.name) ? styles.tagChipSelected : ''}`}
-                  onClick={() => handleTagToggle(tag.name)}
-                >
-                  {tag.name}
-                </button>
-              ))}
-            </div>
+      {allTags.length > 0 && (
+        <div className={styles.tagFilter}>
+          <div className={styles.tagFilterLabel}>タグ</div>
+          <div className={styles.tagChips}>
+            {allTags.map((tag) => (
+              <button
+                key={tag.id}
+                type="button"
+                className={`${styles.tagChip} ${selectedTags.includes(tag.name) ? styles.tagChipSelected : ''}`}
+                onClick={() => handleTagToggle(tag.name)}
+              >
+                {tag.name}
+              </button>
+            ))}
           </div>
-        )}
-        <SortSelector value={sort} onChange={setSort} />
-      </div>
+        </div>
+      )}
 
       {error && <div className={styles.error}>{error}</div>}
 
