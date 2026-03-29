@@ -24,7 +24,7 @@ export function RecordModal({
   onCancel,
   isLoading,
 }: RecordModalProps) {
-  const [status, setStatus] = useState<RecordStatus>('plan_to_watch')
+  const [status, setStatus] = useState<RecordStatus>('watching')
   const [rating, setRating] = useState<number | null>(null)
 
   if (!isOpen) return null
