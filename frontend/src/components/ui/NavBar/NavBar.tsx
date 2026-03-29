@@ -12,7 +12,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'ホーム', path: '/dashboard' },
   { label: '検索', path: '/search' },
   { label: 'ライブラリ', path: '/library' },
-  { label: 'コミュニティ', path: null },
+  { label: 'コミュニティ', path: '/community' },
   { label: 'おすすめ', path: null },
 ]
 
@@ -23,6 +23,14 @@ type NavBarProps = {
 
 export function NavBar({ user, onLogout }: NavBarProps) {
   const { pathname } = useLocation()
+
+  // コミュニティは /discussions/* のサブパスでもアクティブ表示にする
+  const isActive = (path: string) => {
+    if (path === '/community') {
+      return pathname === '/community' || pathname.startsWith('/discussions/')
+    }
+    return pathname === path
+  }
 
   return (
     <nav className={styles.nav}>
@@ -36,7 +44,7 @@ export function NavBar({ user, onLogout }: NavBarProps) {
               <Link
                 key={item.label}
                 to={item.path}
-                className={pathname === item.path ? styles.active : styles.link}
+                className={isActive(item.path) ? styles.active : styles.link}
               >
                 {item.label}
               </Link>

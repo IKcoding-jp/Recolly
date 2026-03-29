@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { AuthProvider } from './contexts/AuthContext'
 import { useAuth } from './contexts/useAuth'
@@ -18,6 +18,9 @@ import { AuthCallbackPage } from './pages/AuthCallbackPage/AuthCallbackPage'
 import { OauthUsernamePage } from './pages/OauthUsernamePage/OauthUsernamePage'
 import { EmailPromptPage } from './pages/EmailPromptPage/EmailPromptPage'
 import { AccountSettingsPage } from './pages/AccountSettingsPage/AccountSettingsPage'
+import { CommunityPage } from './pages/CommunityPage/CommunityPage'
+import { DiscussionDetailPage } from './pages/DiscussionDetailPage/DiscussionDetailPage'
+import { UserProfilePage } from './pages/UserProfilePage/UserProfilePage'
 
 // 認証済みならダッシュボードへ、未認証ならログインページへ
 function RootRedirect() {
@@ -39,6 +42,37 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
       <NavBar user={user} onLogout={() => void logout()} />
       <div className={appStyles.authenticatedContent}>{children}</div>
       <BottomTabBar />
+    </>
+  )
+}
+
+// 未認証でも閲覧可能なページ用レイアウト（ログイン中はNavBar表示、未ログインは簡易ナビ）
+function OptionalAuthLayout({ children }: { children: React.ReactNode }) {
+  const { user, isLoading, logout } = useAuth()
+
+  if (isLoading) return <div className={appStyles.loading}>読み込み中...</div>
+
+  if (user) {
+    return (
+      <>
+        <NavBar user={user} onLogout={() => void logout()} />
+        <div className={appStyles.authenticatedContent}>{children}</div>
+        <BottomTabBar />
+      </>
+    )
+  }
+
+  return (
+    <>
+      <nav className={appStyles.publicNav}>
+        <Link to="/login" className={appStyles.logo}>
+          Recolly
+        </Link>
+        <Link to="/login" className={appStyles.loginLink}>
+          ログイン
+        </Link>
+      </nav>
+      <div className={appStyles.authenticatedContent}>{children}</div>
     </>
   )
 }
@@ -129,6 +163,30 @@ function App() {
                   <AccountSettingsPage />
                 </AuthenticatedLayout>
               </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/community"
+            element={
+              <OptionalAuthLayout>
+                <CommunityPage />
+              </OptionalAuthLayout>
+            }
+          />
+          <Route
+            path="/discussions/:id"
+            element={
+              <OptionalAuthLayout>
+                <DiscussionDetailPage />
+              </OptionalAuthLayout>
+            }
+          />
+          <Route
+            path="/users/:id"
+            element={
+              <OptionalAuthLayout>
+                <UserProfilePage />
+              </OptionalAuthLayout>
             }
           />
         </Routes>
