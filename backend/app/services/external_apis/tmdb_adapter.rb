@@ -6,13 +6,27 @@ module ExternalApis
     IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
     # TMDBのジャンルID: Animation
     ANIMATION_GENRE_ID = 16
+    # 中黒バリエーション検索を試みる閾値（この件数以下なら追加検索する）
+    NAKAGURO_RETRY_THRESHOLD = 3
 
     def media_types
       %w[movie drama]
     end
 
     def search(query, media_type: nil) # rubocop:disable Lint/UnusedMethodArgument -- BaseAdapterインターフェース準拠
-      search_movies(query) + search_tv(query)
+      results = search_movies(query) + search_tv(query)
+
+      # 結果が少ない場合、中黒「・」を挿入したバリエーションで追加検索する
+      # 例: 「ウォーキングデッド」→「ウォーキング・デッド」
+      if results.length <= NAKAGURO_RETRY_THRESHOLD
+        nakaguro_query = insert_nakaguro(query)
+        if nakaguro_query != query
+          additional = search_movies(nakaguro_query) + search_tv(nakaguro_query)
+          results = merge_results(results, additional)
+        end
+      end
+
+      results
     end
 
     # AniListの結果に対して、TMDBから日本語の説明文を取得する
@@ -32,6 +46,20 @@ module ExternalApis
     end
 
     private
+
+    # 長音「ー」の直後にカタカナが続く場合、中黒「・」を挿入する
+    # 例: 「ウォーキングデッド」→「ウォーキング・デッド」
+    def insert_nakaguro(query)
+      query.gsub(/ー([ァ-ヶ])/, 'ー・\1')
+    end
+
+    # TMDB IDで重複除去しながら結果をマージする
+    def merge_results(primary, additional)
+      seen_ids = primary.to_set(&:external_api_id)
+      combined = primary.dup
+      additional.each { |r| combined << r unless seen_ids.include?(r.external_api_id) }
+      combined
+    end
 
     # 日本のアニメーション作品を判定（AniListで取得するため、TMDBからは除外する）
     # genre_ids に Animation(16) が含まれ、かつ原語が日本語の場合はアニメとみなす

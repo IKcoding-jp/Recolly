@@ -167,6 +167,88 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
     end
   end
 
+  describe '中黒バリエーション検索' do
+    before do
+      stub_request(:get, %r{api.themoviedb.org/3/search/movie})
+        .to_return(status: 200, body: { 'results' => [] }.to_json,
+                   headers: { 'Content-Type' => 'application/json' })
+    end
+
+    context '結果が3件以下のとき' do
+      before do
+        stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+          .with(query: hash_including('query' => 'ウォーキングデッド'))
+          .to_return(status: 200, body: { 'results' => [] }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+        # insert_nakaguro は「ー」の直後のカタカナに中黒を挿入する
+        # 「ウォーキングデッド」→「ウォー・キングデッド」（「ー」+「キ」の間に挿入）
+        stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+          .with(query: hash_including('query' => 'ウォー・キングデッド'))
+          .to_return(status: 200, body: { 'results' => [{
+            'id' => 1402, 'name' => 'ウォーキング・デッド',
+            'overview' => 'ゾンビが蔓延する世界', 'poster_path' => '/twd.jpg',
+            'genre_ids' => [18], 'original_language' => 'en', 'popularity' => 95.0
+          }] }.to_json, headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it '中黒挿入版で追加検索して結果を返す' do
+        results = adapter.search('ウォーキングデッド')
+        expect(results.map(&:title)).to include('ウォーキング・デッド')
+      end
+    end
+
+    context '結果が4件以上のとき' do
+      let(:enough_results) do
+        4.times.map do |i|
+          { 'id' => i + 1, 'name' => "ドラマ#{i}", 'overview' => '説明',
+            'poster_path' => '/img.jpg', 'genre_ids' => [], 'original_language' => 'ja',
+            'popularity' => 50.0 }
+        end
+      end
+
+      before do
+        stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+          .to_return(status: 200, body: { 'results' => enough_results }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it '追加検索を実行しない' do
+        adapter.search('テスター作品')
+        expect(WebMock).to have_requested(:get, %r{api.themoviedb.org/3/search/tv}).once
+      end
+    end
+
+    context '中黒挿入で変化がないクエリ' do
+      before do
+        stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+          .to_return(status: 200, body: { 'results' => [] }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it '漢字のみのクエリでは追加検索しない' do
+        adapter.search('半沢直樹')
+        expect(WebMock).to have_requested(:get, %r{api.themoviedb.org/3/search/tv}).once
+      end
+    end
+
+    context '重複除去' do
+      before do
+        same_result = { 'id' => 100, 'name' => 'テスト・ドラマ', 'overview' => '説明',
+                        'poster_path' => '/img.jpg', 'genre_ids' => [], 'original_language' => 'ja',
+                        'popularity' => 50.0 }
+        stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+          .to_return(status: 200, body: { 'results' => [same_result] }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it '同じIDの結果は重複しない' do
+        results = adapter.search('テストドラマ')
+        ids = results.map(&:external_api_id)
+        expect(ids.uniq.length).to eq(ids.length)
+      end
+    end
+  end
+
   describe 'リトライミドルウェア' do
     let(:movie_retry_body) do
       { 'results' => [{ 'id' => 550, 'title' => 'テスト映画', 'overview' => 'テスト概要',
