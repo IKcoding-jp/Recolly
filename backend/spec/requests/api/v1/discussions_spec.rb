@@ -123,6 +123,61 @@ RSpec.describe 'Api::V1::Discussions', type: :request do
     end
   end
 
+  describe 'POST /api/v1/works/:work_id/discussions' do
+    context '認証済み + 記録済みユーザー' do
+      before { sign_in user }
+
+      it 'スレッドを作成できる' do
+        post "/api/v1/works/#{anime_work.id}/discussions",
+             params: { discussion: { title: '新スレッド', body: 'テスト本文', episode_number: 3, has_spoiler: true } },
+             as: :json
+        expect(response).to have_http_status(:created)
+        json = response.parsed_body
+        expect(json['discussion']['title']).to eq('新スレッド')
+        expect(json['discussion']['episode_number']).to eq(3)
+        expect(json['discussion']['has_spoiler']).to be true
+      end
+
+      it 'episode_numberなし（作品全体のスレッド）で作成できる' do
+        post "/api/v1/works/#{anime_work.id}/discussions",
+             params: { discussion: { title: '全体スレッド', body: 'テスト本文' } },
+             as: :json
+        expect(response).to have_http_status(:created)
+        json = response.parsed_body
+        expect(json['discussion']['episode_number']).to be_nil
+      end
+
+      it 'バリデーションエラーで422を返す' do
+        post "/api/v1/works/#{anime_work.id}/discussions",
+             params: { discussion: { title: '', body: '' } },
+             as: :json
+        expect(response).to have_http_status(:unprocessable_content)
+      end
+    end
+
+    context '認証済みだが未記録ユーザー' do
+      let(:other_user) { User.create!(username: 'otheruser', email: 'other@example.com', password: 'password123') }
+
+      before { sign_in other_user }
+
+      it '記録していない作品には403を返す' do
+        post "/api/v1/works/#{anime_work.id}/discussions",
+             params: { discussion: { title: 'テスト', body: 'テスト' } },
+             as: :json
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context '未認証' do
+      it '401を返す' do
+        post "/api/v1/works/#{anime_work.id}/discussions",
+             params: { discussion: { title: 'テスト', body: 'テスト' } },
+             as: :json
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
+
   describe 'GET /api/v1/discussions/:id' do
     let!(:discussion) do
       Discussion.create!(title: '詳細テスト', body: 'これは長い本文です。' * 50,

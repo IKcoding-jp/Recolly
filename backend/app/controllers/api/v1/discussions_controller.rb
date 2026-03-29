@@ -5,6 +5,8 @@ module Api
     class DiscussionsController < ApplicationController
       include DiscussionFilterable
 
+      before_action :authenticate_user!, only: [:create]
+      before_action :authorize_record_owner!, only: [:create]
       before_action :set_discussion, only: [:show]
 
       # GET /api/v1/works/:work_id/discussions
@@ -23,6 +25,18 @@ module Api
       # GET /api/v1/discussions/:id
       def show
         render json: { discussion: discussion_detail_json(@discussion) }
+      end
+
+      # POST /api/v1/works/:work_id/discussions
+      def create
+        discussion = current_user.discussions.build(discussion_params)
+        discussion.work_id = params[:work_id]
+
+        if discussion.save
+          render json: { discussion: discussion_detail_json(discussion) }, status: :created
+        else
+          render json: { errors: discussion.errors.full_messages }, status: :unprocessable_content
+        end
       end
 
       private
@@ -58,6 +72,18 @@ module Api
       def pagination_meta(total_count, page, per_page)
         total_pages = [(total_count.to_f / per_page).ceil, 1].max
         { current_page: page, total_pages: total_pages, total_count: total_count, per_page: per_page }
+      end
+
+      # 指定作品を記録済みのユーザーのみ投稿を許可する
+      def authorize_record_owner!
+        work_id = params[:work_id] || @discussion&.work_id
+        return if current_user.records.exists?(work_id: work_id)
+
+        render json: { error: 'この作品を記録していないため投稿できません' }, status: :forbidden
+      end
+
+      def discussion_params
+        params.expect(discussion: %i[title body episode_number has_spoiler])
       end
 
       def set_discussion
