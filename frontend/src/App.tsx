@@ -10,7 +10,6 @@ import appStyles from './App.module.css'
 import { LoginPage } from './pages/LoginPage/LoginPage'
 import { SignUpPage } from './pages/SignUpPage/SignUpPage'
 import { HomePage } from './pages/HomePage/HomePage'
-import { MyPage } from './pages/MyPage/MyPage'
 import { SearchPage } from './pages/SearchPage/SearchPage'
 import { WorkDetailPage } from './pages/WorkDetailPage/WorkDetailPage'
 import { LibraryPage } from './pages/LibraryPage/LibraryPage'
@@ -29,6 +28,16 @@ function RootRedirect() {
   if (isLoading) return <div className={appStyles.loading}>読み込み中...</div>
 
   return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+}
+
+// /mypageから/users/:idへのリダイレクト（後方互換性）
+function MyPageRedirect() {
+  const { user, isLoading } = useAuth()
+
+  if (isLoading) return <div className={appStyles.loading}>読み込み中...</div>
+  if (!user) return <Navigate to="/login" replace />
+
+  return <Navigate to={`/users/${user.id}`} replace />
 }
 
 // 認証済みページ共通レイアウト（NavBar + コンテンツ）
@@ -107,16 +116,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/mypage"
-            element={
-              <ProtectedRoute>
-                <AuthenticatedLayout>
-                  <MyPage />
-                </AuthenticatedLayout>
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/mypage" element={<MyPageRedirect />} />
           <Route
             path="/search"
             element={
