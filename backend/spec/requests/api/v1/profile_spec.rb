@@ -7,7 +7,10 @@ RSpec.describe 'Api::V1::Profile', type: :request do
 
   describe 'PATCH /api/v1/profile' do
     context '認証済みの場合' do
-      before { sign_in user }
+      before do
+        sign_in user
+        allow(S3PresignService).to receive(:presign_get).and_return('https://s3.example.com/signed-url')
+      end
 
       it 'bioを更新できる' do
         patch '/api/v1/profile', params: { profile: { bio: '自己紹介テスト' } }
