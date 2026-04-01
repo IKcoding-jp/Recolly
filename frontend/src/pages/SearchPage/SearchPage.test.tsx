@@ -180,6 +180,113 @@ describe('SearchPage', () => {
     expect(screen.getByText('海外ゲームは英語タイトルでも検索してみてください')).toBeInTheDocument()
   })
 
+  it('連続で異なる作品を記録する際にステータス・評価がリセットされる', async () => {
+    renderSearchPage()
+    const user = userEvent.setup()
+
+    // 検索API: 2作品を返す
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: '作品A',
+              media_type: 'anime',
+              description: '説明A',
+              cover_image_url: null,
+              total_episodes: 12,
+              external_api_id: '100',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+            {
+              title: '作品B',
+              media_type: 'anime',
+              description: '説明B',
+              cover_image_url: null,
+              total_episodes: 24,
+              external_api_id: '200',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+          ],
+        }),
+    })
+
+    // 検索実行
+    const searchInput = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(searchInput, 'テスト')
+    await user.click(screen.getByRole('button', { name: '検索' }))
+
+    // 作品Aが表示されるのを待つ
+    await waitFor(() => {
+      expect(screen.getByText('作品A')).toBeInTheDocument()
+    })
+
+    // 作品Aの「記録する」をクリック → RecordModal が開く
+    const recordButtons = screen.getAllByRole('button', { name: '記録する' })
+    await user.click(recordButtons[0])
+
+    // モーダルが開いたことを確認
+    await waitFor(() => {
+      expect(screen.getByText('作品Aを記録')).toBeInTheDocument()
+    })
+
+    // ステータスを「視聴完了」に変更
+    await user.click(screen.getByRole('button', { name: '視聴完了' }))
+
+    // 評価を「8」に変更
+    await user.click(screen.getByRole('button', { name: '8' }))
+
+    // 記録API（作品A）: 成功を返す
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          record: { id: 1, status: 'completed', rating: 8 },
+        }),
+    })
+
+    // 「記録する」をクリック（モーダル内の確定ボタン）
+    const confirmButtons = screen.getAllByRole('button', { name: '記録する' })
+    await user.click(confirmButtons[confirmButtons.length - 1])
+
+    // モーダルが閉じるのを待つ
+    await waitFor(() => {
+      expect(screen.queryByText('作品Aを記録')).not.toBeInTheDocument()
+    })
+
+    // 作品Bの「記録する」をクリック → RecordModal が開く
+    const recordButtons2 = screen.getAllByRole('button', { name: '記録する' })
+    await user.click(recordButtons2[0])
+
+    // モーダルが開いたことを確認
+    await waitFor(() => {
+      expect(screen.getByText('作品Bを記録')).toBeInTheDocument()
+    })
+
+    // 記録API（作品B）: 成功を返す
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          record: { id: 2, status: 'watching', rating: null },
+        }),
+    })
+
+    // 何も変更せずにそのまま「記録する」をクリック
+    const confirmButtons2 = screen.getAllByRole('button', { name: '記録する' })
+    await user.click(confirmButtons2[confirmButtons2.length - 1])
+
+    // APIに送信されたデータを検証: 初期値（watching, ratingなし）で送信されているか
+    // mockFetch の呼び出し履歴: [0]=認証, [1]=検索, [2]=作品A記録, [3]=作品B記録
+    const workBCall = mockFetch.mock.calls[3]
+    const workBBody = JSON.parse(workBCall[1].body as string)
+    expect(workBBody.record.status).toBe('watching')
+    expect(workBBody.record.rating).toBeNull()
+  })
+
   it('検索中にスケルトンUIとプログレスが表示される', async () => {
     renderSearchPage()
     const user = userEvent.setup()
