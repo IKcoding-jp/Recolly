@@ -10,9 +10,12 @@ class User < ApplicationRecord
   has_many :tags, dependent: :destroy
   has_many :discussions, dependent: :destroy
   has_many :comments, dependent: :destroy
+  has_many :favorite_works, dependent: :destroy
 
   validates :username, presence: true, uniqueness: true,
                        length: { minimum: 2, maximum: 30 }
+  validates :bio, length: { maximum: 100 }
+  validates :favorite_display_mode, inclusion: { in: %w[ranking favorites] }
 
   # OAuth専用ユーザーはパスワードなしを許可
   def password_required?
