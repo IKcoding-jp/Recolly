@@ -14,6 +14,12 @@
   --color-border-light: #e0e0e0;
   --color-error: #c0392b;
 
+  /* ランキングバッジ */
+  --color-rank-gold: #d4a012;
+  --color-rank-silver: #9e9e9e;
+  --color-rank-bronze: #b07d4b;
+  --color-rank-default: #d0d0d0;
+
   /* --- ジャンル別カラー --- */
   --color-anime: #3d5a80;
   --color-movie: #5e548e;

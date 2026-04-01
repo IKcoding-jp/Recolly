@@ -28,6 +28,12 @@ Rails.application.routes.draw do
         put :set_email
       end
 
+      # プロフィール更新
+      resource :profile, only: [:update], controller: 'profile' do
+        post :presign_avatar
+        put :favorite_works, action: :update_favorite_works
+      end
+
       # 画像アップロード
       resources :images, only: %i[create destroy] do
         collection do
@@ -57,6 +63,7 @@ Rails.application.routes.draw do
       # ユーザープロフィール・記録一覧
       resources :users, only: [:show], controller: 'profiles' do
         resources :records, only: [:index], controller: 'user_records'
+        resources :favorite_works, only: [:index], controller: 'favorite_works'
       end
 
       # タグ管理（ユーザー所有タグの一覧・削除）

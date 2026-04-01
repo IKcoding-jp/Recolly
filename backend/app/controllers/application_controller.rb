@@ -31,10 +31,33 @@ class ApplicationController < ActionController::API
 
   # ユーザー情報のJSON表現（パスワード等の機密情報を除外）
   def user_json(user)
-    user.as_json(only: %i[id username email avatar_url bio created_at]).merge(
+    user.as_json(only: %i[id username email bio created_at]).merge(
+      avatar_url: resolve_avatar_url(user.avatar_url),
       has_password: user.encrypted_password.present?,
       providers: user.user_providers.pluck(:provider),
       email_missing: user.email.blank?
     )
+  end
+
+  # お気に入り作品のJSON表現
+  def favorite_work_json(favorite_work)
+    {
+      id: favorite_work.id,
+      position: favorite_work.position,
+      work: {
+        id: favorite_work.work.id,
+        title: favorite_work.work.title,
+        media_type: favorite_work.work.media_type,
+        cover_image_url: favorite_work.work.resolved_cover_image_url
+      }
+    }
+  end
+
+  # avatar_urlがS3キーの場合、署名付きURLに変換する
+  def resolve_avatar_url(avatar_url)
+    return nil if avatar_url.blank?
+    return avatar_url unless avatar_url.start_with?('uploads/')
+
+    S3PresignService.presign_get(avatar_url)
   end
 end

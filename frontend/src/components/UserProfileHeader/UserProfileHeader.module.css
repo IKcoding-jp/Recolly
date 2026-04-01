@@ -67,6 +67,138 @@
   letter-spacing: 0.02em;
 }
 
+/* アバター編集 */
+.avatarEditable {
+  cursor: pointer;
+  position: relative;
+}
+
+.avatarOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.avatarEditable:hover .avatarOverlay,
+.avatarEditable:focus-visible .avatarOverlay {
+  opacity: 1;
+}
+
+.avatarOverlayVisible {
+  opacity: 1;
+}
+
+.cameraIcon {
+  font-size: var(--font-size-h3);
+  filter: grayscale(1) brightness(10);
+}
+
+.uploadingText {
+  color: var(--color-bg-white);
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+}
+
+.fileInput {
+  display: none;
+}
+
+/* bio編集 */
+.bioEdit {
+  width: 100%;
+  max-width: 400px;
+}
+
+.bioTextarea {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  color: var(--color-text);
+  line-height: var(--line-height-normal);
+  resize: none;
+  box-sizing: border-box;
+}
+
+.bioTextarea:focus {
+  outline: none;
+  border-color: var(--color-text);
+}
+
+.bioEditFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-xs);
+}
+
+.charCount {
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.bioEditActions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.editBioButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 var(--spacing-xs);
+  font-size: var(--font-size-meta);
+  opacity: 0.5;
+  transition: opacity var(--transition-fast);
+}
+
+.editBioButton:hover {
+  opacity: 1;
+}
+
+.addBioButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+  font-style: italic;
+  transition: color var(--transition-fast);
+}
+
+.addBioButton:hover {
+  color: var(--color-text);
+}
+
+.error {
+  color: var(--color-error);
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  margin-top: var(--spacing-xs);
+}
+
+.avatarError {
+  color: var(--color-error);
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  margin-top: var(--spacing-xs);
+  flex-basis: 100%;
+}
+
 @media (max-width: 768px) {
   .header {
     gap: var(--spacing-md);
