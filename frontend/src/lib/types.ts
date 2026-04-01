@@ -254,3 +254,17 @@ export interface PublicRecordsResponse {
   records: PublicRecord[]
   meta: PaginationMeta
 }
+
+// お気に入り作品
+export interface FavoriteWorkItem {
+  id: number
+  position: number
+  work: WorkSummary
+}
+
+export type FavoriteDisplayMode = 'ranking' | 'favorites'
+
+export interface FavoriteWorksResponse {
+  favorite_works: FavoriteWorkItem[]
+  display_mode: FavoriteDisplayMode
+}
