@@ -1,11 +1,20 @@
+import { useState, useRef } from 'react'
 import type { UserProfile } from '../../lib/types'
+import { profileApi } from '../../lib/profileApi'
+import { imagesApi } from '../../lib/imagesApi'
+import { Button } from '../ui/Button/Button'
 import styles from './UserProfileHeader.module.css'
 
 type UserProfileHeaderProps = {
   profile: UserProfile
+  isOwner: boolean
+  onProfileUpdate?: (updates: Partial<UserProfile>) => void
 }
 
-/** 参加年月を「2026年3月から利用」形式で返す */
+const BIO_MAX_LENGTH = 100
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+
 function formatJoinDate(createdAt: string): string {
   const date = new Date(createdAt)
   const formatted = date.toLocaleDateString('ja-JP', {
@@ -15,13 +24,98 @@ function formatJoinDate(createdAt: string): string {
   return `${formatted}から利用`
 }
 
-export function UserProfileHeader({ profile }: UserProfileHeaderProps) {
-  // アバターがない場合はユーザー名の頭文字を表示する
+export function UserProfileHeader({ profile, isOwner, onProfileUpdate }: UserProfileHeaderProps) {
   const initial = profile.username.charAt(0).toUpperCase()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [isEditingBio, setIsEditingBio] = useState(false)
+  const [bioValue, setBioValue] = useState(profile.bio ?? '')
+  const [bioError, setBioError] = useState<string | null>(null)
+  const [isSavingBio, setIsSavingBio] = useState(false)
+
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
+
+  const handleAvatarClick = () => {
+    if (!isOwner || isUploadingAvatar) return
+    fileInputRef.current?.click()
+  }
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setAvatarError('JPEG, PNG, GIF, WebPのみ対応しています')
+      return
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      setAvatarError('ファイルサイズは10MB以下にしてください')
+      return
+    }
+
+    setAvatarError(null)
+    setIsUploadingAvatar(true)
+
+    try {
+      const { presigned_url, s3_key } = await profileApi.presignAvatar(
+        file.name,
+        file.type,
+        file.size,
+      )
+      await imagesApi.uploadToS3(presigned_url, file)
+      await profileApi.update({ avatar_url: s3_key })
+      onProfileUpdate?.({ avatar_url: presigned_url })
+    } catch {
+      setAvatarError('アップロードに失敗しました')
+    } finally {
+      setIsUploadingAvatar(false)
+    }
+  }
+
+  const handleBioSave = async () => {
+    setBioError(null)
+    setIsSavingBio(true)
+    try {
+      const trimmed = bioValue.trim()
+      await profileApi.update({ bio: trimmed || '' })
+      onProfileUpdate?.({ bio: trimmed || null })
+      setIsEditingBio(false)
+    } catch {
+      setBioError('保存に失敗しました')
+    } finally {
+      setIsSavingBio(false)
+    }
+  }
+
+  const handleBioCancel = () => {
+    setBioValue(profile.bio ?? '')
+    setBioError(null)
+    setIsEditingBio(false)
+  }
+
+  const startEditBio = () => {
+    setBioValue(profile.bio ?? '')
+    setIsEditingBio(true)
+  }
 
   return (
     <header className={styles.header}>
-      <div className={styles.avatar}>
+      <div
+        className={`${styles.avatar} ${isOwner ? styles.avatarEditable : ''}`}
+        onClick={handleAvatarClick}
+        role={isOwner ? 'button' : undefined}
+        tabIndex={isOwner ? 0 : undefined}
+        aria-label={isOwner ? 'アバター画像を変更' : undefined}
+        onKeyDown={
+          isOwner
+            ? (e) => {
+                if (e.key === 'Enter') handleAvatarClick()
+              }
+            : undefined
+        }
+      >
         {profile.avatar_url ? (
           <img
             className={styles.avatarImage}
@@ -31,12 +125,91 @@ export function UserProfileHeader({ profile }: UserProfileHeaderProps) {
         ) : (
           <span className={styles.avatarInitial}>{initial}</span>
         )}
+        {isOwner && !isUploadingAvatar && (
+          <div className={styles.avatarOverlay}>
+            <span className={styles.cameraIcon}>📷</span>
+          </div>
+        )}
+        {isUploadingAvatar && (
+          <div className={`${styles.avatarOverlay} ${styles.avatarOverlayVisible}`}>
+            <span className={styles.uploadingText}>...</span>
+          </div>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp"
+          className={styles.fileInput}
+          onChange={(e) => void handleFileSelect(e)}
+        />
       </div>
+
       <div className={styles.info}>
         <h1 className={styles.username}>{profile.username}</h1>
-        {profile.bio && <p className={styles.bio}>{profile.bio}</p>}
+
+        {isEditingBio ? (
+          <div className={styles.bioEdit}>
+            <textarea
+              className={styles.bioTextarea}
+              value={bioValue}
+              onChange={(e) => setBioValue(e.target.value)}
+              maxLength={BIO_MAX_LENGTH}
+              rows={2}
+              autoFocus
+            />
+            <div className={styles.bioEditFooter}>
+              <span className={styles.charCount}>
+                {bioValue.length} / {BIO_MAX_LENGTH}
+              </span>
+              <div className={styles.bioEditActions}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleBioCancel}
+                  disabled={isSavingBio}
+                >
+                  キャンセル
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => void handleBioSave()}
+                  disabled={isSavingBio}
+                >
+                  {isSavingBio ? '保存中...' : '保存'}
+                </Button>
+              </div>
+            </div>
+            {bioError && <p className={styles.error}>{bioError}</p>}
+          </div>
+        ) : (
+          <>
+            {profile.bio ? (
+              <p className={styles.bio}>
+                {profile.bio}
+                {isOwner && (
+                  <button
+                    type="button"
+                    className={styles.editBioButton}
+                    onClick={startEditBio}
+                    aria-label="自己紹介を編集"
+                  >
+                    ✏️
+                  </button>
+                )}
+              </p>
+            ) : isOwner ? (
+              <button type="button" className={styles.addBioButton} onClick={startEditBio}>
+                ＋ 自己紹介を追加
+              </button>
+            ) : null}
+          </>
+        )}
+
         <span className={styles.joinDate}>{formatJoinDate(profile.created_at)}</span>
       </div>
+
+      {avatarError && <p className={styles.avatarError}>{avatarError}</p>}
     </header>
   )
 }
