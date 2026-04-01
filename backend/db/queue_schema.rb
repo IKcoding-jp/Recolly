@@ -10,35 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_01_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_29_062109) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
-
-  create_table "comments", force: :cascade do |t|
-    t.text "body", null: false
-    t.datetime "created_at", null: false
-    t.bigint "discussion_id", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["discussion_id", "created_at"], name: "index_comments_on_discussion_id_and_created_at"
-    t.index ["discussion_id"], name: "index_comments_on_discussion_id"
-    t.index ["user_id"], name: "index_comments_on_user_id"
-  end
-
-  create_table "discussions", force: :cascade do |t|
-    t.text "body", null: false
-    t.integer "comments_count", default: 0, null: false
-    t.datetime "created_at", null: false
-    t.integer "episode_number"
-    t.boolean "has_spoiler", default: false, null: false
-    t.string "title", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.bigint "work_id", null: false
-    t.index ["user_id"], name: "index_discussions_on_user_id"
-    t.index ["work_id", "created_at"], name: "index_discussions_on_work_id_and_created_at"
-    t.index ["work_id"], name: "index_discussions_on_work_id"
-  end
 
   create_table "episode_reviews", force: :cascade do |t|
     t.text "body", null: false
@@ -49,18 +23,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_01_000002) do
     t.integer "visibility", default: 0, null: false
     t.index ["record_id", "episode_number"], name: "index_episode_reviews_on_record_id_and_episode_number", unique: true
     t.index ["record_id"], name: "index_episode_reviews_on_record_id"
-  end
-
-  create_table "favorite_works", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.integer "position", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.bigint "work_id", null: false
-    t.index ["user_id", "position"], name: "index_favorite_works_on_user_id_and_position", unique: true
-    t.index ["user_id", "work_id"], name: "index_favorite_works_on_user_id_and_work_id", unique: true
-    t.index ["user_id"], name: "index_favorite_works_on_user_id"
-    t.index ["work_id"], name: "index_favorite_works_on_work_id"
   end
 
   create_table "images", force: :cascade do |t|
@@ -260,7 +222,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_01_000002) do
     t.datetime "created_at", null: false
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
-    t.string "favorite_display_mode", default: "ranking", null: false
     t.datetime "remember_created_at"
     t.datetime "reset_password_sent_at"
     t.string "reset_password_token"
@@ -286,13 +247,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_01_000002) do
     t.index ["external_api_id", "external_api_source"], name: "index_works_on_external_api_id_and_external_api_source", unique: true, where: "(external_api_id IS NOT NULL)"
   end
 
-  add_foreign_key "comments", "discussions"
-  add_foreign_key "comments", "users"
-  add_foreign_key "discussions", "users"
-  add_foreign_key "discussions", "works"
   add_foreign_key "episode_reviews", "records"
-  add_foreign_key "favorite_works", "users"
-  add_foreign_key "favorite_works", "works"
   add_foreign_key "record_tags", "records"
   add_foreign_key "record_tags", "tags"
   add_foreign_key "records", "users"
