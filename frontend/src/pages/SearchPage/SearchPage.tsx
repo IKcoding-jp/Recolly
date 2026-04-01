@@ -243,6 +243,11 @@ export function SearchPage() {
       </div>
 
       <RecordModal
+        key={
+          modalWork
+            ? `${modalWork.external_api_source ?? 'manual'}:${modalWork.external_api_id ?? manualWorkId}`
+            : 'closed'
+        }
         isOpen={modalWork !== null}
         title={modalWork?.title ?? ''}
         mediaType={modalWork?.media_type ?? 'anime'}
