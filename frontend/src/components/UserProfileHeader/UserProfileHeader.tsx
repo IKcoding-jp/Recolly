@@ -3,6 +3,7 @@ import type { UserProfile } from '../../lib/types'
 import { profileApi } from '../../lib/profileApi'
 import { imagesApi } from '../../lib/imagesApi'
 import { Button } from '../ui/Button/Button'
+import { useBioEdit, BIO_MAX_LENGTH } from './useBioEdit'
 import styles from './UserProfileHeader.module.css'
 
 type UserProfileHeaderProps = {
@@ -11,7 +12,6 @@ type UserProfileHeaderProps = {
   onProfileUpdate?: (updates: Partial<UserProfile>) => void
 }
 
-const BIO_MAX_LENGTH = 100
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
@@ -27,11 +27,7 @@ function formatJoinDate(createdAt: string): string {
 export function UserProfileHeader({ profile, isOwner, onProfileUpdate }: UserProfileHeaderProps) {
   const initial = profile.username.charAt(0).toUpperCase()
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const [isEditingBio, setIsEditingBio] = useState(false)
-  const [bioValue, setBioValue] = useState(profile.bio ?? '')
-  const [bioError, setBioError] = useState<string | null>(null)
-  const [isSavingBio, setIsSavingBio] = useState(false)
+  const bio = useBioEdit(profile, onProfileUpdate)
 
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const [avatarError, setAvatarError] = useState<string | null>(null)
@@ -72,32 +68,6 @@ export function UserProfileHeader({ profile, isOwner, onProfileUpdate }: UserPro
     } finally {
       setIsUploadingAvatar(false)
     }
-  }
-
-  const handleBioSave = async () => {
-    setBioError(null)
-    setIsSavingBio(true)
-    try {
-      const trimmed = bioValue.trim()
-      await profileApi.update({ bio: trimmed || '' })
-      onProfileUpdate?.({ bio: trimmed || null })
-      setIsEditingBio(false)
-    } catch {
-      setBioError('保存に失敗しました')
-    } finally {
-      setIsSavingBio(false)
-    }
-  }
-
-  const handleBioCancel = () => {
-    setBioValue(profile.bio ?? '')
-    setBioError(null)
-    setIsEditingBio(false)
-  }
-
-  const startEditBio = () => {
-    setBioValue(profile.bio ?? '')
-    setIsEditingBio(true)
   }
 
   return (
@@ -147,40 +117,35 @@ export function UserProfileHeader({ profile, isOwner, onProfileUpdate }: UserPro
       <div className={styles.info}>
         <h1 className={styles.username}>{profile.username}</h1>
 
-        {isEditingBio ? (
+        {bio.isEditing ? (
           <div className={styles.bioEdit}>
             <textarea
               className={styles.bioTextarea}
-              value={bioValue}
-              onChange={(e) => setBioValue(e.target.value)}
+              value={bio.value}
+              onChange={(e) => bio.setValue(e.target.value)}
               maxLength={BIO_MAX_LENGTH}
               rows={2}
               autoFocus
             />
             <div className={styles.bioEditFooter}>
               <span className={styles.charCount}>
-                {bioValue.length} / {BIO_MAX_LENGTH}
+                {bio.value.length} / {BIO_MAX_LENGTH}
               </span>
               <div className={styles.bioEditActions}>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleBioCancel}
-                  disabled={isSavingBio}
-                >
+                <Button variant="secondary" size="sm" onClick={bio.cancel} disabled={bio.isSaving}>
                   キャンセル
                 </Button>
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => void handleBioSave()}
-                  disabled={isSavingBio}
+                  onClick={() => void bio.save()}
+                  disabled={bio.isSaving}
                 >
-                  {isSavingBio ? '保存中...' : '保存'}
+                  {bio.isSaving ? '保存中...' : '保存'}
                 </Button>
               </div>
             </div>
-            {bioError && <p className={styles.error}>{bioError}</p>}
+            {bio.error && <p className={styles.error}>{bio.error}</p>}
           </div>
         ) : (
           <>
@@ -191,7 +156,7 @@ export function UserProfileHeader({ profile, isOwner, onProfileUpdate }: UserPro
                   <button
                     type="button"
                     className={styles.editBioButton}
-                    onClick={startEditBio}
+                    onClick={bio.startEdit}
                     aria-label="自己紹介を編集"
                   >
                     ✏️
@@ -199,7 +164,7 @@ export function UserProfileHeader({ profile, isOwner, onProfileUpdate }: UserPro
                 )}
               </p>
             ) : isOwner ? (
-              <button type="button" className={styles.addBioButton} onClick={startEditBio}>
+              <button type="button" className={styles.addBioButton} onClick={bio.startEdit}>
                 ＋ 自己紹介を追加
               </button>
             ) : null}
