@@ -19,6 +19,18 @@ module Api
         end
       end
 
+      # PUT /api/v1/profile/favorite_works
+      def update_favorite_works
+        items = parse_favorite_work_items
+        error = validate_favorite_work_items(items)
+        return render json: { error: error }, status: :unprocessable_content if error
+
+        replace_favorite_works(items)
+        render json: { favorite_works: current_user_favorite_works_json }
+      rescue ActiveRecord::RecordInvalid => e
+        render json: { error: e.message }, status: :unprocessable_content
+      end
+
       # POST /api/v1/profile/presign_avatar
       def presign_avatar
         error = validate_avatar_presign
@@ -31,6 +43,36 @@ module Api
       end
 
       private
+
+      # お気に入り作品パラメータをハッシュ配列として取得する
+      def parse_favorite_work_items
+        Array(params[:favorite_works]).select { |item| item.respond_to?(:key?) }
+      end
+
+      # お気に入り作品の件数・重複バリデーション。エラーメッセージまたはnilを返す
+      def validate_favorite_work_items(items)
+        return 'お気に入りは最大5件です' if items.length > 5
+
+        work_ids = items.map { |item| item[:work_id].to_i }
+        '同じ作品を複数回選択できません' if work_ids.uniq.length != work_ids.length
+      end
+
+      # 既存のお気に入りを削除し、新しいお気に入りを一括作成する
+      def replace_favorite_works(items)
+        ActiveRecord::Base.transaction do
+          current_user.favorite_works.destroy_all
+          items.each do |item|
+            current_user.favorite_works.create!(work_id: item[:work_id], position: item[:position])
+          end
+        end
+      end
+
+      # current_userのお気に入り作品をJSON配列として返す
+      def current_user_favorite_works_json
+        current_user.favorite_works.includes(:work).order(:position).map do |favorite_work|
+          favorite_work_json(favorite_work)
+        end
+      end
 
       # avatar_urlが空文字で送信された場合、nilにリセットする
       def reset_avatar_url_if_blank
