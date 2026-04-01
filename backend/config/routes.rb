@@ -28,6 +28,11 @@ Rails.application.routes.draw do
         put :set_email
       end
 
+      # プロフィール更新
+      resource :profile, only: [:update], controller: 'profile' do
+        post :presign_avatar
+      end
+
       # 画像アップロード
       resources :images, only: %i[create destroy] do
         collection do
