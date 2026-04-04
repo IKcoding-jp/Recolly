@@ -6,8 +6,12 @@ import { SORT_OPTIONS } from '../../components/SortSelector/sortOptions'
 import type { SortOption } from '../../components/SortSelector/sortOptions'
 import type { RecordStatus, MediaType } from '../../lib/types'
 import { RecordListItem } from '../../components/RecordListItem/RecordListItem'
+import { RecordCardItem } from '../../components/RecordCardItem/RecordCardItem'
+import { RecordCompactItem } from '../../components/RecordCompactItem/RecordCompactItem'
 import { Pagination } from '../../components/ui/Pagination/Pagination'
 import { Button } from '../../components/ui/Button/Button'
+import { LayoutSwitcher } from '../../components/ui/LayoutSwitcher/LayoutSwitcher'
+import { useLayoutPreference } from '../../hooks/useLayoutPreference'
 import { useLibrary } from './useLibrary'
 import styles from './LibraryPage.module.css'
 
@@ -16,6 +20,7 @@ export function LibraryPage() {
   const {
     records,
     totalPages,
+    totalCount,
     isLoading,
     error,
     status,
@@ -30,6 +35,8 @@ export function LibraryPage() {
     setPage,
     setTags,
   } = useLibrary()
+
+  const { layout, setLayout } = useLayoutPreference()
 
   const handleTagToggle = (tagName: string) => {
     const next = selectedTags.includes(tagName)
@@ -61,7 +68,7 @@ export function LibraryPage() {
   }
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${layout === 'card' ? styles.pageWide : ''}`}>
       <SectionTitle>マイライブラリ</SectionTitle>
 
       <div className={styles.filters}>
@@ -138,6 +145,8 @@ export function LibraryPage() {
         </div>
       )}
 
+      <LayoutSwitcher currentLayout={layout} totalCount={totalCount} onLayoutChange={setLayout} />
+
       {error && <div className={styles.error}>{error}</div>}
 
       {isLoading && <div className={styles.loading}>読み込み中...</div>}
@@ -175,10 +184,25 @@ export function LibraryPage() {
 
       {!isLoading && !error && records.length > 0 && (
         <>
-          <div className={styles.list}>
-            {records.map((record) => (
-              <RecordListItem key={record.id} record={record} />
-            ))}
+          <div
+            className={
+              layout === 'card'
+                ? styles.cardGrid
+                : layout === 'compact'
+                  ? styles.compactList
+                  : styles.list
+            }
+          >
+            {records.map((record) => {
+              switch (layout) {
+                case 'card':
+                  return <RecordCardItem key={record.id} record={record} />
+                case 'compact':
+                  return <RecordCompactItem key={record.id} record={record} />
+                default:
+                  return <RecordListItem key={record.id} record={record} />
+              }
+            })}
           </div>
           <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
         </>

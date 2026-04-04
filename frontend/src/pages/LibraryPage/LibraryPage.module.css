@@ -142,9 +142,43 @@
   color: var(--color-bg-white);
 }
 
+/* カード表示時のページ幅拡大 */
+.pageWide {
+  max-width: 1100px;
+}
+
+/* カード表示のグリッドレイアウト */
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* コンパクトリスト */
+.compactList {
+  margin-bottom: var(--spacing-lg);
+}
+
+/* レスポンシブ: カードグリッド */
+@media (max-width: 1024px) {
+  .cardGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .page {
     max-width: 100%;
     padding: var(--spacing-md);
+  }
+
+  .cardGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-sm);
+  }
+
+  .pageWide {
+    max-width: 100%;
   }
 }
