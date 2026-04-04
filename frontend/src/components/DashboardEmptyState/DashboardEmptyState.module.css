@@ -2,7 +2,7 @@
 
 .container {
   border: 1px dashed var(--color-border-light);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: var(--spacing-3xl) var(--spacing-xl);
   text-align: center;
 }
@@ -32,7 +32,8 @@
   align-items: center;
   gap: var(--spacing-xs);
   padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: 20px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
   font-family: var(--font-body);
   font-size: var(--font-size-label);
 }
@@ -40,8 +41,64 @@
 .dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   flex-shrink: 0;
+}
+
+/* ジャンル別カラー（CSS変数ベース） */
+
+.pillAnime {
+  background-color: color-mix(in srgb, var(--color-anime) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-anime) 30%, transparent);
+}
+
+.pillAnime .dot {
+  background-color: var(--color-anime);
+}
+
+.pillMovie {
+  background-color: color-mix(in srgb, var(--color-movie) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-movie) 30%, transparent);
+}
+
+.pillMovie .dot {
+  background-color: var(--color-movie);
+}
+
+.pillDrama {
+  background-color: color-mix(in srgb, var(--color-drama) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-drama) 30%, transparent);
+}
+
+.pillDrama .dot {
+  background-color: var(--color-drama);
+}
+
+.pillBook {
+  background-color: color-mix(in srgb, var(--color-book) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-book) 30%, transparent);
+}
+
+.pillBook .dot {
+  background-color: var(--color-book);
+}
+
+.pillManga {
+  background-color: color-mix(in srgb, var(--color-manga) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-manga) 30%, transparent);
+}
+
+.pillManga .dot {
+  background-color: var(--color-manga);
+}
+
+.pillGame {
+  background-color: color-mix(in srgb, var(--color-game) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-game) 30%, transparent);
+}
+
+.pillGame .dot {
+  background-color: var(--color-game);
 }
 
 /* --- 説明テキスト --- */
@@ -74,7 +131,7 @@
 .stepNumber {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   border: 2px solid var(--color-text);
   display: flex;
   align-items: center;
@@ -112,7 +169,7 @@
   font-size: var(--font-size-label);
   font-weight: var(--font-weight-medium);
   border: var(--border-width) var(--border-style) var(--color-text);
-  border-radius: 0;
+  border-radius: var(--radius-none);
   text-decoration: none;
   transition:
     background-color var(--transition-fast),

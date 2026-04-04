@@ -14,6 +14,10 @@
   --color-border-light: #e0e0e0;
   --color-error: #c0392b;
 
+  /* 進行中バッジ */
+  --color-ongoing-bg: #fff3e0;
+  --color-ongoing-text: #e65100;
+
   /* ランキングバッジ */
   --color-rank-gold: #d4a012;
   --color-rank-silver: #9e9e9e;

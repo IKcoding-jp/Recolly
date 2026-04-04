@@ -2,16 +2,16 @@ import { Link } from 'react-router-dom'
 import styles from './DashboardEmptyState.module.css'
 
 /**
- * ジャンル定義: ラベル・HEXカラーの一覧
- * CSS変数では opacity 操作ができないため、HEX値をインラインスタイルで使用する
+ * ジャンル定義: ラベルとCSSクラス名の一覧
+ * 色は tokens.css のCSS変数で管理し、CSSモジュール側で適用する
  */
 const GENRES = [
-  { label: 'アニメ', color: '#3d5a80' },
-  { label: '映画', color: '#5e548e' },
-  { label: 'ドラマ', color: '#9f86c0' },
-  { label: '本', color: '#c4956a' },
-  { label: '漫画', color: '#e07a5f' },
-  { label: 'ゲーム', color: '#6b9080' },
+  { label: 'アニメ', className: styles.pillAnime },
+  { label: '映画', className: styles.pillMovie },
+  { label: 'ドラマ', className: styles.pillDrama },
+  { label: '本', className: styles.pillBook },
+  { label: '漫画', className: styles.pillManga },
+  { label: 'ゲーム', className: styles.pillGame },
 ] as const
 
 const STEPS = [
@@ -20,30 +20,15 @@ const STEPS = [
   { number: 3, label: '進捗を更新', detail: 'ワンクリックで「+1話」' },
 ] as const
 
-/** HEXカラーをRGBA文字列に変換する */
-function hexToRgba(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
 export function DashboardEmptyState() {
   return (
     <div className={styles.container}>
       <h2 className={styles.heading}>はじめましょう</h2>
 
       <ul className={styles.pillList}>
-        {GENRES.map(({ label, color }) => (
-          <li
-            key={label}
-            className={styles.pill}
-            style={{
-              backgroundColor: hexToRgba(color, 0.1),
-              border: `1px solid ${hexToRgba(color, 0.3)}`,
-            }}
-          >
-            <span className={styles.dot} style={{ backgroundColor: color }} />
+        {GENRES.map(({ label, className }) => (
+          <li key={label} className={`${styles.pill} ${className}`}>
+            <span className={styles.dot} />
             {label}
           </li>
         ))}
