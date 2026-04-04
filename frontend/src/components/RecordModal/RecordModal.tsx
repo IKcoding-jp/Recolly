@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { MediaType, RecordStatus } from '../../lib/types'
 import { StatusSelector } from '../ui/StatusSelector/StatusSelector'
-import { RatingInput } from '../ui/RatingInput/RatingInput'
+import { RatingSlider } from '../ui/RatingSlider/RatingSlider'
 import { Button } from '../ui/Button/Button'
 import styles from './RecordModal.module.css'
 
@@ -48,7 +48,7 @@ export function RecordModal({
 
         <div className={styles.card}>
           <label className={styles.label}>評価（任意）</label>
-          <RatingInput value={rating} onChange={setRating} />
+          <RatingSlider value={rating ?? 0} onChange={(v) => setRating(v === 0 ? null : v)} />
         </div>
 
         <div className={styles.actions}>

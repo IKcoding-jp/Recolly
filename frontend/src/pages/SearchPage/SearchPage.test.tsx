@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from '../../contexts/AuthContext'
@@ -236,8 +236,9 @@ describe('SearchPage', () => {
     // ステータスを「視聴完了」に変更
     await user.click(screen.getByRole('button', { name: '視聴完了' }))
 
-    // 評価を「8」に変更
-    await user.click(screen.getByRole('button', { name: '8' }))
+    // 評価を「8」に変更（スライダーで操作）
+    const slider = screen.getByRole('slider')
+    fireEvent.change(slider, { target: { value: '8' } })
 
     // 記録API（作品A）: 成功を返す
     mockFetch.mockResolvedValueOnce({
