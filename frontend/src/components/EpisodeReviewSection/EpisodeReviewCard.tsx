@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import type { EpisodeReview } from '../../lib/types'
 import { Button } from '../ui/Button/Button'
+import { FormTextarea } from '../ui/FormTextarea/FormTextarea'
 import styles from './EpisodeReviewSection.module.css'
 
 type EpisodeReviewCardProps = {
@@ -62,12 +63,7 @@ export function EpisodeReviewCard({
 
       {isEditing ? (
         <div className={styles.editForm}>
-          <textarea
-            className={styles.textarea}
-            value={editBody}
-            onChange={(e) => setEditBody(e.target.value)}
-            rows={3}
-          />
+          <FormTextarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows={3} />
           <div className={styles.editActions}>
             <Button
               variant="primary"

@@ -5,6 +5,7 @@ import { discussionsApi } from '../../lib/discussionsApi'
 import { SectionTitle } from '../ui/SectionTitle/SectionTitle'
 import { DiscussionCard } from '../DiscussionCard/DiscussionCard'
 import { DiscussionCreateModal } from '../DiscussionCreateModal/DiscussionCreateModal'
+import { FormSelect } from '../ui/FormSelect/FormSelect'
 import { Button } from '../ui/Button/Button'
 import styles from './DiscussionSection.module.css'
 
@@ -56,13 +57,11 @@ export function DiscussionSection({ workId, totalEpisodes, hasRecord }: Props) {
     setRefreshKey((prev) => prev + 1)
   }
 
-  // 話数フィルターの選択肢を生成
-  const episodeOptions: { value: number | undefined; label: string }[] = [
-    { value: undefined, label: 'すべて' },
-  ]
+  // 話数フィルターの選択肢を生成（FormSelectはstring型のvalueを受け取る）
+  const episodeOptions: { value: string; label: string }[] = [{ value: '', label: 'すべて' }]
   if (totalEpisodes !== null) {
     for (let i = 1; i <= totalEpisodes; i++) {
-      episodeOptions.push({ value: i, label: `第${String(i)}話` })
+      episodeOptions.push({ value: String(i), label: `第${String(i)}話` })
     }
   }
 
@@ -75,19 +74,15 @@ export function DiscussionSection({ workId, totalEpisodes, hasRecord }: Props) {
         <SectionTitle>DISCUSSIONS</SectionTitle>
         <div className={styles.filters}>
           {totalEpisodes !== null && (
-            <select
-              className={styles.episodeFilter}
-              value={episodeFilter === undefined ? '' : String(episodeFilter)}
-              onChange={(e) => {
-                setEpisodeFilter(e.target.value === '' ? undefined : Number(e.target.value))
-              }}
-            >
-              {episodeOptions.map((opt) => (
-                <option key={opt.value === undefined ? 'all' : opt.value} value={opt.value ?? ''}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+            <div className={styles.filterWrapper}>
+              <FormSelect
+                value={episodeFilter === undefined ? '' : String(episodeFilter)}
+                onChange={(e) => {
+                  setEpisodeFilter(e.target.value === '' ? undefined : Number(e.target.value))
+                }}
+                options={episodeOptions}
+              />
+            </div>
           )}
           {canCreate && (
             <Button
