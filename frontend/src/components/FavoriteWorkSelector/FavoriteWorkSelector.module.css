@@ -15,7 +15,7 @@
   background: var(--color-bg-white);
   border-radius: 8px;
   padding: var(--spacing-lg);
-  max-width: 520px;
+  max-width: 700px;
   width: 90%;
   max-height: 80vh;
   display: flex;
@@ -103,7 +103,7 @@
 
 .workGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: var(--spacing-sm);
   overflow-y: auto;
   flex: 1;
