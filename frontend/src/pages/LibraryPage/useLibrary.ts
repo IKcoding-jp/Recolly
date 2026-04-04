@@ -171,6 +171,7 @@ export function useLibrary() {
   return {
     records: state.records,
     totalPages: state.meta?.total_pages ?? 1,
+    totalCount: state.meta?.total_count ?? 0,
     isLoading: state.isLoading,
     error: state.error,
     status,

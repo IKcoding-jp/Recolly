@@ -1,0 +1,81 @@
+/* frontend/src/components/RecordCompactItem/RecordCompactItem.module.css */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--color-border-light);
+  text-decoration: none;
+  color: inherit;
+  transition: background-color var(--transition-fast);
+}
+
+.row:hover {
+  background-color: var(--color-bg);
+}
+
+.title {
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.star {
+  color: var(--color-star, #f59e0b);
+}
+
+.badge {
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.watching {
+  background-color: var(--color-anime);
+  color: var(--color-bg-white);
+}
+
+.completed {
+  background-color: var(--color-game);
+  color: var(--color-bg-white);
+}
+
+.on_hold {
+  background-color: var(--color-book);
+  color: var(--color-bg-white);
+}
+
+.dropped {
+  background-color: var(--color-error);
+  color: var(--color-bg-white);
+}
+
+.plan_to_watch {
+  background-color: var(--color-border-light);
+  color: var(--color-text);
+}
