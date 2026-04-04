@@ -43,40 +43,6 @@
   font-weight: var(--font-weight-bold);
 }
 
-.sortWrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.sortLabel {
-  font-family: var(--font-body);
-  font-size: 11px;
-  color: var(--color-text-muted);
-  letter-spacing: 0.3px;
-}
-
-.sortSelect {
-  font-family: var(--font-body);
-  font-size: var(--font-size-meta);
-  padding: 6px 12px;
-  border: var(--border-width) var(--border-style) var(--color-border-light);
-  background: var(--color-bg-white);
-  color: var(--color-text);
-  cursor: pointer;
-  min-height: 36px;
-  max-width: 200px;
-}
-
-.sortSelect:hover {
-  border-color: var(--color-border);
-}
-
-.sortSelect:focus {
-  outline: 2px solid var(--color-text);
-  outline-offset: 1px;
-}
-
 .grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -180,10 +146,5 @@
     overflow-x: auto;
     flex-wrap: nowrap;
     -webkit-overflow-scrolling: touch;
-  }
-
-  .sortSelect {
-    max-width: 100%;
-    width: 100%;
   }
 }

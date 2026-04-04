@@ -3,6 +3,7 @@ import { useUserRecords } from '../../hooks/useUserRecords'
 import { getStatusLabel } from '../../lib/mediaTypeUtils'
 import type { MediaType } from '../../lib/types'
 import { GENRE_FILTERS } from '../../pages/SearchPage/genreFilters'
+import { FormSelect } from '../ui/FormSelect/FormSelect'
 import { Pagination } from '../ui/Pagination/Pagination'
 import { SectionTitle } from '../ui/SectionTitle/SectionTitle'
 import styles from './PublicLibrary.module.css'
@@ -45,23 +46,13 @@ export function PublicLibrary({ userId }: PublicLibraryProps) {
             </button>
           ))}
         </div>
-        <div className={styles.sortWrapper}>
-          <label htmlFor="library-sort" className={styles.sortLabel}>
-            並び替え
-          </label>
-          <select
-            id="library-sort"
-            className={styles.sortSelect}
-            value={sort}
-            onChange={handleSortChange}
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <FormSelect
+          label="並び替え"
+          id="library-sort"
+          value={sort}
+          onChange={handleSortChange}
+          options={SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+        />
       </div>
 
       {isLoading && <div className={styles.loading}>読み込み中...</div>}
