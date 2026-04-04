@@ -3,6 +3,9 @@ import type { FormEvent } from 'react'
 import type { MediaType } from '../../lib/types'
 import { ImageUploader } from '../ImageUploader'
 import type { UploadResult } from '../ImageUploader'
+import { FormInput } from '../ui/FormInput/FormInput'
+import { FormSelect } from '../ui/FormSelect/FormSelect'
+import { FormTextarea } from '../ui/FormTextarea/FormTextarea'
 import { Button } from '../ui/Button/Button'
 import styles from './ManualWorkForm.module.css'
 
@@ -56,45 +59,33 @@ export function ManualWorkForm({ onSubmit }: ManualWorkFormProps) {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
+      <FormInput
+        label="タイトル"
+        id="manual-title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+      />
+      <FormSelect
+        label="ジャンル"
+        id="manual-media-type"
+        value={mediaType}
+        onChange={(e) => setMediaType(e.target.value as MediaType)}
+        options={MEDIA_TYPE_OPTIONS}
+      />
       <div className={styles.field}>
-        <label htmlFor="manual-title">タイトル</label>
-        <input
-          id="manual-title"
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-      </div>
-      <div className={styles.field}>
-        <label htmlFor="manual-media-type">ジャンル</label>
-        <select
-          id="manual-media-type"
-          value={mediaType}
-          onChange={(e) => setMediaType(e.target.value as MediaType)}
-        >
-          {MEDIA_TYPE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className={styles.field}>
-        <label>カバー画像（任意）</label>
+        <label className={styles.imageLabel}>カバー画像（任意）</label>
         <ImageUploader
           onUploadComplete={(result) => setImageData(result)}
           onRemove={() => setImageData(undefined)}
         />
       </div>
-      <div className={styles.field}>
-        <label htmlFor="manual-description">説明（任意）</label>
-        <textarea
-          id="manual-description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={3}
-        />
-      </div>
+      <FormTextarea
+        label="説明（任意）"
+        id="manual-description"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        rows={3}
+      />
       {error && <p className={styles.error}>{error}</p>}
       <Button variant="secondary" type="submit" disabled={isSubmitting}>
         {isSubmitting ? '登録中...' : '登録する'}
