@@ -6,7 +6,7 @@ import { tagsApi } from '../../lib/tagsApi'
 import type { SortOption } from '../../components/SortSelector/sortOptions'
 
 const DEFAULT_SORT: SortOption = 'updated_at'
-const PER_PAGE = 20
+const DEFAULT_PER_PAGE = 20
 
 type LibraryState = {
   records: UserRecord[]
@@ -15,7 +15,7 @@ type LibraryState = {
   error: string | null
 }
 
-export function useLibrary() {
+export function useLibrary(perPage: number = DEFAULT_PER_PAGE) {
   const [searchParams, setSearchParams] = useSearchParams()
   const [allTags, setAllTags] = useState<Tag[]>([])
   const [state, setState] = useState<LibraryState>({
@@ -81,7 +81,7 @@ export function useLibrary() {
           mediaType: mediaType ?? undefined,
           sort,
           page,
-          perPage: PER_PAGE,
+          perPage,
           tags: selectedTagsKey ? selectedTagsKey.split(',') : undefined,
         })
         if (!cancelled) {
@@ -103,7 +103,7 @@ export function useLibrary() {
     return () => {
       cancelled = true
     }
-  }, [status, mediaType, sort, page, rawStatus, selectedTagsKey])
+  }, [status, mediaType, sort, page, perPage, rawStatus, selectedTagsKey])
 
   const updateParams = useCallback(
     (updates: Record<string, string | null>) => {

@@ -17,6 +17,9 @@ import styles from './LibraryPage.module.css'
 
 export function LibraryPage() {
   const navigate = useNavigate()
+  const { layout, setLayout } = useLayoutPreference()
+  const perPage = layout === 'card' ? 24 : 20
+
   const {
     records,
     totalPages,
@@ -34,9 +37,7 @@ export function LibraryPage() {
     setSort,
     setPage,
     setTags,
-  } = useLibrary()
-
-  const { layout, setLayout } = useLayoutPreference()
+  } = useLibrary(perPage)
 
   const handleTagToggle = (tagName: string) => {
     const next = selectedTags.includes(tagName)
