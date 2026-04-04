@@ -76,6 +76,7 @@ export function DiscussionSection({ workId, totalEpisodes, hasRecord }: Props) {
           {totalEpisodes !== null && (
             <div className={styles.filterWrapper}>
               <FormSelect
+                size="sm"
                 value={episodeFilter === undefined ? '' : String(episodeFilter)}
                 onChange={(e) => {
                   setEpisodeFilter(e.target.value === '' ? undefined : Number(e.target.value))

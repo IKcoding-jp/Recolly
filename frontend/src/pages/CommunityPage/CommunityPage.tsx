@@ -51,6 +51,7 @@ export function CommunityPage() {
           ))}
         </div>
         <FormSelect
+          size="sm"
           label="並び替え"
           id="sort-select"
           value={sort}

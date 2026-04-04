@@ -13,7 +13,8 @@ type FormSelectProps = {
   options: SelectOption[]
   error?: string
   className?: string
-} & Omit<SelectHTMLAttributes<HTMLSelectElement>, 'className' | 'value' | 'onChange'>
+  size?: 'sm' | 'md'
+} & Omit<SelectHTMLAttributes<HTMLSelectElement>, 'className' | 'value' | 'onChange' | 'size'>
 
 export function FormSelect({
   label,
@@ -22,18 +23,26 @@ export function FormSelect({
   options,
   error,
   className,
+  size = 'md',
   id,
   ...rest
 }: FormSelectProps) {
   const selectId = id ?? label?.toLowerCase().replace(/\s+/g, '-')
-  const selectClasses = [styles.select, error ? styles.selectError : '', className]
+  const fieldClasses = [styles.field, size === 'sm' ? styles.fieldSm : ''].filter(Boolean).join(' ')
+  const labelClasses = [styles.label, size === 'sm' ? styles.labelSm : ''].filter(Boolean).join(' ')
+  const selectClasses = [
+    styles.select,
+    size === 'sm' ? styles.selectSm : '',
+    error ? styles.selectError : '',
+    className,
+  ]
     .filter(Boolean)
     .join(' ')
 
   return (
-    <div className={styles.field}>
+    <div className={fieldClasses}>
       {label && (
-        <label htmlFor={selectId} className={styles.label}>
+        <label htmlFor={selectId} className={labelClasses}>
           {label}
         </label>
       )}

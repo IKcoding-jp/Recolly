@@ -53,4 +53,12 @@ describe('FormSelect', () => {
     render(<FormSelect value="all" onChange={() => {}} options={OPTIONS} />)
     expect(screen.getByRole('combobox')).toBeInTheDocument()
   })
+
+  it('size="sm"でコンパクトCSSクラスが適用される', () => {
+    render(
+      <FormSelect label="フィルター" value="all" onChange={() => {}} options={OPTIONS} size="sm" />,
+    )
+    const select = screen.getByRole('combobox')
+    expect(select.className).toContain('Sm')
+  })
 })

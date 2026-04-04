@@ -75,6 +75,7 @@ export function LibraryPage() {
 
       <div className={styles.filters}>
         <FormSelect
+          size="sm"
           label="ステータス"
           id="status-filter"
           value={status ?? 'all'}
@@ -83,6 +84,7 @@ export function LibraryPage() {
         />
 
         <FormSelect
+          size="sm"
           label="ジャンル"
           id="media-type-filter"
           value={mediaType ?? 'all'}
@@ -91,6 +93,7 @@ export function LibraryPage() {
         />
 
         <FormSelect
+          size="sm"
           label="並び替え"
           id="sort-filter"
           value={sort}

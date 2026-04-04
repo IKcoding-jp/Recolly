@@ -38,3 +38,20 @@
   font-family: var(--font-body);
   font-size: var(--font-size-meta);
 }
+
+/* コンパクトサイズ（フィルター用） */
+.fieldSm {
+  gap: 2px;
+}
+
+.labelSm {
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-text-muted);
+  letter-spacing: 0.03em;
+}
+
+.selectSm {
+  padding: 6px 2px;
+  font-size: var(--font-size-label);
+}

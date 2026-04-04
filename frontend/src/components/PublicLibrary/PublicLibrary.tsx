@@ -47,6 +47,7 @@ export function PublicLibrary({ userId }: PublicLibraryProps) {
           ))}
         </div>
         <FormSelect
+          size="sm"
           label="並び替え"
           id="library-sort"
           value={sort}
