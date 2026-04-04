@@ -25,7 +25,7 @@ export function StatusSelector({ value, onChange, mediaType }: StatusSelectorPro
           <button
             key={status}
             type="button"
-            className={`${styles.pill} ${value === status ? styles.active : ''}`}
+            className={`${styles.tab} ${value === status ? styles.active : ''}`}
             onClick={() => onChange(status)}
             aria-label={label}
           >

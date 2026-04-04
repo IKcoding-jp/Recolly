@@ -18,11 +18,12 @@
 }
 
 .filterButton {
-  padding: var(--spacing-sm) var(--spacing-md);
-  min-height: 44px;
+  padding: 8px 12px;
+  min-height: 36px;
   display: inline-flex;
   align-items: center;
-  border: var(--border-width) var(--border-style) var(--color-border-light);
+  border: none;
+  border-bottom: 2px solid transparent;
   background: none;
   font-family: var(--font-body);
   font-size: var(--font-size-meta);
@@ -32,14 +33,13 @@
 }
 
 .filterButton:hover {
-  border-color: var(--color-text);
   color: var(--color-text);
 }
 
 .filterActive {
-  border-color: var(--color-text);
   color: var(--color-text);
   font-weight: var(--font-weight-bold);
+  border-bottom-color: var(--color-text);
 }
 
 .list {
