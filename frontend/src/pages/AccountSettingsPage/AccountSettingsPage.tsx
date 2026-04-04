@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import { Button } from '../../components/ui/Button/Button'
 import { csrfApi } from '../../lib/api'
+import { FormInput } from '../../components/ui/FormInput/FormInput'
 import { useAccountSettings } from './useAccountSettings'
 import styles from './AccountSettingsPage.module.css'
 
@@ -111,32 +112,26 @@ export function AccountSettingsPage() {
       <div className={styles.section}>
         <SectionTitle>{user.has_password ? 'パスワードを変更' : 'パスワードを設定'}</SectionTitle>
         <form className={styles.form} onSubmit={handlePasswordSubmit}>
-          <div className={styles.field}>
-            <label htmlFor="password">
-              {user.has_password ? '新しいパスワード' : 'パスワード'}
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              autoComplete="new-password"
-            />
-          </div>
-          <div className={styles.field}>
-            <label htmlFor="passwordConfirmation">パスワード（確認）</label>
-            <input
-              id="passwordConfirmation"
-              type="password"
-              value={passwordConfirmation}
-              onChange={(e) => setPasswordConfirmation(e.target.value)}
-              required
-              minLength={6}
-              autoComplete="new-password"
-            />
-          </div>
+          <FormInput
+            label={user.has_password ? '新しいパスワード' : 'パスワード'}
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+            autoComplete="new-password"
+          />
+          <FormInput
+            label="パスワード（確認）"
+            id="passwordConfirmation"
+            type="password"
+            value={passwordConfirmation}
+            onChange={(e) => setPasswordConfirmation(e.target.value)}
+            required
+            minLength={6}
+            autoComplete="new-password"
+          />
           {passwordError && <p className={styles.error}>{passwordError}</p>}
           {passwordSuccess && <p className={styles.success}>{passwordSuccess}</p>}
           <Button variant="primary" type="submit" disabled={isSubmitting}>

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
+import { FormSelect } from '../../components/ui/FormSelect/FormSelect'
 import { getStatusOptions } from '../../components/StatusFilter/statusOptions'
 import { MEDIA_TYPE_OPTIONS } from '../../components/MediaTypeFilter/mediaTypeOptions'
 import { SORT_OPTIONS } from '../../components/SortSelector/sortOptions'
@@ -73,59 +74,32 @@ export function LibraryPage() {
       <SectionTitle>マイライブラリ</SectionTitle>
 
       <div className={styles.filters}>
-        <div className={styles.filterItem}>
-          <label htmlFor="status-filter" className={styles.filterLabel}>
-            ステータス
-          </label>
-          <select
-            id="status-filter"
-            className={styles.filterSelect}
-            value={status ?? 'all'}
-            onChange={handleStatusChange}
-          >
-            {statusOptions.map((option) => (
-              <option key={option.value ?? 'all'} value={option.value ?? 'all'}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <FormSelect
+          size="sm"
+          label="ステータス"
+          id="status-filter"
+          value={status ?? 'all'}
+          onChange={handleStatusChange}
+          options={statusOptions.map((o) => ({ value: o.value ?? 'all', label: o.label }))}
+        />
 
-        <div className={styles.filterItem}>
-          <label htmlFor="media-type-filter" className={styles.filterLabel}>
-            ジャンル
-          </label>
-          <select
-            id="media-type-filter"
-            className={styles.filterSelect}
-            value={mediaType ?? 'all'}
-            onChange={handleMediaTypeChange}
-          >
-            {MEDIA_TYPE_OPTIONS.map((option) => (
-              <option key={option.value ?? 'all'} value={option.value ?? 'all'}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <FormSelect
+          size="sm"
+          label="ジャンル"
+          id="media-type-filter"
+          value={mediaType ?? 'all'}
+          onChange={handleMediaTypeChange}
+          options={MEDIA_TYPE_OPTIONS.map((o) => ({ value: o.value ?? 'all', label: o.label }))}
+        />
 
-        <div className={styles.filterItem}>
-          <label htmlFor="sort-filter" className={styles.filterLabel}>
-            並び替え
-          </label>
-          <select
-            id="sort-filter"
-            className={styles.filterSelect}
-            value={sort}
-            onChange={handleSortChange}
-          >
-            {SORT_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <FormSelect
+          size="sm"
+          label="並び替え"
+          id="sort-filter"
+          value={sort}
+          onChange={handleSortChange}
+          options={SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+        />
       </div>
 
       {allTags.length > 0 && (

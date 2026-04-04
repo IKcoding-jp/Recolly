@@ -7,7 +7,7 @@ import {
   UNIT_LABELS,
 } from '../../lib/mediaTypeUtils'
 import { StatusSelector } from '../../components/ui/StatusSelector/StatusSelector'
-import { RatingInput } from '../../components/ui/RatingInput/RatingInput'
+import { RatingSlider } from '../../components/ui/RatingSlider/RatingSlider'
 import { ProgressControl } from '../../components/ui/ProgressControl/ProgressControl'
 import { RewatchControl } from '../../components/RewatchControl/RewatchControl'
 import { ReviewSection } from '../../components/ReviewSection/ReviewSection'
@@ -104,7 +104,10 @@ export function WorkDetailPage() {
 
             <div className={styles.section}>
               <div className={styles.label}>評価</div>
-              <RatingInput value={record.rating} onChange={handleRatingChange} />
+              <RatingSlider
+                value={record.rating ?? 0}
+                onChange={(v) => handleRatingChange(v === 0 ? null : v)}
+              />
             </div>
 
             {hasEpisodes(work.media_type) && (

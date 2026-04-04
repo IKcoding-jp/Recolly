@@ -37,9 +37,9 @@ describe('RecordModal', () => {
     expect(screen.getByRole('button', { name: '読書予定' })).toBeInTheDocument()
   })
 
-  it('評価入力が表示される', () => {
+  it('評価スライダーが表示される', () => {
     render(<RecordModal {...defaultProps} />)
-    expect(screen.getByRole('button', { name: '1' })).toBeInTheDocument()
+    expect(screen.getByRole('slider')).toBeInTheDocument()
   })
 
   it('記録するボタンでonConfirmが呼ばれる', async () => {

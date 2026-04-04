@@ -10,40 +10,6 @@
   margin-bottom: var(--spacing-md);
 }
 
-.filterItem {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.filterLabel {
-  font-family: var(--font-body);
-  font-size: 11px;
-  color: var(--color-text-muted);
-  letter-spacing: 0.3px;
-}
-
-.filterSelect {
-  font-family: var(--font-body);
-  font-size: var(--font-size-meta);
-  padding: 6px 12px;
-  border: var(--border-width) var(--border-style) var(--color-border-light);
-  background: var(--color-bg-white);
-  color: var(--color-text);
-  cursor: pointer;
-  min-height: 36px;
-}
-
-.filterSelect:hover {
-  border-color: var(--color-border);
-}
-
-.filterSelect:focus {
-  outline: 2px solid var(--color-text);
-  outline-offset: 1px;
-}
-
 .list {
   display: flex;
   flex-direction: column;
@@ -119,8 +85,9 @@
   font-family: var(--font-body);
   font-size: var(--font-size-meta);
   padding: var(--spacing-xs) var(--spacing-sm);
-  border: var(--border-width-thin) solid var(--color-border-light);
-  border-radius: 999px;
+  border: none;
+  border-bottom: 1px solid var(--color-border-light);
+  border-radius: 0;
   background: none;
   color: var(--color-text-muted);
   cursor: pointer;
@@ -128,18 +95,15 @@
 }
 
 .tagChip:hover {
-  border-color: var(--color-border);
   color: var(--color-text);
+  border-bottom-color: var(--color-text);
 }
 
 .tagChipSelected {
-  background: var(--color-text);
-  color: var(--color-bg-white);
-  border-color: var(--color-text);
-}
-
-.tagChipSelected:hover {
-  color: var(--color-bg-white);
+  color: var(--color-text);
+  font-weight: 600;
+  border-bottom-color: var(--color-text);
+  background: none;
 }
 
 /* カード表示時のページ幅拡大 */

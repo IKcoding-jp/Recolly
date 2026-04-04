@@ -1,6 +1,7 @@
 import { useDiscussions } from '../../hooks/useDiscussions'
 import type { DiscussionSort } from '../../hooks/useDiscussions'
 import { DiscussionCard } from '../../components/DiscussionCard/DiscussionCard'
+import { FormSelect } from '../../components/ui/FormSelect/FormSelect'
 import { GENRE_FILTERS } from '../SearchPage/genreFilters'
 import type { MediaType } from '../../lib/types'
 import { Pagination } from '../../components/ui/Pagination/Pagination'
@@ -49,23 +50,14 @@ export function CommunityPage() {
             </button>
           ))}
         </div>
-        <div className={styles.sortWrapper}>
-          <label htmlFor="sort-select" className={styles.sortLabel}>
-            並び替え
-          </label>
-          <select
-            id="sort-select"
-            className={styles.sortSelect}
-            value={sort}
-            onChange={handleSortChange}
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <FormSelect
+          size="sm"
+          label="並び替え"
+          id="sort-select"
+          value={sort}
+          onChange={handleSortChange}
+          options={SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+        />
       </div>
 
       {isLoading && <div className={styles.loading}>読み込み中...</div>}

@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useTags } from '../../hooks/useTags'
 import { Button } from '../ui/Button/Button'
+import { FormInput } from '../ui/FormInput/FormInput'
 import type { Tag } from '../../lib/types'
 import styles from './TagSection.module.css'
 
@@ -92,18 +93,19 @@ export function TagSection({ recordId, initialTags }: TagSectionProps) {
       )}
 
       <div className={styles.form}>
-        <input
-          className={styles.input}
-          type="text"
-          value={inputValue}
-          onChange={(e) => {
-            setInputValue(e.target.value)
-            setShowSuggestions(true)
-          }}
-          onFocus={() => setShowSuggestions(true)}
-          onKeyDown={handleKeyDown}
-          placeholder="タグを追加..."
-        />
+        <div className={styles.inputWrapper}>
+          <FormInput
+            label="タグ"
+            value={inputValue}
+            onChange={(e) => {
+              setInputValue(e.target.value)
+              setShowSuggestions(true)
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            onKeyDown={handleKeyDown}
+            placeholder="タグを追加..."
+          />
+        </div>
         <Button
           variant="secondary"
           size="sm"

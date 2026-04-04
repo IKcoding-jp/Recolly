@@ -5,13 +5,14 @@ import { worksApi } from '../../lib/worksApi'
 import { recordsApi } from '../../lib/recordsApi'
 import { imagesApi } from '../../lib/imagesApi'
 import { ApiError } from '../../lib/api'
+import { FormInput } from '../../components/ui/FormInput/FormInput'
 import { WorkCard } from '../../components/WorkCard/WorkCard'
 import { SearchSkeleton } from '../../components/SearchSkeleton/SearchSkeleton'
 import { SearchProgress } from '../../components/SearchProgress/SearchProgress'
 import { ManualWorkForm } from '../../components/ManualWorkForm/ManualWorkForm'
 import type { UploadResult } from '../../components/ImageUploader'
 import { RecordModal } from '../../components/RecordModal/RecordModal'
-import { Typography } from '../../components/ui/Typography/Typography'
+import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import { Button } from '../../components/ui/Button/Button'
 import { getGenreLabel } from '../../lib/mediaTypeUtils'
 import { GenreDropdown } from './GenreDropdown'
@@ -157,16 +158,19 @@ export function SearchPage() {
   return (
     <div className={styles.page}>
       <div className={styles.container}>
-        <Typography variant="h2">作品検索</Typography>
+        <SectionTitle>作品検索</SectionTitle>
 
         <form className={styles.searchForm} onSubmit={handleSearch}>
-          <input
-            className={styles.searchInput}
-            type="text"
-            placeholder="作品を検索..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+          <div className={styles.searchInputWrapper}>
+            <FormInput
+              label="検索"
+              id="search"
+              type="text"
+              placeholder="作品を検索..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
           <Button variant="primary" type="submit" disabled={isSearching}>
             {isSearching ? '検索中...' : '検索'}
           </Button>

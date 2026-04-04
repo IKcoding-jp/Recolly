@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { Button } from '../ui/Button/Button'
+import { FormTextarea } from '../ui/FormTextarea/FormTextarea'
 import styles from './ReviewSection.module.css'
 
 type ReviewSectionProps = {
@@ -25,8 +26,7 @@ export function ReviewSection({ reviewText, onSave }: ReviewSectionProps) {
 
   return (
     <div className={styles.container}>
-      <textarea
-        className={styles.textarea}
+      <FormTextarea
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder="作品の感想を書く..."

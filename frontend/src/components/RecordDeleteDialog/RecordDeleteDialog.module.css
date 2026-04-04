@@ -13,7 +13,7 @@
 
 .dialog {
   background: var(--color-bg-white);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: var(--spacing-xl);
   max-width: 400px;
   width: 90%;

@@ -7,6 +7,7 @@ import { Typography } from '../../components/ui/Typography/Typography'
 import { Button } from '../../components/ui/Button/Button'
 import { Divider } from '../../components/ui/Divider/Divider'
 import { OAuthButtons } from '../../components/OAuthButtons/OAuthButtons'
+import { FormInput } from '../../components/ui/FormInput/FormInput'
 import styles from '../../styles/authForm.module.css'
 
 export function LoginPage() {
@@ -53,28 +54,24 @@ export function LoginPage() {
         <Typography variant="h2">ログイン</Typography>
         <Divider />
         <form className={styles.form} onSubmit={handleSubmit}>
-          <div className={styles.field}>
-            <label htmlFor="email">メールアドレス</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-          </div>
-          <div className={styles.field}>
-            <label htmlFor="password">パスワード</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-            />
-          </div>
+          <FormInput
+            label="メールアドレス"
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+          />
+          <FormInput
+            label="パスワード"
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="current-password"
+          />
           {error && <p className={styles.error}>{error}</p>}
           <Button variant="primary" type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'ログイン中...' : 'ログイン'}

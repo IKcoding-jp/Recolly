@@ -65,7 +65,7 @@
   font-size: var(--font-size-meta);
   font-weight: var(--font-weight-medium);
   padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   white-space: nowrap;
 }
 
@@ -108,7 +108,7 @@
   font-size: var(--font-size-meta);
   padding: 1px var(--spacing-xs);
   border: var(--border-width-thin) solid var(--color-border-light);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   color: var(--color-text-muted);
   line-height: 1.4;
 }
@@ -151,7 +151,7 @@
   flex: 1;
   height: 6px;
   background-color: var(--color-border-light);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   max-width: 120px;
 }
@@ -159,7 +159,7 @@
 .progressFill {
   height: 100%;
   background-color: var(--color-anime);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   transition: width var(--transition-normal);
 }
 

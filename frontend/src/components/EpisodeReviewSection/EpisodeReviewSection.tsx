@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useEpisodeReviews } from '../../hooks/useEpisodeReviews'
 import { Button } from '../ui/Button/Button'
+import { FormTextarea } from '../ui/FormTextarea/FormTextarea'
 import { EpisodeReviewCard } from './EpisodeReviewCard'
 import type { MediaType } from '../../lib/types'
 import { UNIT_LABELS } from '../../lib/mediaTypeUtils'
@@ -60,8 +61,7 @@ export function EpisodeReviewSection({
           />
           <span className={styles.episodeLabel}>{unit}</span>
         </div>
-        <textarea
-          className={styles.textarea}
+        <FormTextarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder={`この${unit}の感想を書く...`}

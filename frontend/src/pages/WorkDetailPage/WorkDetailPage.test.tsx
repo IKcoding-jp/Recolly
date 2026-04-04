@@ -86,12 +86,14 @@ describe('WorkDetailPage', () => {
     })
   })
 
-  it('評価ボタンがアクティブ状態で表示される', async () => {
+  it('評価スライダーに現在の値が表示される', async () => {
     renderWithRouter('1')
     await waitFor(() => {
-      const button7 = screen.getByRole('button', { name: '7' })
-      expect(button7.className).toContain('active')
+      const slider = screen.getByRole('slider')
+      expect(slider).toHaveAttribute('value', '7')
     })
+    // スコア表示も確認
+    expect(screen.getByText('7')).toBeInTheDocument()
   })
 
   it('進捗が表示される', async () => {

@@ -22,7 +22,7 @@
 .avatar {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   background: var(--color-bg);
   border: var(--border-width-thin) solid var(--color-border-light);
   display: flex;
@@ -90,7 +90,7 @@
   width: 100%;
   padding: var(--spacing-sm);
   border: var(--border-width-thin) solid var(--color-border-light);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-family: var(--font-body);
   font-size: var(--font-size-body);
   line-height: var(--line-height-normal);
@@ -113,7 +113,7 @@
 .cancelButton {
   padding: var(--spacing-xs) var(--spacing-md);
   border: var(--border-width-thin) solid var(--color-border-light);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: var(--color-bg-white);
   font-family: var(--font-body);
   font-size: var(--font-size-label);
@@ -129,7 +129,7 @@
 .saveButton {
   padding: var(--spacing-xs) var(--spacing-md);
   border: var(--border-width) solid var(--color-text);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: var(--color-text);
   font-family: var(--font-body);
   font-size: var(--font-size-label);
