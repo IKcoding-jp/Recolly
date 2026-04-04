@@ -12,7 +12,7 @@ import { SearchProgress } from '../../components/SearchProgress/SearchProgress'
 import { ManualWorkForm } from '../../components/ManualWorkForm/ManualWorkForm'
 import type { UploadResult } from '../../components/ImageUploader'
 import { RecordModal } from '../../components/RecordModal/RecordModal'
-import { Typography } from '../../components/ui/Typography/Typography'
+import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import { Button } from '../../components/ui/Button/Button'
 import { getGenreLabel } from '../../lib/mediaTypeUtils'
 import { GenreDropdown } from './GenreDropdown'
@@ -158,7 +158,7 @@ export function SearchPage() {
   return (
     <div className={styles.page}>
       <div className={styles.container}>
-        <Typography variant="h2">作品検索</Typography>
+        <SectionTitle>作品検索</SectionTitle>
 
         <form className={styles.searchForm} onSubmit={handleSearch}>
           <div className={styles.searchInputWrapper}>
