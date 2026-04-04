@@ -87,7 +87,7 @@ export function ManualWorkForm({ onSubmit }: ManualWorkFormProps) {
         rows={3}
       />
       {error && <p className={styles.error}>{error}</p>}
-      <Button variant="secondary" type="submit" disabled={isSubmitting}>
+      <Button variant="primary" type="submit" disabled={isSubmitting}>
         {isSubmitting ? '登録中...' : '登録する'}
       </Button>
     </form>
