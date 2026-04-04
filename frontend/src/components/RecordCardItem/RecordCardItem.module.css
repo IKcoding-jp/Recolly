@@ -4,6 +4,8 @@
   text-decoration: none;
   color: inherit;
   transition: opacity var(--transition-fast);
+  /* グリッド内で画像の元サイズに引きずられないようにする */
+  min-width: 0;
 }
 
 .card:hover {
