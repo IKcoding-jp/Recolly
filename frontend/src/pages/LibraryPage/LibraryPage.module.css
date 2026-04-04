@@ -86,7 +86,7 @@
   font-size: var(--font-size-meta);
   padding: var(--spacing-xs) var(--spacing-sm);
   border: var(--border-width-thin) solid var(--color-border-light);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: none;
   color: var(--color-text-muted);
   cursor: pointer;

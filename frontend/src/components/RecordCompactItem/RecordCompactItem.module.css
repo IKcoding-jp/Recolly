@@ -51,7 +51,7 @@
   font-size: var(--font-size-meta);
   font-weight: var(--font-weight-medium);
   padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   white-space: nowrap;
 }
 

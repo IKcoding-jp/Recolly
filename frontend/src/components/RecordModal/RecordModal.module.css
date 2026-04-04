@@ -13,7 +13,7 @@
 
 .modal {
   background: var(--color-bg-white);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 28px;
   max-width: 400px;
   width: 90%;
@@ -43,7 +43,7 @@
 
 .card {
   background: #f8f8f8;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 14px;
   margin-bottom: 12px;
 }

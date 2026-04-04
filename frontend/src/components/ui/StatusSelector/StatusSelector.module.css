@@ -10,7 +10,7 @@
   font-weight: var(--font-weight-medium);
   padding: var(--spacing-sm) var(--spacing-xs);
   border: var(--border-width) var(--border-style) var(--color-border-light);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--color-bg-white);
   color: var(--color-text-muted);
   cursor: pointer;

@@ -21,7 +21,7 @@
 
 .cover {
   width: 100%;
-  border-radius: 0;
+  border-radius: var(--radius-none);
   border: var(--border-width) var(--border-style) var(--color-border-light);
 }
 
@@ -92,7 +92,7 @@
   gap: var(--spacing-sm);
   background: #fef3ef;
   border: var(--border-width-thin) var(--border-style) var(--color-manga);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: var(--spacing-sm) var(--spacing-md);
   margin-top: var(--spacing-sm);
   font-size: var(--font-size-label);

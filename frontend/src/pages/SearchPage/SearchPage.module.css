@@ -101,7 +101,7 @@
 
 .manualCard {
   border: 1px dashed var(--color-border-light);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: var(--spacing-xl);
   text-align: center;
   display: flex;

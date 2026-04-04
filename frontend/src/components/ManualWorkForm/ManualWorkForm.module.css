@@ -25,7 +25,7 @@
 .field textarea {
   padding: var(--spacing-sm) var(--spacing-md);
   border: var(--border-width) var(--border-style) var(--color-text);
-  border-radius: 0;
+  border-radius: var(--radius-none);
   font-family: var(--font-body);
   font-size: var(--font-size-body);
   color: var(--color-text);
