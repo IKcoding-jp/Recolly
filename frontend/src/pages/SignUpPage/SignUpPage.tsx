@@ -7,6 +7,7 @@ import { Typography } from '../../components/ui/Typography/Typography'
 import { Button } from '../../components/ui/Button/Button'
 import { Divider } from '../../components/ui/Divider/Divider'
 import { OAuthButtons } from '../../components/OAuthButtons/OAuthButtons'
+import { FormInput } from '../../components/ui/FormInput/FormInput'
 import styles from '../../styles/authForm.module.css'
 
 export function SignUpPage() {
@@ -50,52 +51,44 @@ export function SignUpPage() {
         <Typography variant="h2">アカウント作成</Typography>
         <Divider />
         <form className={styles.form} onSubmit={handleSubmit}>
-          <div className={styles.field}>
-            <label htmlFor="username">ユーザー名</label>
-            <input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              autoComplete="username"
-            />
-          </div>
-          <div className={styles.field}>
-            <label htmlFor="email">メールアドレス</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-          </div>
-          <div className={styles.field}>
-            <label htmlFor="password">パスワード</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              autoComplete="new-password"
-            />
-          </div>
-          <div className={styles.field}>
-            <label htmlFor="passwordConfirmation">パスワード（確認）</label>
-            <input
-              id="passwordConfirmation"
-              type="password"
-              value={passwordConfirmation}
-              onChange={(e) => setPasswordConfirmation(e.target.value)}
-              required
-              minLength={6}
-              autoComplete="new-password"
-            />
-          </div>
+          <FormInput
+            label="ユーザー名"
+            id="username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            autoComplete="username"
+          />
+          <FormInput
+            label="メールアドレス"
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+          />
+          <FormInput
+            label="パスワード"
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+            autoComplete="new-password"
+          />
+          <FormInput
+            label="パスワード（確認）"
+            id="passwordConfirmation"
+            type="password"
+            value={passwordConfirmation}
+            onChange={(e) => setPasswordConfirmation(e.target.value)}
+            required
+            minLength={6}
+            autoComplete="new-password"
+          />
           {error && <p className={styles.error}>{error}</p>}
           <Button variant="primary" type="submit" disabled={isSubmitting}>
             {isSubmitting ? '登録中...' : 'アカウントを作成'}

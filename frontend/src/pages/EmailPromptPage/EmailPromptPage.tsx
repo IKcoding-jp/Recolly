@@ -6,6 +6,7 @@ import { accountApi, ApiError } from '../../lib/api'
 import { Typography } from '../../components/ui/Typography/Typography'
 import { Button } from '../../components/ui/Button/Button'
 import { Divider } from '../../components/ui/Divider/Divider'
+import { FormInput } from '../../components/ui/FormInput/FormInput'
 import styles from '../../styles/authForm.module.css'
 
 export function EmailPromptPage() {
@@ -45,17 +46,15 @@ export function EmailPromptPage() {
         <Typography variant="h2">メールアドレスを設定</Typography>
         <Divider />
         <form className={styles.form} onSubmit={handleSubmit}>
-          <div className={styles.field}>
-            <label htmlFor="email">メールアドレス</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-          </div>
+          <FormInput
+            label="メールアドレス"
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+          />
           {error && <p className={styles.error}>{error}</p>}
           <Button variant="primary" type="submit" disabled={isSubmitting}>
             {isSubmitting ? '設定中...' : '設定する'}
