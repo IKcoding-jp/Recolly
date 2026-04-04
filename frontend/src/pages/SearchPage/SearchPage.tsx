@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { SearchResult, MediaType, RecordStatus } from '../../lib/types'
 import { worksApi } from '../../lib/worksApi'
@@ -51,6 +51,16 @@ export function SearchPage() {
   // 手動登録で作成したWorkのID（Record作成時に使用）
   const [manualWorkId, setManualWorkId] = useState<number | null>(null)
 
+  // マウント時にユーザーの記録済み作品IDリストを取得
+  useEffect(() => {
+    recordsApi
+      .getRecordedExternalIds()
+      .then((data) => setRecordedIds(new Set(data.recorded_ids)))
+      .catch(() => {
+        // 取得失敗時はフォールバック（空のまま）
+      })
+  }, [])
+
   const handleSearch = async (e: FormEvent) => {
     e.preventDefault()
     if (!query.trim()) return
@@ -98,6 +108,12 @@ export function SearchPage() {
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message)
+        // 409 Conflict = 既に記録済み → UIを「記録済み」に更新
+        if (err.status === 409 && modalWork) {
+          const workKey = `${modalWork.external_api_source}:${modalWork.external_api_id}`
+          setRecordedIds((prev) => new Set(prev).add(workKey))
+          setModalWork(null)
+        }
       }
     } finally {
       setLoadingId(null)

@@ -63,10 +63,22 @@ RSpec.describe 'Api::V1::Records', type: :request do
         expect(work.metadata['status']).to eq('RELEASING')
       end
 
-      it '同じ作品を二重記録しようとすると422' do
+      it '同じ作品を二重記録しようとすると409と日本語エラーメッセージを返す' do
         Record.create!(user: user, work: existing_work)
         post '/api/v1/records', params: { record: { work_id: existing_work.id } }, as: :json
-        expect(response).to have_http_status(:unprocessable_content)
+        expect(response).to have_http_status(:conflict)
+        json = response.parsed_body
+        expect(json['error']).to eq('この作品はすでに記録されています')
+      end
+
+      it '検索結果から同じ外部API作品を二重記録しようとすると409を返す' do
+        work = Work.create!(title: '外部作品', media_type: 'anime',
+                            external_api_id: '12345', external_api_source: 'anilist')
+        Record.create!(user: user, work: work)
+        params = { record: { work_data: { title: '外部作品', media_type: 'anime',
+                                          external_api_id: '12345', external_api_source: 'anilist' } } }
+        post '/api/v1/records', params: params, as: :json
+        expect(response).to have_http_status(:conflict)
       end
 
       it 'work_id も work_data もない場合は422' do
@@ -394,6 +406,55 @@ RSpec.describe 'Api::V1::Records', type: :request do
       json = response.parsed_body
       expect(json['records'].length).to eq(1)
       expect(json['records'].first['id']).to eq(record1.id)
+    end
+  end
+
+  describe 'GET /api/v1/records/recorded_external_ids' do
+    context '認証済み' do
+      before { sign_in user }
+
+      it '記録済みの外部API IDリストを返す' do
+        work1 = Work.create!(title: '作品1', media_type: 'anime',
+                             external_api_id: '111', external_api_source: 'anilist')
+        work2 = Work.create!(title: '作品2', media_type: 'manga',
+                             external_api_id: '222', external_api_source: 'anilist')
+        Record.create!(user: user, work: work1)
+        Record.create!(user: user, work: work2)
+
+        get '/api/v1/records/recorded_external_ids'
+        expect(response).to have_http_status(:ok)
+        json = response.parsed_body
+        expect(json['recorded_ids']).to contain_exactly('anilist:111', 'anilist:222')
+      end
+
+      it '手動登録作品（external_api_id なし）は含まない' do
+        manual_work = Work.create!(title: '手動作品', media_type: 'anime')
+        Record.create!(user: user, work: manual_work)
+
+        get '/api/v1/records/recorded_external_ids'
+        expect(response).to have_http_status(:ok)
+        json = response.parsed_body
+        expect(json['recorded_ids']).to be_empty
+      end
+
+      it '他ユーザーの記録は含まない' do
+        other_user = User.create!(username: 'other', email: 'other@example.com', password: 'password123')
+        work = Work.create!(title: '他人の作品', media_type: 'anime',
+                            external_api_id: '999', external_api_source: 'anilist')
+        Record.create!(user: other_user, work: work)
+
+        get '/api/v1/records/recorded_external_ids'
+        expect(response).to have_http_status(:ok)
+        json = response.parsed_body
+        expect(json['recorded_ids']).to be_empty
+      end
+    end
+
+    context '未認証' do
+      it '401を返す' do
+        get '/api/v1/records/recorded_external_ids'
+        expect(response).to have_http_status(:unauthorized)
+      end
     end
   end
 end
