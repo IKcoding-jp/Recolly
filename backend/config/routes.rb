@@ -71,6 +71,9 @@ Rails.application.routes.draw do
 
       # 記録（ライブラリ追加）
       resources :records, only: %i[index show create update destroy] do
+        collection do
+          get :recorded_external_ids
+        end
         resources :episode_reviews, only: %i[index create update destroy]
         resources :tags, only: %i[create destroy], controller: 'record_tags'
       end

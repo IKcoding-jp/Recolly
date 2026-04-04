@@ -30,6 +30,8 @@ module Api
         work = find_or_create_work
         return render json: { error: 'work_id または work_data が必要です' }, status: :unprocessable_content unless work
 
+        return render json: { error: 'この作品はすでに記録されています' }, status: :conflict if current_user.records.exists?(work: work)
+
         record = current_user.records.new(work: work, **record_create_params)
 
         if record.save
@@ -46,6 +48,16 @@ module Api
         else
           render json: { errors: @record.errors.full_messages }, status: :unprocessable_content
         end
+      end
+
+      # GET /api/v1/records/recorded_external_ids
+      # 検索ページで記録済み作品を判定するためのエンドポイント
+      def recorded_external_ids
+        ids = current_user.records.joins(:work)
+                          .where.not(works: { external_api_id: nil })
+                          .pluck('works.external_api_source', 'works.external_api_id')
+                          .map { |source, id| "#{source}:#{id}" }
+        render json: { recorded_ids: ids }
       end
 
       # DELETE /api/v1/records/:id

@@ -15,6 +15,11 @@ beforeEach(() => {
     ok: true,
     json: () => Promise.resolve({ user: { id: 1, username: 'test', email: 'test@example.com' } }),
   })
+  // SearchPage マウント時の recorded_external_ids 取得
+  mockFetch.mockResolvedValueOnce({
+    ok: true,
+    json: () => Promise.resolve({ recorded_ids: [] }),
+  })
 })
 
 function renderSearchPage() {
@@ -281,8 +286,8 @@ describe('SearchPage', () => {
     await user.click(confirmButtons2[confirmButtons2.length - 1])
 
     // APIに送信されたデータを検証: 初期値（watching, ratingなし）で送信されているか
-    // mockFetch の呼び出し履歴: [0]=認証, [1]=検索, [2]=作品A記録, [3]=作品B記録
-    const workBCall = mockFetch.mock.calls[3]
+    // mockFetch の呼び出し履歴: [0]=認証, [1]=recorded_external_ids, [2]=検索, [3]=作品A記録, [4]=作品B記録
+    const workBCall = mockFetch.mock.calls[4]
     const workBBody = JSON.parse(workBCall[1].body as string)
     expect(workBBody.record.status).toBe('watching')
     expect(workBBody.record.rating).toBeNull()

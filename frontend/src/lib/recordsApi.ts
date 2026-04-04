@@ -73,6 +73,11 @@ export const recordsApi = {
     })
   },
 
+  // 記録済みの外部API IDリストを取得（検索ページの「記録済み」表示用）
+  getRecordedExternalIds(): Promise<{ recorded_ids: string[] }> {
+    return request<{ recorded_ids: string[] }>('/records/recorded_external_ids')
+  },
+
   update(id: number, params: RecordUpdateParams): Promise<RecordResponse> {
     return request<RecordResponse>(`/records/${id}`, {
       method: 'PATCH',
