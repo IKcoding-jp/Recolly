@@ -66,6 +66,12 @@
   --border-width-thin: 1px;
   --border-style: solid;
 
+  /* --- 角丸 --- */
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-full: 9999px;
+
   /* --- トランジション --- */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
