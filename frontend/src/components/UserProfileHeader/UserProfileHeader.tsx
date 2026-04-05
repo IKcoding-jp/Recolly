@@ -62,7 +62,7 @@ export function UserProfileHeader({ profile, isOwner, onProfileUpdate }: UserPro
       )
       await imagesApi.uploadToS3(presigned_url, file)
       await profileApi.update({ avatar_url: s3_key })
-      onProfileUpdate?.({ avatar_url: presigned_url })
+      onProfileUpdate?.({ avatar_url: URL.createObjectURL(file) })
     } catch {
       setAvatarError('アップロードに失敗しました')
     } finally {
@@ -97,7 +97,18 @@ export function UserProfileHeader({ profile, isOwner, onProfileUpdate }: UserPro
         )}
         {isOwner && !isUploadingAvatar && (
           <div className={styles.avatarOverlay}>
-            <span className={styles.cameraIcon}>📷</span>
+            <svg
+              className={styles.cameraIcon}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
           </div>
         )}
         {isUploadingAvatar && (
