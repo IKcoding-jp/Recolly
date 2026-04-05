@@ -20,6 +20,7 @@ import { AccountSettingsPage } from './pages/AccountSettingsPage/AccountSettings
 import { CommunityPage } from './pages/CommunityPage/CommunityPage'
 import { DiscussionDetailPage } from './pages/DiscussionDetailPage/DiscussionDetailPage'
 import { UserProfilePage } from './pages/UserProfilePage/UserProfilePage'
+import { RecommendationsPage } from './pages/RecommendationsPage/RecommendationsPage'
 
 // 認証済みならダッシュボードへ、未認証ならログインページへ
 function RootRedirect() {
@@ -143,6 +144,16 @@ function App() {
               <ProtectedRoute>
                 <AuthenticatedLayout>
                   <WorkDetailPage />
+                </AuthenticatedLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/recommendations"
+            element={
+              <ProtectedRoute>
+                <AuthenticatedLayout>
+                  <RecommendationsPage />
                 </AuthenticatedLayout>
               </ProtectedRoute>
             }
