@@ -98,8 +98,9 @@
 }
 
 .cameraIcon {
-  font-size: var(--font-size-h3);
-  filter: grayscale(1) brightness(10);
+  width: 24px;
+  height: 24px;
+  color: var(--color-bg-white);
 }
 
 .uploadingText {
