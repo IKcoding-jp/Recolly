@@ -97,9 +97,7 @@ export function RecommendationsPage() {
       <div className={styles.container}>
         <h1 className={styles.pageTitle}>おすすめ</h1>
         <div className={styles.progressCard}>
-          <div className={styles.progressTitle}>
-            あと{remaining}件記録するとAI分析が使えます
-          </div>
+          <div className={styles.progressTitle}>あと{remaining}件記録するとAI分析が使えます</div>
           <div className={styles.progressBarContainer}>
             <div className={styles.progressBarBg}>
               <div
@@ -189,9 +187,7 @@ export function RecommendationsPage() {
                   key={`${work.external_api_source}:${work.external_api_id}`}
                   work={work}
                   onRecord={handleOpenModal}
-                  isLoading={
-                    recordingId === `${work.external_api_source}:${work.external_api_id}`
-                  }
+                  isLoading={recordingId === `${work.external_api_source}:${work.external_api_id}`}
                 />
               ))}
             </div>
@@ -210,9 +206,7 @@ export function RecommendationsPage() {
                   key={`${work.external_api_source}:${work.external_api_id}`}
                   work={work}
                   onRecord={handleOpenModal}
-                  isLoading={
-                    recordingId === `${work.external_api_source}:${work.external_api_id}`
-                  }
+                  isLoading={recordingId === `${work.external_api_source}:${work.external_api_id}`}
                 />
               ))}
             </div>
@@ -222,9 +216,7 @@ export function RecommendationsPage() {
         {/* 記録モーダル */}
         <RecordModal
           key={
-            modalWork
-              ? `${modalWork.external_api_source}:${modalWork.external_api_id}`
-              : 'closed'
+            modalWork ? `${modalWork.external_api_source}:${modalWork.external_api_id}` : 'closed'
           }
           isOpen={modalWork !== null}
           title={modalWork?.title ?? ''}

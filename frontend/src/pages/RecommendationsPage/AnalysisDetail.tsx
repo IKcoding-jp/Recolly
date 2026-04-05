@@ -45,10 +45,7 @@ export function AnalysisDetail({ analysis }: AnalysisDetailProps) {
               <div key={score.label} className={styles.prefRow}>
                 <span className={styles.prefLabel}>{score.label}</span>
                 <div className={styles.prefBarBg}>
-                  <div
-                    className={styles.prefBar}
-                    style={{ width: `${score.score * 10}%` }}
-                  />
+                  <div className={styles.prefBar} style={{ width: `${score.score * 10}%` }} />
                 </div>
                 <span className={styles.prefScore}>{score.score}</span>
               </div>

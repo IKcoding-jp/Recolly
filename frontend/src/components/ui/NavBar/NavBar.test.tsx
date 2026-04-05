@@ -35,10 +35,12 @@ describe('NavBar', () => {
     expect(screen.getByRole('link', { name: 'コミュニティ' })).toHaveAttribute('href', '/community')
   })
 
-  it('未実装のナビ項目はリンクではなくグレーアウトで表示する', () => {
+  it('おすすめのナビ項目がリンクとして表示される', () => {
     renderNavBar()
-    expect(screen.getByText('おすすめ')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'おすすめ' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'おすすめ' })).toHaveAttribute(
+      'href',
+      '/recommendations',
+    )
   })
 
   it('ナビに「マイページ」リンクが表示されない', () => {

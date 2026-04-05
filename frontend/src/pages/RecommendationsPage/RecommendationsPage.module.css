@@ -231,12 +231,7 @@
   left: 0;
   width: 4px;
   height: 100%;
-  background: linear-gradient(
-    180deg,
-    var(--color-anime),
-    var(--color-movie),
-    var(--color-manga)
-  );
+  background: linear-gradient(180deg, var(--color-anime), var(--color-movie), var(--color-manga));
   border-radius: var(--radius-md) 0 0 var(--radius-md);
 }
 
@@ -347,12 +342,24 @@
   margin: 0 auto var(--spacing-sm);
 }
 
-.bganime { background: var(--color-anime); }
-.bgmovie { background: var(--color-movie); }
-.bgdrama { background: var(--color-drama); }
-.bgbook { background: var(--color-book); }
-.bgmanga { background: var(--color-manga); }
-.bggame { background: var(--color-game); }
+.bganime {
+  background: var(--color-anime);
+}
+.bgmovie {
+  background: var(--color-movie);
+}
+.bgdrama {
+  background: var(--color-drama);
+}
+.bgbook {
+  background: var(--color-book);
+}
+.bgmanga {
+  background: var(--color-manga);
+}
+.bggame {
+  background: var(--color-game);
+}
 
 .genreCount {
   font-family: var(--font-heading);
@@ -362,12 +369,24 @@
   margin-bottom: var(--spacing-xs);
 }
 
-.coloranime { color: var(--color-anime); }
-.colormovie { color: var(--color-movie); }
-.colordrama { color: var(--color-drama); }
-.colorbook { color: var(--color-book); }
-.colormanga { color: var(--color-manga); }
-.colorgame { color: var(--color-game); }
+.coloranime {
+  color: var(--color-anime);
+}
+.colormovie {
+  color: var(--color-movie);
+}
+.colordrama {
+  color: var(--color-drama);
+}
+.colorbook {
+  color: var(--color-book);
+}
+.colormanga {
+  color: var(--color-manga);
+}
+.colorgame {
+  color: var(--color-game);
+}
 
 .genreLabel {
   font-size: var(--font-size-meta);
@@ -532,12 +551,24 @@
   font-weight: var(--font-weight-medium);
 }
 
-.genreanime { background: var(--color-anime); }
-.genremovie { background: var(--color-movie); }
-.genredrama { background: var(--color-drama); }
-.genrebook { background: var(--color-book); }
-.genremanga { background: var(--color-manga); }
-.genregame { background: var(--color-game); }
+.genreanime {
+  background: var(--color-anime);
+}
+.genremovie {
+  background: var(--color-movie);
+}
+.genredrama {
+  background: var(--color-drama);
+}
+.genrebook {
+  background: var(--color-book);
+}
+.genremanga {
+  background: var(--color-manga);
+}
+.genregame {
+  background: var(--color-game);
+}
 
 /* おすすめの理由 */
 .recReason {

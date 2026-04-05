@@ -21,12 +21,7 @@ export function RecommendedWorkCard({ work, onRecord, isLoading }: RecommendedWo
         <div className={styles.recInfo}>
           <div className={styles.recTitleRow}>
             <span className={styles.recTitle}>{work.title}</span>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => onRecord(work)}
-              disabled={isLoading}
-            >
+            <Button variant="primary" size="sm" onClick={() => onRecord(work)} disabled={isLoading}>
               記録する
             </Button>
           </div>
