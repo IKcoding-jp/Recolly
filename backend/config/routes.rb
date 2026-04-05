@@ -81,6 +81,11 @@ Rails.application.routes.draw do
       # 統計（単一リソースのためIDなし）
       resource :statistics, only: [:show], controller: 'statistics'
 
+      # おすすめ（単一リソースのためIDなし）
+      resource :recommendations, only: [:show] do
+        post :refresh, on: :collection
+      end
+
       get "health", to: "health#show"
     end
   end
