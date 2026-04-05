@@ -22,6 +22,9 @@ gem 'omniauth-twitter2'
 gem 'faraday'
 gem 'faraday-retry'
 
+# Claude API連携（おすすめ機能の好み分析用）
+gem 'anthropic'
+
 # S3画像アップロード用
 gem 'aws-sdk-s3'
 

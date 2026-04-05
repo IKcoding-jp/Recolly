@@ -22,6 +22,14 @@ class PreferenceAnalyzer
     }
   end
 
+  def analyze
+    return nil if @records.count < MINIMUM_RECORDS
+
+    data = collect_data
+    response = call_claude_api(data)
+    parse_response(response, data)
+  end
+
   private
 
   def genre_stats
@@ -113,5 +121,32 @@ class PreferenceAnalyzer
       rating: record.rating,
       genres: record.work.metadata&.dig('genres') || []
     }
+  end
+
+  def call_claude_api(data)
+    client = Anthropic::Client.new(api_key: ENV.fetch('ANTHROPIC_API_KEY'))
+    prompt = PreferencePromptBuilder.new(data).build
+    client.messages(
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }]
+    )
+  end
+
+  def parse_response(response, data)
+    text = response.dig('content', 0, 'text')
+    parsed = JSON.parse(text)
+
+    {
+      summary: parsed['summary'],
+      preference_scores: parsed['preference_scores'],
+      search_keywords: parsed['search_keywords'],
+      reasons: parsed['reasons'],
+      genre_stats: data[:genre_stats],
+      top_tags: data[:tag_stats]
+    }
+  rescue JSON::ParserError => e
+    Rails.logger.error("[PreferenceAnalyzer] JSON解析エラー: #{e.message}")
+    nil
   end
 end
