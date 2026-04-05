@@ -126,7 +126,7 @@ class PreferenceAnalyzer
   def call_claude_api(data)
     client = Anthropic::Client.new(api_key: ENV.fetch('ANTHROPIC_API_KEY'))
     prompt = PreferencePromptBuilder.new(data).build
-    client.messages(
+    client.messages.create(
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1024,
       messages: [{ role: 'user', content: prompt }]
