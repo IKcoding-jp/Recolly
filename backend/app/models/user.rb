@@ -11,6 +11,7 @@ class User < ApplicationRecord
   has_many :discussions, dependent: :destroy
   has_many :comments, dependent: :destroy
   has_many :favorite_works, dependent: :destroy
+  has_one :recommendation, dependent: :destroy
 
   validates :username, presence: true, uniqueness: true,
                        length: { minimum: 2, maximum: 30 }
