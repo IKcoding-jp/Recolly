@@ -73,8 +73,10 @@ class PreferencePromptBuilder
   end
 
   def output_instructions
-    genre_list = @data[:genre_stats].map { |s| s[:media_type] }.join(', ')
+    "#{json_format_instruction}\n#{genre_distribution_rules}"
+  end
 
+  def json_format_instruction
     <<~INSTRUCTIONS
       以下をJSON形式で出力してください。
 
@@ -92,17 +94,23 @@ class PreferencePromptBuilder
           ]
         }
       }
+    INSTRUCTIONS
+  end
 
+  def genre_distribution_rules
+    genre_list = @data[:genre_stats].pluck(:media_type).join(', ')
+
+    <<~RULES
       重要なルール:
       - preference_scoresは5項目
       - search_keywordsのrecommendedは7件、challengeは3件
-      - queryは「具体的な作品タイトル」を1つだけ指定すること（ジャンル名や抽象的なキーワードではなく実在する作品名）
-      - reasonは各作品ごとに異なる内容にすること。ユーザーの具体的な作品名・評価を引用し、なぜこの作品が合うのかを説明する
+      - queryは「具体的な作品タイトル」を1つだけ指定すること（実在する作品名）
+      - reasonは各作品ごとに異なる内容にすること。ユーザーの具体的な作品名・評価を引用する
       - ユーザーの記録ジャンル: #{genre_list}
-      - recommendedの7件は、ユーザーが記録しているジャンル（#{genre_list}）に分散させること。同じジャンルばかりにしない
-      - anime/mangaの記録が多いユーザーにはanime/mangaを中心におすすめすること。実写映画ばかりにしない
+      - recommendedはジャンル（#{genre_list}）に分散させること。同じジャンルばかりにしない
+      - anime/mangaの記録が多いユーザーにはanime/mangaを中心におすすめすること
       - challengeの3件は、ユーザーの記録が少ないジャンルから選ぶこと
-      - JSONのみ出力し、```json```マーカーやそれ以外のテキストは含めないでください
-    INSTRUCTIONS
+      - JSONのみ出力し、それ以外のテキストは含めないでください
+    RULES
   end
 end

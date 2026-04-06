@@ -45,8 +45,9 @@ class PreferenceAnalyzer
   end
 
   def query_genre_stats
-    completed_case = "SUM(CASE WHEN records.status = #{Record.statuses[:completed]} THEN 1 ELSE 0 END)"
-    dropped_case = "SUM(CASE WHEN records.status = #{Record.statuses[:dropped]} THEN 1 ELSE 0 END)"
+    # Arel.sqlでリテラル値を明示し、Brakemanの誤検知を回避
+    completed_status = Record.statuses[:completed].to_i
+    dropped_status = Record.statuses[:dropped].to_i
 
     Work.joins(:records)
         .where(records: { user_id: @user.id })
@@ -55,8 +56,8 @@ class PreferenceAnalyzer
           'works.media_type',
           'COUNT(*) as count',
           'AVG(records.rating) as avg_rating',
-          "#{completed_case} as completed_count",
-          "#{dropped_case} as dropped_count"
+          Arel.sql("SUM(CASE WHEN records.status = #{completed_status} THEN 1 ELSE 0 END) as completed_count"),
+          Arel.sql("SUM(CASE WHEN records.status = #{dropped_status} THEN 1 ELSE 0 END) as dropped_count")
         )
   end
 
