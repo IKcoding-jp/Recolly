@@ -13,7 +13,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: '検索', path: '/search' },
   { label: 'ライブラリ', path: '/library' },
   { label: 'コミュニティ', path: '/community' },
-  { label: 'おすすめ', path: null },
+  { label: 'おすすめ', path: '/recommendations' },
 ]
 
 type NavBarProps = {

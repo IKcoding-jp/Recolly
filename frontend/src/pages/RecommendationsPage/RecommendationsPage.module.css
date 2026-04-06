@@ -1,0 +1,631 @@
+/* ページコンテナ */
+.container {
+  max-width: 800px;
+  margin: var(--spacing-xl) auto;
+  padding: 0 var(--spacing-xl);
+}
+
+.pageHeader {
+  margin-bottom: var(--spacing-lg);
+}
+
+.pageTitle {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin-bottom: var(--spacing-xs);
+}
+
+.pageSubtitle {
+  font-size: var(--font-size-body);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-normal);
+}
+
+/* ローディング・エラー */
+.loading {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-muted);
+}
+
+.errorCard {
+  text-align: center;
+  padding: var(--spacing-3xl) var(--spacing-xl);
+}
+
+.errorTitle {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-sm);
+}
+
+.errorDesc {
+  font-size: var(--font-size-body);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-normal);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* 空状態 */
+.emptyState {
+  text-align: center;
+  padding: var(--spacing-3xl) var(--spacing-xl);
+}
+
+.emptyTitle {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-sm);
+}
+
+.emptyDesc {
+  font-size: var(--font-size-body);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-normal);
+  margin-bottom: var(--spacing-lg);
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* プログレスバー（記録不足状態） */
+.progressCard {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.progressTitle {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-md);
+}
+
+.progressBarContainer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  max-width: 320px;
+  margin: 0 auto var(--spacing-xs);
+}
+
+.progressBarBg {
+  flex: 1;
+  height: 8px;
+  background: var(--color-border-light);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: var(--color-anime);
+  border-radius: var(--radius-sm);
+}
+
+.progressCount {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-anime);
+  white-space: nowrap;
+}
+
+.progressHint {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+/* 簡易ジャンル統計 */
+.simpleGenreRow {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.simpleGenre {
+  flex: 1;
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  text-align: center;
+}
+
+.simpleGenreNum {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-bold);
+}
+
+.simpleGenreLabel {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+/* ローディングオーバーレイ（更新中） */
+.loadingOverlay {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--color-border-light);
+  border-top-color: var(--color-anime);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingText {
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+}
+
+.loadingSub {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+  margin-top: var(--spacing-xs);
+}
+
+/* 更新バー */
+.updateBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+}
+
+.updateInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.updateDot {
+  width: 6px;
+  height: 6px;
+  background: var(--color-game);
+  border-radius: 50%;
+}
+
+/* サマリーカード */
+.summaryCard {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
+  position: relative;
+}
+
+.summaryCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--color-anime), var(--color-movie), var(--color-manga));
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+.summaryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-sm);
+}
+
+.summaryLabel {
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.aiBadge {
+  font-size: 0.6rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-movie);
+  background: rgba(94, 84, 142, 0.08);
+  padding: 2px var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  margin-left: var(--spacing-sm);
+}
+
+.summaryText {
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text);
+}
+
+/* アコーディオン展開ボタン */
+.expandToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  width: 100%;
+  padding: var(--spacing-sm);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+  background: none;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all var(--transition-fast);
+  margin-bottom: var(--spacing-xl);
+}
+
+.expandToggle:hover {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.arrow {
+  transition: transform 200ms ease;
+}
+
+.expandOpen .arrow {
+  transform: rotate(180deg);
+}
+
+/* 展開される詳細エリア */
+.detailInner {
+  margin-bottom: var(--spacing-xl);
+}
+
+.detailSection {
+  margin-bottom: var(--spacing-lg);
+}
+
+.detailSectionTitle {
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--color-border-light);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* ジャンル統計グリッド */
+.genreGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.genreCard {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md) var(--spacing-sm);
+  text-align: center;
+}
+
+.genreIndicator {
+  width: 20px;
+  height: 3px;
+  border-radius: 2px;
+  margin: 0 auto var(--spacing-sm);
+}
+
+.bganime {
+  background: var(--color-anime);
+}
+.bgmovie {
+  background: var(--color-movie);
+}
+.bgdrama {
+  background: var(--color-drama);
+}
+.bgbook {
+  background: var(--color-book);
+}
+.bgmanga {
+  background: var(--color-manga);
+}
+.bggame {
+  background: var(--color-game);
+}
+
+.genreCount {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  margin-bottom: var(--spacing-xs);
+}
+
+.coloranime {
+  color: var(--color-anime);
+}
+.colormovie {
+  color: var(--color-movie);
+}
+.colordrama {
+  color: var(--color-drama);
+}
+.colorbook {
+  color: var(--color-book);
+}
+.colormanga {
+  color: var(--color-manga);
+}
+.colorgame {
+  color: var(--color-game);
+}
+
+.genreLabel {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-xs);
+}
+
+.genreRating {
+  font-size: var(--font-size-meta);
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+}
+
+.star {
+  color: var(--color-book);
+}
+
+/* 傾向スコアバー */
+.prefBars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.prefRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.prefLabel {
+  width: 110px;
+  font-size: var(--font-size-meta);
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.prefBarBg {
+  flex: 1;
+  height: 6px;
+  background: var(--color-border-light);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.prefBar {
+  height: 100%;
+  background: var(--color-anime);
+  border-radius: 3px;
+}
+
+.prefScore {
+  width: 32px;
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-medium);
+  text-align: right;
+}
+
+/* タグ */
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.tag {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: 9999px;
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: var(--font-size-meta);
+  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.tagCount {
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-medium);
+}
+
+/* おすすめ作品リスト */
+.recList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.recItem {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  transition: box-shadow var(--transition-fast);
+}
+
+.recItem:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.recTop {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.recCover {
+  width: 60px;
+  height: 84px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.recCoverPlaceholder {
+  width: 60px;
+  height: 84px;
+  background: var(--color-border-light);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.recInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.recTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-xs);
+  gap: var(--spacing-md);
+}
+
+.recTitle {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-tight);
+}
+
+.recMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.genreBadge {
+  display: inline-block;
+  padding: 2px var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.65rem;
+  color: var(--color-bg-white);
+  font-weight: var(--font-weight-medium);
+}
+
+.genreanime {
+  background: var(--color-anime);
+}
+.genremovie {
+  background: var(--color-movie);
+}
+.genredrama {
+  background: var(--color-drama);
+}
+.genrebook {
+  background: var(--color-book);
+}
+.genremanga {
+  background: var(--color-manga);
+}
+.genregame {
+  background: var(--color-game);
+}
+
+/* おすすめの理由 */
+.recReason {
+  background: rgba(61, 90, 128, 0.03);
+  border: 1px solid rgba(61, 90, 128, 0.1);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+}
+
+.reasonLabel {
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.reasonText {
+  font-size: var(--font-size-meta);
+  color: var(--color-text);
+  line-height: var(--line-height-normal);
+}
+
+/* チャレンジセクション */
+.challengeTitle {
+  color: var(--color-game);
+}
+
+/* レスポンシブ */
+@media (max-width: 768px) {
+  .container {
+    max-width: 100%;
+    padding: 0 var(--spacing-md);
+    margin: var(--spacing-md) auto;
+  }
+
+  .genreGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .prefLabel {
+    width: 80px;
+    font-size: 0.7rem;
+  }
+
+  .recTop {
+    gap: var(--spacing-sm);
+  }
+
+  .recCover,
+  .recCoverPlaceholder {
+    width: 48px;
+    height: 67px;
+  }
+
+  .simpleGenreRow {
+    flex-wrap: wrap;
+  }
+}
