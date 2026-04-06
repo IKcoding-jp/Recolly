@@ -7,9 +7,15 @@ type RecommendedWorkCardProps = {
   work: RecommendedWork
   onRecord: (work: RecommendedWork) => void
   isLoading: boolean
+  isRecorded: boolean
 }
 
-export function RecommendedWorkCard({ work, onRecord, isLoading }: RecommendedWorkCardProps) {
+export function RecommendedWorkCard({
+  work,
+  onRecord,
+  isLoading,
+  isRecorded,
+}: RecommendedWorkCardProps) {
   return (
     <div className={styles.recItem}>
       <div className={styles.recTop}>
@@ -21,9 +27,18 @@ export function RecommendedWorkCard({ work, onRecord, isLoading }: RecommendedWo
         <div className={styles.recInfo}>
           <div className={styles.recTitleRow}>
             <span className={styles.recTitle}>{work.title}</span>
-            <Button variant="primary" size="sm" onClick={() => onRecord(work)} disabled={isLoading}>
-              記録する
-            </Button>
+            {isRecorded ? (
+              <span className={styles.recordedBadge}>記録済み</span>
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => onRecord(work)}
+                disabled={isLoading}
+              >
+                記録する
+              </Button>
+            )}
           </div>
           <div className={styles.recMeta}>
             <span className={`${styles.genreBadge} ${styles[`genre${work.media_type}`]}`}>

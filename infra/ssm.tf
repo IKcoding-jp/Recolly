@@ -79,6 +79,14 @@ resource "aws_ssm_parameter" "google_client_secret" {
   lifecycle { ignore_changes = [value] }
 }
 
+resource "aws_ssm_parameter" "anthropic_api_key" {
+  name  = "/${var.project_name}/${var.environment}/ANTHROPIC_API_KEY"
+  type  = "SecureString"
+  value = "placeholder"
+
+  lifecycle { ignore_changes = [value] }
+}
+
 resource "aws_ssm_parameter" "frontend_url" {
   name  = "/${var.project_name}/${var.environment}/FRONTEND_URL"
   type  = "String"

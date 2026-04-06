@@ -42,6 +42,7 @@ IGDB_CLIENT_SECRET=$(get_param "IGDB_CLIENT_SECRET")
 GOOGLE_CLIENT_ID=$(get_param "GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET=$(get_param "GOOGLE_CLIENT_SECRET")
 FRONTEND_URL=$(get_param "FRONTEND_URL")
+ANTHROPIC_API_KEY=$(get_param "ANTHROPIC_API_KEY")
 # SSMパラメータ未作成でもデプロイを止めない（puma.rbが未設定時はSolid Queueを起動しない）
 SOLID_QUEUE_IN_PUMA=$(get_param "SOLID_QUEUE_IN_PUMA" 2>/dev/null || echo "")
 # S3画像アップロード用（認証はEC2のIAMロールで行うため、アクセスキーは不要）
@@ -79,6 +80,7 @@ docker run -d \
   -e GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID" \
   -e GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
   -e FRONTEND_URL="$FRONTEND_URL" \
+  -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
   -e SOLID_QUEUE_IN_PUMA="$SOLID_QUEUE_IN_PUMA" \
   -e S3_BUCKET_NAME="$S3_BUCKET_NAME" \
   -e RAILS_LOG_TO_STDOUT=1 \
