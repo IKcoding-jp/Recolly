@@ -12,11 +12,11 @@ development:
     database: recolly_development
   cache:
     <<: *default
-    database: recolly_development
+    database: recolly_development_cache
     migrations_paths: db/cache_migrate
   queue:
     <<: *default
-    database: recolly_development
+    database: recolly_development_queue
     migrations_paths: db/queue_migrate
 
 test:
@@ -25,11 +25,11 @@ test:
     database: recolly_test
   cache:
     <<: *default
-    database: recolly_test
+    database: recolly_test_cache
     migrations_paths: db/cache_migrate
   queue:
     <<: *default
-    database: recolly_test
+    database: recolly_test_queue
     migrations_paths: db/queue_migrate
 
 production:
@@ -39,11 +39,11 @@ production:
     url: <%= ENV["DATABASE_URL"] %>
   cache:
     <<: *default
-    database: recolly_production
-    url: <%= ENV["DATABASE_URL"] %>
+    database: recolly_production_cache
+    url: <%= ENV.fetch("CACHE_DATABASE_URL", ENV["DATABASE_URL"]) %>
     migrations_paths: db/cache_migrate
   queue:
     <<: *default
-    database: recolly_production
-    url: <%= ENV["DATABASE_URL"] %>
+    database: recolly_production_queue
+    url: <%= ENV.fetch("QUEUE_DATABASE_URL", ENV["DATABASE_URL"]) %>
     migrations_paths: db/queue_migrate
