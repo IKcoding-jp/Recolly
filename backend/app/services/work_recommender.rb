@@ -46,7 +46,7 @@ class WorkRecommender
       title: work.title,
       media_type: work.media_type,
       description: work.description,
-      cover_url: work.cover_url,
+      cover_url: work.cover_image_url,
       reason: reason,
       external_api_id: work.external_api_id,
       external_api_source: work.external_api_source,

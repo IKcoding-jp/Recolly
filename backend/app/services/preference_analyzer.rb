@@ -128,15 +128,15 @@ class PreferenceAnalyzer
     prompt = PreferencePromptBuilder.new(data).build
     client.messages.create(
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
+      max_tokens: 4096,
       messages: [{ role: 'user', content: prompt }]
     )
   end
 
   def parse_response(response, data)
-    text = response.content[0].text
+    text = response.content[0].text.strip
     # LLMが```json...```で囲む場合があるので除去
-    text = text.gsub(/\A```json\s*/, '').gsub(/\s*```\z/, '')
+    text = text.sub(/\A```json\s*\n?/, '').sub(/\n?```\s*\z/, '')
     parsed = JSON.parse(text)
 
     {
