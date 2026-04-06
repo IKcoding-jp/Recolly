@@ -134,7 +134,9 @@ class PreferenceAnalyzer
   end
 
   def parse_response(response, data)
-    text = response.dig('content', 0, 'text')
+    text = response.content[0].text
+    # LLMが```json...```で囲む場合があるので除去
+    text = text.gsub(/\A```json\s*/, '').gsub(/\s*```\z/, '')
     parsed = JSON.parse(text)
 
     {

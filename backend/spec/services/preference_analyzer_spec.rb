@@ -125,11 +125,12 @@ RSpec.describe PreferenceAnalyzer do
     end
 
     it 'Claude APIを呼び出して分析結果を返す' do
-      client_double = double('Anthropic::Client') # rubocop:disable RSpec/VerifiedDoubles
+      text_block = double('TextBlock', text: mock_api_response.to_json) # rubocop:disable RSpec/VerifiedDoubles
+      message = double('Message', content: [text_block]) # rubocop:disable RSpec/VerifiedDoubles
+      messages_resource = double('Messages') # rubocop:disable RSpec/VerifiedDoubles
+      client_double = double('Anthropic::Client', messages: messages_resource) # rubocop:disable RSpec/VerifiedDoubles
       allow(Anthropic::Client).to receive(:new).and_return(client_double)
-      allow(client_double).to receive(:messages).and_return(
-        { 'content' => [{ 'text' => mock_api_response.to_json }] }
-      )
+      allow(messages_resource).to receive(:create).and_return(message)
 
       result = described_class.new(user).analyze
       expect(result[:summary]).to eq('テスト分析サマリー')
@@ -147,11 +148,12 @@ RSpec.describe PreferenceAnalyzer do
     end
 
     it 'Claude APIのJSON解析に失敗したらnilを返す' do
-      client_double = double('Anthropic::Client') # rubocop:disable RSpec/VerifiedDoubles
+      text_block = double('TextBlock', text: '不正なJSON') # rubocop:disable RSpec/VerifiedDoubles
+      message = double('Message', content: [text_block]) # rubocop:disable RSpec/VerifiedDoubles
+      messages_resource = double('Messages') # rubocop:disable RSpec/VerifiedDoubles
+      client_double = double('Anthropic::Client', messages: messages_resource) # rubocop:disable RSpec/VerifiedDoubles
       allow(Anthropic::Client).to receive(:new).and_return(client_double)
-      allow(client_double).to receive(:messages).and_return(
-        { 'content' => [{ 'text' => '不正なJSON' }] }
-      )
+      allow(messages_resource).to receive(:create).and_return(message)
 
       result = described_class.new(user).analyze
       expect(result).to be_nil
