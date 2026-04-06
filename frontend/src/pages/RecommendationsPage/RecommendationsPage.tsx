@@ -16,6 +16,7 @@ export function RecommendationsPage() {
   const { data, status, isLoading, isRefreshing, error, refresh } = useRecommendations()
   const [modalWork, setModalWork] = useState<RecommendedWork | null>(null)
   const [recordingId, setRecordingId] = useState<string | null>(null)
+  const [recordedIds, setRecordedIds] = useState<Set<string>>(new Set())
 
   const handleOpenModal = (work: RecommendedWork) => {
     setModalWork(work)
@@ -36,13 +37,14 @@ export function RecommendationsPage() {
           title: modalWork.title,
           media_type: modalWork.media_type as MediaType,
           description: modalWork.description,
-          cover_url: modalWork.cover_url,
+          cover_image_url: modalWork.cover_url,
           external_api_id: modalWork.external_api_id,
           external_api_source: modalWork.external_api_source,
           metadata: modalWork.metadata,
         },
         recordData,
       )
+      setRecordedIds((prev) => new Set(prev).add(workKey))
       setModalWork(null)
     } catch {
       // エラーハンドリングはRecordModal側で表示
@@ -188,6 +190,9 @@ export function RecommendationsPage() {
                   work={work}
                   onRecord={handleOpenModal}
                   isLoading={recordingId === `${work.external_api_source}:${work.external_api_id}`}
+                  isRecorded={recordedIds.has(
+                    `${work.external_api_source}:${work.external_api_id}`,
+                  )}
                 />
               ))}
             </div>
@@ -207,6 +212,9 @@ export function RecommendationsPage() {
                   work={work}
                   onRecord={handleOpenModal}
                   isLoading={recordingId === `${work.external_api_source}:${work.external_api_id}`}
+                  isRecorded={recordedIds.has(
+                    `${work.external_api_source}:${work.external_api_id}`,
+                  )}
                 />
               ))}
             </div>
