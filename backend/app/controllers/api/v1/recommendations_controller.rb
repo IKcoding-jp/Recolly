@@ -15,6 +15,13 @@ module Api
         render_recommendation
       end
 
+      def refresh
+        RecommendationRefreshJob.perform_later(current_user.id)
+        render json: { message: '分析を開始しました', status: 'processing' }, status: :accepted
+      end
+
+      private
+
       def render_recommendation
         recommendation = RecommendationService.new(current_user).fetch
 
@@ -25,13 +32,6 @@ module Api
 
         render json: { recommendation: format_recommendation(recommendation), status: 'ready' }
       end
-
-      def refresh
-        RecommendationRefreshJob.perform_later(current_user.id)
-        render json: { message: '分析を開始しました', status: 'processing' }, status: :accepted
-      end
-
-      private
 
       def insufficient_records_response(records_count)
         {

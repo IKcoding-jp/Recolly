@@ -11,8 +11,9 @@ class WorkRecommender
   end
 
   def recommend
-    recommended = search_works(@analysis_result[:search_keywords]['recommended'], MAX_RECOMMENDED)
-    challenge = search_works(@analysis_result[:search_keywords]['challenge'], MAX_CHALLENGE)
+    keywords = @analysis_result[:search_keywords] || {}
+    recommended = search_works(keywords['recommended'] || [], MAX_RECOMMENDED)
+    challenge = search_works(keywords['challenge'] || [], MAX_CHALLENGE)
 
     { recommended_works: recommended, challenge_works: challenge }
   end

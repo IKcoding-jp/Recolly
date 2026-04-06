@@ -30,9 +30,7 @@ class RecommendationService
   private
 
   def save_result(analysis, recommendations)
-    recommendation = @user.recommendation || @user.build_recommendation
-
-    recommendation.update!(
+    attributes = {
       analysis_summary: analysis[:summary],
       preference_scores: analysis[:preference_scores],
       genre_stats: stringify_keys_in_array(analysis[:genre_stats]),
@@ -41,8 +39,11 @@ class RecommendationService
       challenge_works: stringify_keys_in_array(recommendations[:challenge_works]),
       record_count: @user.records.count,
       analyzed_at: Time.current
-    )
+    }
 
+    # 並列ジョブ実行時のレースコンディションを防ぐ
+    recommendation = Recommendation.find_or_initialize_by(user: @user)
+    recommendation.update!(attributes)
     recommendation
   end
 
