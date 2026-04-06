@@ -107,12 +107,8 @@ RSpec.describe PreferenceAnalyzer do
         'summary' => 'テスト分析サマリー',
         'preference_scores' => [{ 'label' => 'キャラクター重視', 'score' => 9.2 }],
         'search_keywords' => {
-          'recommended' => [{ 'media_type' => 'anime', 'query' => 'ファンタジー 感動' }],
-          'challenge' => [{ 'media_type' => 'book', 'query' => '社会派 小説' }]
-        },
-        'reasons' => {
-          'ファンタジー 感動' => '作品Aに9点をつけたあなたへ。',
-          '社会派 小説' => '普段あまり読まないジャンルから。'
+          'recommended' => [{ 'media_type' => 'anime', 'query' => '葬送のフリーレン', 'reason' => '作品0に9点をつけたあなたへ。' }],
+          'challenge' => [{ 'media_type' => 'book', 'query' => 'コンビニ人間', 'reason' => '普段あまり読まないジャンルから。' }]
         }
       }
     end

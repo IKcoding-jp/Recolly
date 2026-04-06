@@ -73,6 +73,8 @@ class PreferencePromptBuilder
   end
 
   def output_instructions
+    genre_list = @data[:genre_stats].map { |s| s[:media_type] }.join(', ')
+
     <<~INSTRUCTIONS
       以下をJSON形式で出力してください。
 
@@ -83,20 +85,24 @@ class PreferencePromptBuilder
         ],
         "search_keywords": {
           "recommended": [
-            { "media_type": "ジャンル名", "query": "外部APIで検索するキーワード" }
+            { "media_type": "ジャンル名", "query": "具体的な作品タイトル1つ", "reason": "この作品をおすすめする具体的な理由" }
           ],
           "challenge": [
-            { "media_type": "ジャンル名", "query": "普段触れないジャンルのキーワード" }
+            { "media_type": "ジャンル名", "query": "具体的な作品タイトル1つ", "reason": "このジャンルに挑戦する理由" }
           ]
-        },
-        "reasons": {
-          "検索キーワード": "ユーザーの具体的な作品名・評価・感想を引用したおすすめ理由"
         }
       }
 
-      preference_scoresは5項目。search_keywordsのrecommendedは7件、challengeは3件。
-      reasonsはsearch_keywordsの各queryに対応する理由文。
-      JSONのみ出力し、それ以外のテキストは含めないでください。
+      重要なルール:
+      - preference_scoresは5項目
+      - search_keywordsのrecommendedは7件、challengeは3件
+      - queryは「具体的な作品タイトル」を1つだけ指定すること（ジャンル名や抽象的なキーワードではなく実在する作品名）
+      - reasonは各作品ごとに異なる内容にすること。ユーザーの具体的な作品名・評価を引用し、なぜこの作品が合うのかを説明する
+      - ユーザーの記録ジャンル: #{genre_list}
+      - recommendedの7件は、ユーザーが記録しているジャンル（#{genre_list}）に分散させること。同じジャンルばかりにしない
+      - anime/mangaの記録が多いユーザーにはanime/mangaを中心におすすめすること。実写映画ばかりにしない
+      - challengeの3件は、ユーザーの記録が少ないジャンルから選ぶこと
+      - JSONのみ出力し、```json```マーカーやそれ以外のテキストは含めないでください
     INSTRUCTIONS
   end
 end

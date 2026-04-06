@@ -8,29 +8,24 @@ RSpec.describe WorkRecommender do
     {
       search_keywords: {
         'recommended' => [
-          { 'media_type' => 'anime', 'query' => 'ファンタジー 感動' },
-          { 'media_type' => 'movie', 'query' => '社会派 ドラマ' }
+          { 'media_type' => 'anime', 'query' => '葬送のフリーレン', 'reason' => '作品Aに9点をつけたあなたへ。' },
+          { 'media_type' => 'movie', 'query' => 'パラサイト', 'reason' => '社会派テーマが好きなあなたへ。' }
         ],
         'challenge' => [
-          { 'media_type' => 'book', 'query' => '現代文学' }
+          { 'media_type' => 'book', 'query' => 'コンビニ人間', 'reason' => '普段あまり読まないジャンルから。' }
         ]
-      },
-      reasons: {
-        'ファンタジー 感動' => '作品Aに9点をつけたあなたへ。',
-        '社会派 ドラマ' => '社会派テーマが好きなあなたへ。',
-        '現代文学' => '普段あまり読まないジャンルから。'
       }
     }
   end
 
   let(:mock_search_result) do
-    Struct.new(:title, :media_type, :description, :cover_url,
+    Struct.new(:title, :media_type, :description, :cover_image_url,
                :external_api_id, :external_api_source, :metadata)
           .new(
             title: 'おすすめ作品',
             media_type: 'anime',
             description: 'テスト説明',
-            cover_url: 'https://example.com/cover.jpg',
+            cover_image_url: 'https://example.com/cover.jpg',
             external_api_id: '12345',
             external_api_source: 'anilist',
             metadata: { 'genres' => %w[Fantasy], 'season_year' => 2023 }

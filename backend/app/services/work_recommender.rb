@@ -19,25 +19,26 @@ class WorkRecommender
 
   private
 
+  # 各キーワードから1作品のみ取得（理由の重複を防ぐ）
   def search_works(keywords, max_count)
     results = []
     keywords.each do |keyword|
       break if results.length >= max_count
 
-      add_matching_works(results, keyword, max_count)
+      work = find_best_match(keyword, results)
+      next if work.nil?
+
+      reason = keyword['reason'] || ''
+      results << build_work_data(work, reason)
     end
     results
   end
 
-  def add_matching_works(results, keyword, max_count)
+  def find_best_match(keyword, existing_results)
     found = @search_service.search(keyword['query'], media_type: keyword['media_type'])
-    reason = @analysis_result[:reasons][keyword['query']] || ''
 
-    found.each do |work|
-      break if results.length >= max_count
-      next if already_recorded?(work) || results.any? { |r| r[:title] == work.title }
-
-      results << build_work_data(work, reason)
+    found.find do |work|
+      !already_recorded?(work) && existing_results.none? { |r| r[:title] == work.title }
     end
   end
 

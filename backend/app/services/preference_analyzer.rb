@@ -143,7 +143,6 @@ class PreferenceAnalyzer
       summary: parsed['summary'],
       preference_scores: parsed['preference_scores'],
       search_keywords: parsed['search_keywords'],
-      reasons: parsed['reasons'],
       genre_stats: data[:genre_stats],
       top_tags: data[:tag_stats]
     }
