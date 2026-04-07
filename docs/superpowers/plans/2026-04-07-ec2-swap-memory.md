@@ -44,13 +44,13 @@ git commit -m "feat: EC2のuser_dataにswapメモリ設定を追加"
 - [ ] **Step 1: EC2にSSH接続**
 
 ```bash
-ssh -i ~/.ssh/recolly-ec2 ec2-user@3.112.170.21
+ssh -i ~/.ssh/recolly-ec2 ec2-user@<EC2_PUBLIC_IP>
 ```
 
 - [ ] **Step 2: swapが既に存在しないか確認**
 
 ```bash
-ssh -i ~/.ssh/recolly-ec2 ec2-user@3.112.170.21 "free -h && swapon --show"
+ssh -i ~/.ssh/recolly-ec2 ec2-user@<EC2_PUBLIC_IP> "free -h && swapon --show"
 ```
 
 期待結果: Swapの行が `0B` で、`swapon --show` の出力が空（swapなし）
@@ -58,13 +58,13 @@ ssh -i ~/.ssh/recolly-ec2 ec2-user@3.112.170.21 "free -h && swapon --show"
 - [ ] **Step 3: swapファイルを作成・有効化**
 
 ```bash
-ssh -i ~/.ssh/recolly-ec2 ec2-user@3.112.170.21 "sudo dd if=/dev/zero of=/swapfile bs=1M count=2048 && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile && echo '/swapfile swap swap defaults 0 0' | sudo tee -a /etc/fstab"
+ssh -i ~/.ssh/recolly-ec2 ec2-user@<EC2_PUBLIC_IP> "sudo dd if=/dev/zero of=/swapfile bs=1M count=2048 && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile && echo '/swapfile swap swap defaults 0 0' | sudo tee -a /etc/fstab"
 ```
 
 - [ ] **Step 4: swap有効化を確認**
 
 ```bash
-ssh -i ~/.ssh/recolly-ec2 ec2-user@3.112.170.21 "free -h && swapon --show"
+ssh -i ~/.ssh/recolly-ec2 ec2-user@<EC2_PUBLIC_IP> "free -h && swapon --show"
 ```
 
 期待結果:
