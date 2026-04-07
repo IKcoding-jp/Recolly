@@ -15,3 +15,12 @@ usermod -aG docker ec2-user
 
 # AWS CLI v2（Amazon Linux 2023にはプリインストール済み）
 # ECRログインヘルパーの準備のみ
+
+# swapメモリの設定（2GB）
+# t2.micro（RAM 1GB）のメモリ不足を補うため。
+# デプロイ時のdocker pull + db:prepare + 旧コンテナ同時実行でメモリが不足する問題の対策。
+dd if=/dev/zero of=/swapfile bs=1M count=2048
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
