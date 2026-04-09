@@ -47,21 +47,15 @@ Rails.application.configure do
   # Solid Queue: ジョブキューを既存PostgreSQLで管理（ADR-0008）
   config.active_job.queue_adapter = :solid_queue
 
-  # Ignore bad email addresses and do not raise email delivery errors.
-  # Set this to true and configure the email server for immediate delivery to raise delivery errors.
-  # config.action_mailer.raise_delivery_errors = false
+  # AWS SES 経由でメール送信（ADR-0037）
+  # aws-sdk-rails gem が提供する :ses_v2 delivery method を使用。
+  # 認証は EC2 インスタンスロール（iam.tf）で自動取得されるため credentials 不要。
+  config.action_mailer.delivery_method = :ses_v2
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.perform_deliveries = true
 
-  # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: 'recolly.net' }
-
-  # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
-  # config.action_mailer.smtp_settings = {
-  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
-  #   password: Rails.application.credentials.dig(:smtp, :password),
-  #   address: "smtp.example.com",
-  #   port: 587,
-  #   authentication: :plain
-  # }
+  # メーラーテンプレート内のリンクで使用されるホスト（HTTPSリンクを生成）
+  config.action_mailer.default_url_options = { host: 'recolly.net', protocol: 'https' }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
