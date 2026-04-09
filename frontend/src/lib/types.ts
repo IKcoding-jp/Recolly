@@ -16,6 +16,13 @@ export interface AuthResponse {
   user: User
 }
 
+// Google Identity Services (ADR-0035) のログインAPIレスポンス
+// 分岐が3系統あるため、discriminated unionで表現する
+export type GoogleAuthResponse =
+  | { status: 'success'; user: User }
+  | { status: 'new_user' }
+  | { status: 'error'; code: string; message: string }
+
 export interface ErrorResponse {
   error?: string
   errors?: string[]

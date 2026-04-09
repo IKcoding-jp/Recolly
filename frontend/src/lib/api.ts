@@ -1,4 +1,4 @@
-import type { AuthResponse, ErrorResponse } from './types'
+import type { AuthResponse, ErrorResponse, GoogleAuthResponse } from './types'
 
 const API_BASE = '/api/v1'
 
@@ -91,6 +91,24 @@ export const oauthApi = {
     return request<AuthResponse>('/auth/complete_registration', {
       method: 'POST',
       body: JSON.stringify({ username }),
+    })
+  },
+}
+
+// Google Identity Services (ADR-0035) のID Tokenを検証してログインする
+export const googleAuthApi = {
+  // 未ログイン状態でID Token検証 + ログイン/新規登録判定
+  signIn(credential: string): Promise<GoogleAuthResponse> {
+    return request<GoogleAuthResponse>('/auth/google_id_token', {
+      method: 'POST',
+      body: JSON.stringify({ credential }),
+    })
+  },
+  // ログイン済みユーザーがGoogleアカウントを連携追加する
+  linkProvider(credential: string): Promise<AuthResponse> {
+    return request<AuthResponse>('/account_settings/link_provider', {
+      method: 'POST',
+      body: JSON.stringify({ credential }),
     })
   },
 }
