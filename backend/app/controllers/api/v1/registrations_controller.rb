@@ -9,6 +9,7 @@ module Api
 
       def respond_with(resource, _opts = {})
         if resource.persisted?
+          # ADR-0036: password_set_at は User#before_create でアトミックに設定される
           render json: { user: user_json(resource) }, status: :created
         else
           render json: { errors: resource.errors.full_messages }, status: :unprocessable_content

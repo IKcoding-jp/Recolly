@@ -21,6 +21,13 @@ class ApplicationController < ActionController::API
     render json: { error: 'リソースが見つかりません' }, status: :not_found
   end
 
+  # エラーレスポンス生成ヘルパー。
+  # バックエンドのエラーを {error, code, message} の統一形式で返す。
+  # error フィールドは既存フロントの後方互換用。code は機械判別用。
+  def render_error(code:, message:, status:)
+    render json: { error: message, code: code, message: message }, status: status
+  end
+
   # 未認証ユーザーへの401レスポンス（deviseのデフォルトリダイレクトを上書き）
   def authenticate_user!
     return if user_signed_in?
@@ -32,7 +39,10 @@ class ApplicationController < ActionController::API
   def user_json(user)
     user.as_json(only: %i[id username email bio created_at]).merge(
       avatar_url: resolve_avatar_url(user.avatar_url),
-      has_password: user.encrypted_password.present?,
+      # has_password は「ユーザーが自分でパスワードを設定したか」を表す。
+      # OAuth 新規登録時の SecureRandom ハッシュは「設定済み」とは扱わないため
+      # encrypted_password ではなく password_set_at で判定する（ADR-0036）
+      has_password: user.password_set_at.present?,
       providers: user.user_providers.pluck(:provider),
       email_missing: user.email.blank?
     )

@@ -1,17 +1,31 @@
 import type { AuthResponse, ErrorResponse, GoogleAuthResponse } from './types'
+import { getErrorMessage } from './errorMessages'
 
 const API_BASE = '/api/v1'
 
 // 共通のfetchラッパー（credentials: 'include' でCookieを自動送信）
 export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  })
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    })
+  } catch (err) {
+    // fetch 自体の失敗（ネットワーク不通、CORSエラー等）は TypeError として送出される
+    if (err instanceof TypeError) {
+      throw new ApiError(
+        'ネットワークに接続できませんでした。通信環境をご確認ください',
+        0,
+        'network_error',
+      )
+    }
+    throw err
+  }
 
   // ボディなしレスポンス（204 No Content）はJSONパースをスキップ
   if (response.status === 204) {
@@ -22,8 +36,11 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
 
   if (!response.ok) {
     const errorData = data as ErrorResponse
-    const message = errorData.error ?? errorData.errors?.join(', ') ?? 'エラーが発生しました'
-    throw new ApiError(message, response.status)
+    const rawMessage =
+      errorData.error ?? errorData.message ?? errorData.errors?.join(', ') ?? 'エラーが発生しました'
+    // code があれば errorMessages.ts 辞書経由で日本語メッセージに変換、なければ raw を使う
+    const message = getErrorMessage(errorData.code, rawMessage)
+    throw new ApiError(message, response.status, errorData.code)
   }
 
   return data as T
@@ -31,11 +48,13 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
 
 export class ApiError extends Error {
   status: number
+  code?: string
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, code?: string) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.code = code
   }
 }
 

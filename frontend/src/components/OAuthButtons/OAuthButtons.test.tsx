@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { OAuthButtons } from './OAuthButtons'
 import { AuthContext } from '../../contexts/AuthContext'
+import { ApiError } from '../../lib/api'
 import type { User } from '../../lib/types'
 
 // GoogleIdTokenSessions APIをモック
@@ -168,6 +169,28 @@ describe('OAuthButtons', () => {
 
       await waitFor(() => {
         expect(screen.getByText('このメールアドレスは既に登録されています')).toBeInTheDocument()
+      })
+    })
+
+    it('signInがApiErrorをrejectしたらエラーメッセージを表示（409経路）', async () => {
+      // バックエンドが 409 Conflict を返すと api.ts の request() が
+      // errorMessages.ts 辞書経由で日本語メッセージに変換した ApiError を throw する。
+      // OAuthButtons の catch 節が err.message を setError に渡す経路を検証。
+      const { triggerCallback } = setupGoogleSdkMock()
+      mockSignIn.mockRejectedValue(
+        new ApiError(
+          'このメールアドレスは既にメール+パスワードで登録されています。メールでログインしてください',
+          409,
+          'email_already_registered',
+        ),
+      )
+
+      renderWithProviders(<OAuthButtons />)
+      await waitFor(() => expect(window.google).toBeDefined())
+      triggerCallback('dummy-id-token')
+
+      await waitFor(() => {
+        expect(screen.getByText(/既にメール\+パスワードで登録/)).toBeInTheDocument()
       })
     })
   })
