@@ -78,12 +78,14 @@ RSpec.describe 'Api::V1::GoogleIdTokenSessions', type: :request do
         User.create!(username: 'passworduser', email: google_email, password: 'password123')
       end
 
-      it '409 Conflictとerror codeを返す' do
+      it '409 Conflictとerror codeを返す（error/code/message統一形式）', :aggregate_failures do
         post '/api/v1/auth/google_id_token', params: { credential: credential }, as: :json
         expect(response).to have_http_status(:conflict)
         json = response.parsed_body
         expect(json['status']).to eq('error')
         expect(json['code']).to eq('email_already_registered')
+        expect(json['message']).to be_present
+        expect(json['error']).to eq(json['message'])
       end
     end
 
@@ -93,39 +95,50 @@ RSpec.describe 'Api::V1::GoogleIdTokenSessions', type: :request do
         UserProvider.create!(user: other_user, provider: 'other_provider', provider_uid: 'other_uid')
       end
 
-      it '409 Conflictとemail_registered_with_other_providerを返す' do
+      it '409 Conflictとemail_registered_with_other_providerを返す（統一形式）', :aggregate_failures do
         post '/api/v1/auth/google_id_token', params: { credential: credential }, as: :json
         expect(response).to have_http_status(:conflict)
         json = response.parsed_body
         expect(json['status']).to eq('error')
         expect(json['code']).to eq('email_registered_with_other_provider')
+        expect(json['message']).to be_present
+        expect(json['error']).to eq(json['message'])
       end
     end
 
     context 'ID Token検証エラー' do
-      it '署名検証エラー → 401' do
+      it '署名検証エラー → 401 + unauthorized code' do
         stub_verifier(error: Google::Auth::IDTokens::SignatureError.new('bad'))
         post '/api/v1/auth/google_id_token', params: { credential: credential }, as: :json
         expect(response).to have_http_status(:unauthorized)
+        json = response.parsed_body
+        expect(json['code']).to eq('unauthorized')
+        expect(json['error']).to be_present
+        expect(json['message']).to eq(json['error'])
       end
 
-      it 'audienceミスマッチ → 401' do
+      it 'audienceミスマッチ → 401 + unauthorized code' do
         stub_verifier(error: Google::Auth::IDTokens::AudienceMismatchError.new('bad'))
         post '/api/v1/auth/google_id_token', params: { credential: credential }, as: :json
         expect(response).to have_http_status(:unauthorized)
+        expect(response.parsed_body['code']).to eq('unauthorized')
       end
 
-      it '有効期限切れ → 401' do
+      it '有効期限切れ → 401 + unauthorized code' do
         stub_verifier(error: Google::Auth::IDTokens::ExpiredTokenError.new('bad'))
         post '/api/v1/auth/google_id_token', params: { credential: credential }, as: :json
         expect(response).to have_http_status(:unauthorized)
+        expect(response.parsed_body['code']).to eq('unauthorized')
       end
     end
 
     context 'パラメータ不正' do
-      it 'credentialが欠落している → 400' do
+      it 'credentialが欠落している → 400 + bad_request code' do
         post '/api/v1/auth/google_id_token', params: {}, as: :json
         expect(response).to have_http_status(:bad_request)
+        json = response.parsed_body
+        expect(json['code']).to eq('bad_request')
+        expect(json['error']).to be_present
       end
     end
   end

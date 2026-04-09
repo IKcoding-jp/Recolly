@@ -68,20 +68,26 @@ module Api
         render json: { status: 'new_user' }, status: :ok
       end
 
+      # conflict は status フィールドが必要なので render_error を使わず直接 render
       def render_conflict(error)
         render json: {
           status: 'error',
+          error: error[:message],
           code: error[:code],
           message: error[:message]
         }, status: :conflict
       end
 
       def render_unauthorized
-        render json: { error: '認証に失敗しました' }, status: :unauthorized
+        render_error(code: ApiErrorCodes::UNAUTHORIZED,
+                     message: '認証に失敗しました',
+                     status: :unauthorized)
       end
 
       def render_bad_request
-        render json: { error: 'credentialが必要です' }, status: :bad_request
+        render_error(code: ApiErrorCodes::BAD_REQUEST,
+                     message: 'credentialが必要です',
+                     status: :bad_request)
       end
     end
   end
