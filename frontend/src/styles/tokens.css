@@ -13,6 +13,9 @@
   --color-border: #2c2c2c;
   --color-border-light: #e0e0e0;
   --color-error: #c0392b;
+  --color-success: #2e7d32;
+  --color-warning-bg: #fff8e1;
+  --color-warning-text: #8a6d00;
 
   /* 進行中バッジ */
   --color-ongoing-bg: #fff3e0;

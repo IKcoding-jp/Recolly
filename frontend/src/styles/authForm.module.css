@@ -25,6 +25,37 @@
   font-size: var(--font-size-meta);
 }
 
+.success {
+  color: var(--color-success);
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-bg-white);
+  border: var(--border-width-thin) var(--border-style) var(--color-success);
+  border-radius: var(--radius-sm);
+  margin-top: var(--spacing-md);
+}
+
+.warningBanner {
+  color: var(--color-warning-text);
+  background-color: var(--color-warning-bg);
+  border: var(--border-width-thin) var(--border-style) var(--color-warning-text);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  margin-top: var(--spacing-md);
+}
+
+.warningBanner p {
+  margin: var(--spacing-xs) 0;
+}
+
+.warningBanner a {
+  color: var(--color-warning-text);
+  text-decoration: underline;
+}
+
 .link {
   text-align: center;
   margin-top: var(--spacing-md);
