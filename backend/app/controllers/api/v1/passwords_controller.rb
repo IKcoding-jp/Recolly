@@ -20,8 +20,12 @@ module Api
         if resource.errors.empty?
           render json: { message: 'パスワードを更新しました' }, status: :ok
         else
+          # code ベースのエラー形式（既存の ApiErrorCodes パターンに準拠）
+          # 原因が何であれ（無効トークン/期限切れ/パスワード要件違反）、
+          # ユーザー向けには統一して「リンクが無効または期限切れ」と案内する
           render json: {
-            error: 'password_reset_failed',
+            code: ApiErrorCodes::PASSWORD_RESET_FAILED,
+            error: 'リンクが無効または期限切れです',
             errors: resource.errors.full_messages
           }, status: :unprocessable_content
         end

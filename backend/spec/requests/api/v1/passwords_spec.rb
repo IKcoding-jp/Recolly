@@ -77,7 +77,7 @@ RSpec.describe 'Api::V1::Passwords', type: :request do
             as: :json
 
         expect(response).to have_http_status(:unprocessable_content)
-        expect(response.parsed_body['error']).to eq('password_reset_failed')
+        expect(response.parsed_body['code']).to eq('password_reset_failed')
       end
 
       it '期限切れのトークンで 422' do
@@ -88,7 +88,7 @@ RSpec.describe 'Api::V1::Passwords', type: :request do
           put user_password_path, params: valid_params, as: :json
 
           expect(response).to have_http_status(:unprocessable_content)
-          expect(response.parsed_body['error']).to eq('password_reset_failed')
+          expect(response.parsed_body['code']).to eq('password_reset_failed')
         end
       end
 
@@ -98,7 +98,7 @@ RSpec.describe 'Api::V1::Passwords', type: :request do
             as: :json
 
         expect(response).to have_http_status(:unprocessable_content)
-        expect(response.parsed_body['error']).to eq('password_reset_failed')
+        expect(response.parsed_body['code']).to eq('password_reset_failed')
       end
 
       it 'パスワードと確認が不一致の場合 422' do
@@ -107,7 +107,7 @@ RSpec.describe 'Api::V1::Passwords', type: :request do
             as: :json
 
         expect(response).to have_http_status(:unprocessable_content)
-        expect(response.parsed_body['error']).to eq('password_reset_failed')
+        expect(response.parsed_body['code']).to eq('password_reset_failed')
       end
     end
   end

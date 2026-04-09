@@ -19,6 +19,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   password_mismatch: 'パスワードが一致しません',
   email_already_set: 'メールアドレスは既に設定されています',
   email_taken: 'このメールアドレスは既に使用されています',
+  password_reset_failed: 'リンクが無効または期限切れです。再度リセットを申請してください',
   network_error: 'ネットワークに接続できませんでした。通信環境をご確認ください',
 }
 
