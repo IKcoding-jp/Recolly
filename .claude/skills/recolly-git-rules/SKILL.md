@@ -31,19 +31,57 @@ refactor: 認証ロジックを整理
 
 ## コードレビュー
 
+### 初回レビュー（自動）
+
+PR を open すると、`.github/workflows/claude-code-review.yml` により Claude Code Review が自動で走る。トリガーは `pull_request: opened / ready_for_review / reopened` イベントのみ。
+
+### 再レビュー（手動、@claude メンションで発動）
+
+**subsequent push では自動レビューは走らない**。これは設計上の意図：
+
+- 再レビューのいたちごっこ（ping-pong）を防ぐ
+- 些細な修正まで毎回レビューすると API コストと待ち時間が無駄
+- 「人間が見てほしいと判断したタイミング」で走らせる方がノイズが少ない
+
+再レビューが必要になったら、PR のコメント欄に `@claude` メンションして依頼する。これで `.github/workflows/claude.yml` が発動し、コメントの指示内容に従って Claude がアクションする。
+
+#### 再レビュー依頼コメントの例
+
+**一般的な再レビュー依頼**:
+
+```
+@claude 直近のコミットを再レビューしてください
+```
+
+**特定ファイル / 観点を限定**:
+
+```
+@claude Gemfile の変更だけ見てください。依存 gem の順序が正しいか、バージョン固定が妥当か確認してほしい
+```
+
+**指摘への返答と修正依頼**（claude.yml は修正コミットも作れる）:
+
+```
+@claude 指摘ありがとうございます。L42 の nil ガードを追加してください
+```
+
 ### フロー
 
 1. ローカルで実装 + テスト + コミット
-2. `git push` + PR作成
-3. **Claude Code Review が自動でPRをレビュー**（GitHub Actions）
-4. 指摘事項を解消（ローカルのClaude Code または PR上で @claude メンションで修正）
-5. CI全パス + レビュー指摘解消 → マージ
+2. `git push` + PR 作成
+3. **Claude Code Review が初回レビュー**（自動、`claude-code-review.yml`）
+4. 指摘事項があれば：
+   - **ローカルで修正** → 追加コミット push（自動レビューは走らない）
+   - **または PR コメントで @claude メンション** → Claude が修正コミット（`claude.yml`）
+5. 追加コミット後に再レビューを受けたい場合のみ、PR コメントで `@claude 再レビューして` と依頼
+6. CI 全パス + レビュー指摘解消 → マージ
 
 ### ルール
 
-- 全PRにClaude Code Reviewを必須とする（CI経由で自動実行）
+- 全 PR の **初回に** Claude Code Review を必須とする（CI 経由で自動実行）
 - レビュー指摘を全て解消してからマージする
-- レビュー指摘の修正はローカルのClaude Code または PR上で @claude メンションで行う
+- **subsequent push で自動レビューは走らない**（意図的）。必要なら明示的に `@claude` で再依頼
+- レビュー指摘の修正はローカルの Claude Code または PR 上で `@claude` メンションで行う
 
 ### レビュー観点
 
@@ -59,7 +97,8 @@ refactor: 認証ロジックを整理
 
 ### 設定ファイル
 
-- ワークフロー: `.github/workflows/claude-code-review.yml`
+- 初回レビュー: `.github/workflows/claude-code-review.yml`（`pull_request: opened / ready_for_review / reopened`）
+- オンデマンドレビュー: `.github/workflows/claude.yml`（`@claude` メンションで発動）
 
 ## PR前セルフチェック
 
