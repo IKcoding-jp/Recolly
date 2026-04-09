@@ -3,6 +3,8 @@
 require 'rails_helper'
 
 RSpec.describe 'Api::V1::Passwords', type: :request do
+  include ActiveSupport::Testing::TimeHelpers
+
   let!(:user) do
     User.create!(username: 'testuser', email: 'test@example.com', password: 'password123')
   end
@@ -65,6 +67,47 @@ RSpec.describe 'Api::V1::Passwords', type: :request do
         user.reload
         expect(user.valid_password?('newpassword123')).to be true
         expect(user.valid_password?('password123')).to be false
+      end
+    end
+
+    context '異常系' do
+      it '無効なトークンで 422' do
+        put user_password_path,
+            params: valid_params.deep_merge(user: { reset_password_token: 'invalid-token' }),
+            as: :json
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.parsed_body['error']).to eq('password_reset_failed')
+      end
+
+      it '期限切れのトークンで 422' do
+        raw_token # トークンを生成（reset_password_sent_at が現在時刻でセットされる）
+
+        # Devise の reset_password_within は 6 時間。7 時間進めれば確実に期限切れ
+        travel_to(7.hours.from_now) do
+          put user_password_path, params: valid_params, as: :json
+
+          expect(response).to have_http_status(:unprocessable_content)
+          expect(response.parsed_body['error']).to eq('password_reset_failed')
+        end
+      end
+
+      it 'パスワードが短すぎる場合 422' do
+        put user_password_path,
+            params: valid_params.deep_merge(user: { password: 'short', password_confirmation: 'short' }),
+            as: :json
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.parsed_body['error']).to eq('password_reset_failed')
+      end
+
+      it 'パスワードと確認が不一致の場合 422' do
+        put user_password_path,
+            params: valid_params.deep_merge(user: { password_confirmation: 'different123' }),
+            as: :json
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.parsed_body['error']).to eq('password_reset_failed')
       end
     end
   end
