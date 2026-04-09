@@ -23,12 +23,10 @@ module Api
       private
 
       def create_oauth_user(oauth_data)
+        # ADR-0036: encrypted_password 空文字ハックを廃止。SecureRandom の bcrypt ハッシュを残す。
+        # password_set_at は nil のまま → has_password = false として UI 上は「未設定」と扱われる
         user = build_user(oauth_data)
-        ActiveRecord::Base.transaction do
-          user.save!
-          # OAuthユーザーはパスワード認証不要のため、暗号化パスワードをクリア
-          user.update_column(:encrypted_password, '') # rubocop:disable Rails/SkipsModelValidations
-        end
+        user.save!
         user
       end
 

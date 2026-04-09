@@ -110,4 +110,27 @@ RSpec.describe User, type: :model do
       expect { user.destroy }.to change(UserProvider, :count).by(-1)
     end
   end
+
+  describe 'ロックアウト防御 (prevent_lockout_transition)' do
+    it 'encrypted_password を空にする更新は before_update で弾かれる', :aggregate_failures do
+      user = described_class.create!(username: 'normaluser', email: 'normal@example.com', password: 'password123')
+      user.encrypted_password = ''
+      expect(user.save).to be false
+      expect(user.errors[:base]).to include('ログイン手段を全て失う変更はできません')
+    end
+
+    it 'user_providers がある状態で encrypted_password を空にする更新は許可される' do
+      user = described_class.create!(username: 'withprov', email: 'withprov@example.com', password: 'password123')
+      UserProvider.create!(user: user, provider: 'google_oauth2', provider_uid: '12345')
+      user.reload
+      user.encrypted_password = ''
+      expect(user.save).to be true
+    end
+
+    it 'encrypted_password が変わらない更新（プロフィール更新等）はコールバックをスキップする' do
+      user = described_class.create!(username: 'profileuser', email: 'profile@example.com', password: 'password123')
+      user.bio = '新しい自己紹介'
+      expect(user.save).to be true
+    end
+  end
 end

@@ -44,6 +44,11 @@ module Api
       end
 
       def set_password
+        if params[:password].blank?
+          return render_error(code: ApiErrorCodes::PASSWORD_EMPTY,
+                              message: 'パスワードを入力してください',
+                              status: :unprocessable_content)
+        end
         if params[:password] != params[:password_confirmation]
           return render_error(code: ApiErrorCodes::PASSWORD_MISMATCH,
                               message: 'パスワードが一致しません',
@@ -91,6 +96,9 @@ module Api
 
       def update_password
         assign_password_params
+        # ADR-0036: パスワード設定済みフラグ。OAuth専用ユーザーが初めて自分でパスワードを
+        # 設定したタイミングを記録する。has_password 判定もこの値を使う。
+        current_user.password_set_at = Time.current
         save_and_render(current_user)
       end
 
@@ -113,7 +121,8 @@ module Api
       end
 
       def last_login_method?
-        has_password = current_user.encrypted_password.present?
+        # password_set_at が nil なら「ユーザー自身がパスワード未設定」（ADR-0036）
+        has_password = current_user.password_set_at.present?
         provider_count = current_user.user_providers.count
         !has_password && provider_count <= 1
       end

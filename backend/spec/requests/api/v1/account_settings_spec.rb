@@ -83,6 +83,9 @@ RSpec.describe 'Account Settings', type: :request do
     context '複数のログイン手段がある場合' do
       it 'OAuth連携を解除できる' do
         user = User.create!(username: 'testuser', email: 'test@example.com', password: 'password123')
+        # ADR-0036: User.create! では password_set_at がセットされないので明示的にセット
+        # （本番では RegistrationsController が自動でセットする）
+        user.update_column(:password_set_at, Time.current) # rubocop:disable Rails/SkipsModelValidations
         UserProvider.create!(user: user, provider: 'google_oauth2', provider_uid: '12345')
         sign_in user
 
@@ -111,7 +114,7 @@ RSpec.describe 'Account Settings', type: :request do
 
   describe 'PUT /api/v1/account_settings/set_password' do
     context 'パスワード未設定のOAuthユーザー' do
-      it 'パスワードを設定できる' do
+      it 'パスワードを設定できる（password_set_atもセットされる）', :aggregate_failures do
         user = create_oauth_only_user(username: 'oauthuser', email: 'oauth@example.com')
         sign_in user
 
@@ -120,6 +123,26 @@ RSpec.describe 'Account Settings', type: :request do
         expect(response).to have_http_status(:ok)
         user.reload
         expect(user.encrypted_password).to be_present
+        expect(user.password_set_at).to be_present
+      end
+
+      it 'レスポンスの has_password が true に変わる' do
+        user = create_oauth_only_user(username: 'oauthuser', email: 'oauth@example.com')
+        sign_in user
+        put '/api/v1/account_settings/set_password',
+            params: { password: 'newpass123', password_confirmation: 'newpass123' }, as: :json
+        expect(response.parsed_body.dig('user', 'has_password')).to be true
+      end
+    end
+
+    context 'パスワードが空文字' do
+      it '422 + password_empty code を返す', :aggregate_failures do
+        user = create_oauth_only_user(username: 'emptypassuser', email: 'empty@example.com')
+        sign_in user
+        put '/api/v1/account_settings/set_password',
+            params: { password: '', password_confirmation: '' }, as: :json
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.parsed_body['code']).to eq('password_empty')
       end
     end
 

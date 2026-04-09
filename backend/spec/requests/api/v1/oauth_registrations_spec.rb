@@ -22,7 +22,7 @@ RSpec.describe 'OAuth Registrations', type: :request do
     context '有効なセッションデータがある場合' do
       before { setup_oauth_session }
 
-      it 'ユーザーとUserProviderを作成して201を返す' do
+      it 'ユーザーとUserProviderを作成して201を返す', :aggregate_failures do
         expect do
           post '/api/v1/auth/complete_registration',
                params: { username: 'newuser' },
@@ -34,6 +34,19 @@ RSpec.describe 'OAuth Registrations', type: :request do
         json = response.parsed_body
         expect(json.dig('user', 'username')).to eq('newuser')
         expect(json.dig('user', 'email')).to eq('user@gmail.com')
+      end
+
+      it '作成されたユーザーのencrypted_passwordはbcryptハッシュが残り、password_set_atはnil', :aggregate_failures do
+        post '/api/v1/auth/complete_registration', params: { username: 'newuser' }, as: :json
+        user = User.last
+        expect(user.encrypted_password).not_to be_empty
+        expect(user.password_set_at).to be_nil
+      end
+
+      it '作成されたユーザーのhas_passwordはfalse' do
+        post '/api/v1/auth/complete_registration', params: { username: 'newuser' }, as: :json
+        json = response.parsed_body
+        expect(json.dig('user', 'has_password')).to be false
       end
 
       it '作成されたユーザーのemail_missingがfalse' do
