@@ -77,3 +77,10 @@ group :development do
   # 開発環境でメールをブラウザでプレビュー（パスワードリセット用）
   gem 'letter_opener_web'
 end
+
+group :production do
+  # AWS SES 経由でメール送信するための Rails 統合（ADR-0037）
+  # aws-sdk-rails 5.x は個別サービス gem を分離しているため aws-sdk-sesv2 も必要
+  gem 'aws-sdk-rails'
+  gem 'aws-sdk-sesv2'
+end
