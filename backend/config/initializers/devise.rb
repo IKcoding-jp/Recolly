@@ -4,8 +4,8 @@
 # https://github.com/heartcombo/devise/wiki
 
 Devise.setup do |config|
-  # メーラーの送信元アドレス
-  config.mailer_sender = 'noreply@recolly.com'
+  # メーラーの送信元アドレス（SES の検証ドメイン recolly.net と一致させる必要あり）
+  config.mailer_sender = 'noreply@recolly.net'
 
   # ORM設定
   require 'devise/orm/active_record'

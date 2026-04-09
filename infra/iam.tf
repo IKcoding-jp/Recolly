@@ -72,6 +72,30 @@ resource "aws_iam_role_policy_attachment" "ec2_s3_images" {
   policy_arn = aws_iam_policy.ec2_s3_images.arn
 }
 
+# EC2がSES経由でメール送信する権限（ADR-0037, Issue #108）
+# Resource を recolly.net の identity に限定（最小権限原則）
+data "aws_iam_policy_document" "ec2_ses" {
+  statement {
+    actions = [
+      "ses:SendEmail",
+      "ses:SendRawEmail",
+    ]
+    resources = [
+      "arn:aws:ses:${var.aws_region}:*:identity/${var.domain_name}",
+    ]
+  }
+}
+
+resource "aws_iam_policy" "ec2_ses" {
+  name   = "${var.project_name}-ec2-ses-policy"
+  policy = data.aws_iam_policy_document.ec2_ses.json
+}
+
+resource "aws_iam_role_policy_attachment" "ec2_ses" {
+  role       = aws_iam_role.ec2.name
+  policy_arn = aws_iam_policy.ec2_ses.arn
+}
+
 # === GitHub Actions OIDC ===
 
 # OIDCプロバイダ（GitHubとAWSの信頼関係）
@@ -126,7 +150,7 @@ data "aws_iam_policy_document" "github_actions" {
 
   # S3へのアップロード権限
   statement {
-    actions   = ["s3:PutObject", "s3:DeleteObject", "s3:ListBucket", "s3:GetObject"]
+    actions = ["s3:PutObject", "s3:DeleteObject", "s3:ListBucket", "s3:GetObject"]
     resources = [
       "arn:aws:s3:::${var.project_name}-frontend-*",
       "arn:aws:s3:::${var.project_name}-frontend-*/*",
