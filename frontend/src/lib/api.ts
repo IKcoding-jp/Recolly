@@ -95,6 +95,23 @@ export const authApi = {
       body: JSON.stringify({ user: { email } }),
     })
   },
+
+  updatePassword(
+    resetPasswordToken: string,
+    password: string,
+    passwordConfirmation: string,
+  ): Promise<{ message: string }> {
+    return request<{ message: string }>('/password', {
+      method: 'PUT',
+      body: JSON.stringify({
+        user: {
+          reset_password_token: resetPasswordToken,
+          password,
+          password_confirmation: passwordConfirmation,
+        },
+      }),
+    })
+  },
 }
 
 // CSRFトークン取得API
