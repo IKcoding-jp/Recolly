@@ -50,7 +50,7 @@ PR-B1 で AWS SES によるメール送信基盤が整ったため、本 PR（PR
 | 7 | メール内 URL の組み立て | **環境変数 `FRONTEND_URL` をカスタム DeviseMailer に注入** | API モードのため routes ヘルパーはバックエンド URL を返す。フロントエンド URL を明示的に渡す必要あり |
 | 8 | リセット成功時の遷移 | **`/login` に遷移して成功メッセージ表示**（自動ログインなし） | Issue #107 の要件通り。自動ログインはセキュリティ観点で避ける |
 | 9 | トークン無効・期限切れ時の UX | **エラー + `/password/new` への再申請リンクを表示** | ユーザーが詰まないように次のアクションを明示 |
-| 10 | クライアントサイドバリデーション | **8 文字以上 + 一致確認** | 既存の SignUpPage と同じ基準。送信前に事前チェック（CLAUDE.md の規約通り） |
+| 10 | クライアントサイドバリデーション | **6 文字以上 + 一致確認** | 既存の Devise 設定 `password_length: 6..128` および SignUpPage の `minLength={6}` と揃える。送信前に事前チェック（CLAUDE.md の規約通り） |
 
 ## 全体アーキテクチャ
 
@@ -236,8 +236,8 @@ useEffect(() => {
   if (!token) navigate('/password/new', { replace: true })
 }, [token, navigate])
 
-// バリデーション: 8 文字以上 + 一致確認
-const isValid = password.length >= 8 && password === passwordConfirmation
+// バリデーション: 6 文字以上 + 一致確認
+const isValid = password.length >= 6 && password === passwordConfirmation
 
 // 成功時は /login に遷移してメッセージ表示
 await updatePassword(token, password, passwordConfirmation)
@@ -373,7 +373,7 @@ end
 
 **`PasswordEditPage.test.tsx`**:
 - トークンなしでアクセスすると `/password/new` にリダイレクト
-- パスワード 8 文字未満で送信ボタン disabled
+- パスワード 6 文字未満で送信ボタン disabled
 - パスワードと確認が不一致で送信ボタン disabled
 - 送信成功時に `/login` に遷移し `state.message` を渡す
 - `password_reset_failed` エラー時に再申請リンク表示
@@ -388,8 +388,8 @@ end
 ### 新規に必要な環境変数
 
 **`FRONTEND_URL`**:
-- ローカル開発: `docker-compose.yml` の backend サービスに `FRONTEND_URL=http://localhost:5173` を追加
-- 本番: EC2 の Rails 環境変数（`.env.production` or systemd unit file）に `FRONTEND_URL=https://recolly.net` を追加
+- ローカル開発: `docker-compose.yml` の backend サービスに **既に設定済み**（`FRONTEND_URL=http://localhost:5173`）→ 変更不要
+- 本番: EC2 の Rails 環境変数（`.env.production` or systemd unit file）に `FRONTEND_URL=https://recolly.net` を追加する必要あり
 
 ### `deploy.sh` の更新
 
