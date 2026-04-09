@@ -111,6 +111,20 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe 'password_set_at の自動設定 (set_password_set_at_on_email_registration)' do
+    it 'メール+パスワード経路の新規作成時に password_set_at が自動セットされる' do
+      user = described_class.create!(username: 'mailuser', email: 'mail@example.com', password: 'password123')
+      expect(user.password_set_at).to be_present
+    end
+
+    it 'OAuth 経路（user_providers を build した状態）の save では password_set_at がセットされない' do
+      user = described_class.new(username: 'oauthuser', email: 'oauth@example.com', password: SecureRandom.hex(32))
+      user.user_providers.build(provider: 'google_oauth2', provider_uid: '12345')
+      user.save!
+      expect(user.password_set_at).to be_nil
+    end
+  end
+
   describe 'ロックアウト防御 (prevent_lockout_transition)' do
     it 'encrypted_password を空にする更新は before_update で弾かれる', :aggregate_failures do
       user = described_class.create!(username: 'normaluser', email: 'normal@example.com', password: 'password123')

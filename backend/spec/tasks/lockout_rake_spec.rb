@@ -20,10 +20,10 @@ RSpec.describe 'lockout:detect', type: :task do
     create_oauth_only_user(username: 'oauthuser', email: 'oauth@example.com')
 
     # ロックアウト状態: password_set_at が nil かつ user_providers が空
+    # User#before_create で password_set_at が自動セットされるため、強制的に nil に戻す
     locked = User.new(username: 'lockeduser', email: 'locked@example.com', password: SecureRandom.hex(32))
     locked.save!
-    # password_set_at は nil のまま
-    # user_providers も作らない
+    locked.update_column(:password_set_at, nil) # rubocop:disable Rails/SkipsModelValidations
 
     # .and で chain すると block が 2回実行されてしまうため、1つの正規表現にまとめる
     expect { task.invoke }.to output(/ロックアウト状態のユーザー: 1件.*lockeduser/m).to_stdout

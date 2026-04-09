@@ -25,6 +25,11 @@ class User < ApplicationRecord
   validates :bio, length: { maximum: 100 }
   validates :favorite_display_mode, inclusion: { in: %w[ranking favorites] }
 
+  # メール+パスワード新規登録時に password_set_at をセットする（ADR-0036）。
+  # User#save と同一トランザクション内で実行されるためアトミック。
+  # OAuth 新規登録時は build 済みの user_providers が存在するためスキップされる。
+  before_create :set_password_set_at_on_email_registration
+
   # ロックアウト防御の最後の砦（ADR-0036, Issue #105）。
   # encrypted_password が空文字に変わる update を、user_providers が空のときに拒否する。
   # Controller 層の last_login_method? と UserProvider#before_destroy の補完として、
@@ -55,6 +60,16 @@ class User < ApplicationRecord
   end
 
   private
+
+  def set_password_set_at_on_email_registration
+    # OAuth 経路では OauthRegistrationsController が user.user_providers.build した
+    # 状態で save するため、build 済みオブジェクトを含めて any? が true になりスキップ。
+    # メール+パスワード経路では user_providers は空なので password_set_at がセットされる。
+    return if user_providers.any?
+    return if encrypted_password.blank?
+
+    self.password_set_at = Time.current
+  end
 
   def prevent_lockout_transition
     return unless encrypted_password_changed?
