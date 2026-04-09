@@ -80,7 +80,8 @@ end
 
 group :production do
   # AWS SES 経由でメール送信するための Rails 統合（ADR-0037）
-  # aws-sdk-rails 5.x は個別サービス gem を分離しているため aws-sdk-sesv2 も必要
-  gem 'aws-sdk-rails'
-  gem 'aws-sdk-sesv2'
+  # aws-sdk-rails 5.x から SES ActionMailer 機能は aws-actionmailer-ses に分離された。
+  # aws-actionmailer-ses は aws-sdk-ses / aws-sdk-sesv2 を依存として自動導入する。
+  gem 'aws-sdk-rails', '~> 5'
+  gem 'aws-actionmailer-ses', '~> 1'
 end
