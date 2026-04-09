@@ -39,8 +39,17 @@ module Api
                               status: :unprocessable_content)
         end
 
-        provider.destroy!
+        # Controller チェックを通過しても、モデル層の before_destroy で
+        # 弾かれた場合はトランザクションごと rollback される（多層防御）
+        ActiveRecord::Base.transaction do
+          provider.destroy!
+        end
+
         render json: { user: user_json(current_user.reload) }
+      rescue ActiveRecord::RecordNotDestroyed
+        render_error(code: ApiErrorCodes::LAST_LOGIN_METHOD,
+                     message: '最後のログイン手段は解除できません',
+                     status: :unprocessable_content)
       end
 
       def set_password

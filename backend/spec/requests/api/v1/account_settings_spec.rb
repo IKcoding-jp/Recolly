@@ -110,6 +110,25 @@ RSpec.describe 'Account Settings', type: :request do
         expect(json['message']).to eq(json['error'])
       end
     end
+
+    context 'Controller層のチェックを通過してもモデル層で弾かれるケース' do
+      # Controller 層の last_login_method? をモックで bypass し、
+      # UserProvider#before_destroy がトランザクション内で発動して rollback されることを検証。
+      # これは多層防御の最終層が機能していることを保証する回帰テスト。
+      it 'トランザクションが rollback して 422 を返す', :aggregate_failures do
+        user = create_oauth_only_user(username: 'oauthonly', email: 'oauth@example.com')
+        sign_in user
+
+        # Controller 層チェックをバイパスして強制的にモデル層まで到達させる
+        allow_any_instance_of(Api::V1::AccountSettingsController) # rubocop:disable RSpec/AnyInstance
+          .to receive(:last_login_method?).and_return(false)
+
+        delete '/api/v1/account_settings/unlink_provider', params: { provider: 'google_oauth2' }, as: :json
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.parsed_body['code']).to eq('last_login_method')
+        expect(UserProvider.where(user: user).count).to eq(1) # rollback された
+      end
+    end
   end
 
   describe 'PUT /api/v1/account_settings/set_password' do
