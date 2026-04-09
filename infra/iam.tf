@@ -72,8 +72,21 @@ resource "aws_iam_role_policy_attachment" "ec2_s3_images" {
   policy_arn = aws_iam_policy.ec2_s3_images.arn
 }
 
-# EC2がSES経由でメール送信する権限（ADR-0037, Issue #108）
-# Resource を recolly.net の identity に限定（最小権限原則）
+# EC2がSES経由でメール送信する権限（ADR-0037, Issue #108 / #118）
+#
+# Resource が "identity/*" と広く見えるが、以下の理由で実質的な権限拡大は最小:
+# - EC2 インスタンスロール自体は EC2 インスタンスからのみ assume 可能
+# - このアカウントで verify されたドメインは recolly.net のみ
+# - 検証済みメールアドレスは SES console で明示的に追加したものに限る
+# - SES サンドボックスモードが送信先を検証済みアドレスに制限する
+#
+# なぜ identity/recolly.net だけでは不十分か:
+# SES v2 の SendEmail API は raw MIME content を渡すとき、内部的に
+# ses:SendRawEmail 権限を要求する。サンドボックスモードでは送信元 identity
+# (recolly.net) だけでなく、受信者として verify した email identity にも
+# 権限が必要となる (例: identity/your-verified@gmail.com)。
+# 個別メアドごとにポリシー追加するのは現実的でないため、同一アカウント内の
+# SES identity 全体に許可する形に広げる。
 data "aws_iam_policy_document" "ec2_ses" {
   statement {
     actions = [
@@ -81,7 +94,7 @@ data "aws_iam_policy_document" "ec2_ses" {
       "ses:SendRawEmail",
     ]
     resources = [
-      "arn:aws:ses:${var.aws_region}:*:identity/${var.domain_name}",
+      "arn:aws:ses:${var.aws_region}:*:identity/*",
     ]
   }
 }

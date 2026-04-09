@@ -110,6 +110,39 @@ PR #104 の動作確認中、オーナーアカウントがロックアウトさ
 - メール本文の日本語化（PR-B2 #107）
 - DMARC ポリシーの強化（`p=none` → `p=quarantine` → `p=reject`）（運用安定後）
 
+## 実装時の学び（ホットフィックス履歴）
+
+### 学び 1: aws-sdk-rails 5.x は機能別 gem 分離（PR #116 で対応）
+
+PR #115 の初回実装で `aws-sdk-rails` + `aws-sdk-sesv2` だけ追加したら、`Invalid delivery method :ses_v2` エラー。aws-sdk-rails 5.x は本体が薄い Railtie 層のみで、SES ActionMailer 機能は `aws-actionmailer-ses` という別 gem に切り出されている。公式 README を読み飛ばさないこと。
+
+### 学び 2: SES v2 + raw content + サンドボックスは受信者 identity の IAM 権限も必要（PR #118 で対応）
+
+PR #116 で `:ses_v2` が使えるようになった後、動作確認で以下のエラー：
+
+```
+Aws::SESV2::Errors::AccessDeniedException
+User ... is not authorized to perform `ses:SendRawEmail` on resource
+`arn:aws:ses:ap-northeast-1:*:identity/<verified-recipient>@gmail.com`
+```
+
+**根本原因**:
+- SES v2 の `SendEmail` API は raw MIME content を渡すとき内部的に `ses:SendRawEmail` 権限を要求する（v1 互換の挙動）
+- **サンドボックスモードでは、送信元 identity だけでなく受信者として verify された email identity に対する権限も必要**
+- 例: 送信元 `noreply@recolly.net`（domain identity）+ 受信者 `user@gmail.com`（email identity、Step 4 で verify）の両方に `ses:SendRawEmail` が必要
+
+**対応**:
+
+当初の iam.tf は `resources = ["arn:aws:ses:${var.aws_region}:*:identity/${var.domain_name}"]` で domain identity のみ許可していたが、`identity/*` に広げた。個別の verified email identity を毎回ポリシーに追加するのは非現実的なため。
+
+**セキュリティ評価（妥当性の検証）**:
+
+- EC2 インスタンスロールは EC2 からのみ assume 可能
+- このアカウントで verify されたドメインは `recolly.net` のみ（今後ドメイン追加しない限り、事実上 recolly.net 経由しか送れない）
+- サンドボックスが解除されても SES の rate limit が効く
+- `ses:SendEmail` / `ses:SendRawEmail` のみ許可で、他の SES API（設定変更等）は引き続き拒否
+- 実質的なリスクは `identity/recolly.net` 限定と同等
+
 ## 参考
 
 - AWS SES v2 公式ドキュメント: <https://docs.aws.amazon.com/ses/latest/dg/send-email-api.html>
