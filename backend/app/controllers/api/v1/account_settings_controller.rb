@@ -9,21 +9,34 @@ module Api
       # 現在のユーザーに対してOAuthプロバイダ連携を追加する
       def link_provider
         credential = params[:credential]
-        return render json: { error: 'credentialが必要です' }, status: :bad_request if credential.blank?
+        if credential.blank?
+          return render_error(code: ApiErrorCodes::BAD_REQUEST,
+                              message: 'credentialが必要です',
+                              status: :bad_request)
+        end
 
         payload = verify_google_credential(credential)
-        return render json: { error: '認証に失敗しました' }, status: :unauthorized if payload.nil?
+        if payload.nil?
+          return render_error(code: ApiErrorCodes::UNAUTHORIZED,
+                              message: '認証に失敗しました',
+                              status: :unauthorized)
+        end
 
         create_provider_for_current_user(payload)
       end
 
       def unlink_provider
         provider = current_user.user_providers.find_by(provider: params[:provider])
-        return render json: { error: '連携が見つかりません' }, status: :not_found unless provider
+        unless provider
+          return render_error(code: ApiErrorCodes::PROVIDER_NOT_FOUND,
+                              message: '連携が見つかりません',
+                              status: :not_found)
+        end
 
         if last_login_method?
-          return render json: { error: '最後のログイン手段は解除できません。先にパスワードを設定するか、別のOAuthを連携してください' },
-                        status: :unprocessable_content
+          return render_error(code: ApiErrorCodes::LAST_LOGIN_METHOD,
+                              message: '最後のログイン手段は解除できません。先にパスワードを設定するか、別のOAuthを連携してください',
+                              status: :unprocessable_content)
         end
 
         provider.destroy!
@@ -31,14 +44,26 @@ module Api
       end
 
       def set_password
-        return render_password_mismatch if params[:password] != params[:password_confirmation]
+        if params[:password] != params[:password_confirmation]
+          return render_error(code: ApiErrorCodes::PASSWORD_MISMATCH,
+                              message: 'パスワードが一致しません',
+                              status: :unprocessable_content)
+        end
 
         update_password
       end
 
       def set_email
-        return render_email_already_set if current_user.email.present?
-        return render_email_taken if email_taken?
+        if current_user.email.present?
+          return render_error(code: ApiErrorCodes::EMAIL_ALREADY_SET,
+                              message: 'メールアドレスは既に設定されています',
+                              status: :unprocessable_content)
+        end
+        if email_taken?
+          return render_error(code: ApiErrorCodes::EMAIL_TAKEN,
+                              message: 'このメールアドレスは既に使用されています',
+                              status: :unprocessable_content)
+        end
 
         update_email
       end
@@ -59,7 +84,9 @@ module Api
         )
         render json: { user: user_json(current_user.reload) }
       rescue ActiveRecord::RecordInvalid
-        render json: { error: 'このプロバイダは既に連携済みです' }, status: :unprocessable_content
+        render_error(code: ApiErrorCodes::PROVIDER_ALREADY_LINKED,
+                     message: 'このプロバイダは既に連携済みです',
+                     status: :unprocessable_content)
       end
 
       def update_password
@@ -83,18 +110,6 @@ module Api
         else
           render json: { errors: user.errors.full_messages }, status: :unprocessable_content
         end
-      end
-
-      def render_password_mismatch
-        render json: { error: 'パスワードが一致しません' }, status: :unprocessable_content
-      end
-
-      def render_email_already_set
-        render json: { error: 'メールアドレスは既に設定されています' }, status: :unprocessable_content
-      end
-
-      def render_email_taken
-        render json: { error: 'このメールアドレスは既に使用されています' }, status: :unprocessable_content
       end
 
       def last_login_method?

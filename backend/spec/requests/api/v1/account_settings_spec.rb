@@ -37,13 +37,16 @@ RSpec.describe 'Account Settings', type: :request do
     end
 
     context 'ログイン済み + 既に同プロバイダ連携済み' do
-      it '422を返す' do
+      it '422 + provider_already_linked code を返す', :aggregate_failures do
         user = User.create!(username: 'testuser', email: 'test@example.com', password: 'password123')
         UserProvider.create!(user: user, provider: 'google_oauth2', provider_uid: 'google_new_sub')
         sign_in user
 
         post '/api/v1/account_settings/link_provider', params: { credential: credential }, as: :json
         expect(response).to have_http_status(:unprocessable_content)
+        json = response.parsed_body
+        expect(json['code']).to eq('provider_already_linked')
+        expect(json['error']).to eq(json['message'])
       end
     end
 
@@ -92,17 +95,16 @@ RSpec.describe 'Account Settings', type: :request do
     end
 
     context '最後のログイン手段の場合' do
-      it '解除を拒否して422を返す' do
-        user = User.new(username: 'oauthonly', email: 'oauth@example.com')
-        user.save!(validate: false)
-        user.update_column(:encrypted_password, '') # rubocop:disable Rails/SkipsModelValidations
-        UserProvider.create!(user: user, provider: 'google_oauth2', provider_uid: '12345')
+      it '解除を拒否して422 + last_login_method code を返す', :aggregate_failures do
+        user = create_oauth_only_user(username: 'oauthonly', email: 'oauth@example.com')
         sign_in user
 
         delete '/api/v1/account_settings/unlink_provider', params: { provider: 'google_oauth2' }, as: :json
         expect(response).to have_http_status(:unprocessable_content)
         json = response.parsed_body
+        expect(json['code']).to eq('last_login_method')
         expect(json['error']).to include('ログイン手段')
+        expect(json['message']).to eq(json['error'])
       end
     end
   end
@@ -122,13 +124,14 @@ RSpec.describe 'Account Settings', type: :request do
     end
 
     context 'パスワード不一致' do
-      it '422を返す' do
+      it '422 + password_mismatch code を返す', :aggregate_failures do
         user = create_oauth_only_user(username: 'oauthuser', email: 'oauth@example.com')
         sign_in user
 
         put '/api/v1/account_settings/set_password',
             params: { password: 'newpass123', password_confirmation: 'wrongpass' }, as: :json
         expect(response).to have_http_status(:unprocessable_content)
+        expect(response.parsed_body['code']).to eq('password_mismatch')
       end
     end
 
@@ -155,13 +158,14 @@ RSpec.describe 'Account Settings', type: :request do
     end
 
     context 'メールアドレスが既に使用されている場合' do
-      it '422を返す' do
+      it '422 + email_taken code を返す', :aggregate_failures do
         User.create!(username: 'otheruser', email: 'taken@example.com', password: 'password123')
         user = create_oauth_only_user(username: 'noemailuser', email: '')
         sign_in user
 
         put '/api/v1/account_settings/set_email', params: { email: 'taken@example.com' }, as: :json
         expect(response).to have_http_status(:unprocessable_content)
+        expect(response.parsed_body['code']).to eq('email_taken')
       end
     end
 
