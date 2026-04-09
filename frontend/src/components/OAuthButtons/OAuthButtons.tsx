@@ -77,13 +77,20 @@ export function OAuthButtons({
       },
     })
 
+    // GISボタンはflex対応していないため、親コンテナの幅を測ってpx指定する
+    // authForm.module.cssのcardがmax-width:400px, padding:32pxなので
+    // フォーム内の実質幅は336px。それに合わせてボタン幅をフォーム他要素と揃える
+    const containerWidth = buttonContainerRef.current.clientWidth
+    // GISはwidthの上限を400pxに制限している
+    const buttonWidth = Math.min(Math.max(containerWidth, 200), 400)
+
     window.google?.accounts.id.renderButton(buttonContainerRef.current, {
       theme: 'outline',
       size: 'large',
       text: mode === 'link' ? 'continue_with' : 'signin_with',
       shape: 'rectangular',
       logo_alignment: 'left',
-      width: 280,
+      width: buttonWidth,
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSdkReady, mode])
