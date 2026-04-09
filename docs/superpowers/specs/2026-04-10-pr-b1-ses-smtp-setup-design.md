@@ -73,7 +73,7 @@ PR #104（Google Identity Services 移行）の動作確認中にオーナーア
 
 | ファイル | 変更内容 | 新規/修正 |
 |---|---|---|
-| `infra/ses.tf` | `aws_sesv2_email_identity` リソースで `recolly.net` をドメイン identity として登録 | **新規** |
+| `infra/ses.tf` | `aws_ses_domain_identity` と `aws_ses_domain_dkim` リソースで `recolly.net` をドメイン検証・DKIM トークン発行 | **新規** |
 | `infra/route53.tf` | DKIM CNAME × 3 / SPF TXT / DMARC TXT を `recolly.net` に追加 | **追記** |
 | `infra/iam.tf` | EC2 インスタンスロールに `ses:SendEmail` / `ses:SendRawEmail` 最小権限ポリシーを追加 | **追記** |
 
@@ -81,18 +81,22 @@ PR #104（Google Identity Services 移行）の動作確認中にオーナーア
 
 ```hcl
 # infra/ses.tf（新規）
-resource "aws_sesv2_email_identity" "recolly_net" {
-  email_identity = var.domain_name  # "recolly.net"
+resource "aws_ses_domain_identity" "recolly_net" {
+  domain = var.domain_name  # "recolly.net"
+}
+
+resource "aws_ses_domain_dkim" "recolly_net" {
+  domain = aws_ses_domain_identity.recolly_net.domain
 }
 
 # infra/route53.tf（追記）
 resource "aws_route53_record" "ses_dkim" {
   count   = 3
   zone_id = var.route53_zone_id
-  name    = "${aws_sesv2_email_identity.recolly_net.dkim_signing_attributes[0].tokens[count.index]}._domainkey.recolly.net"
+  name    = "${aws_ses_domain_dkim.recolly_net.dkim_tokens[count.index]}._domainkey.${var.domain_name}"
   type    = "CNAME"
   ttl     = 600
-  records = ["${aws_sesv2_email_identity.recolly_net.dkim_signing_attributes[0].tokens[count.index]}.dkim.amazonses.com"]
+  records = ["${aws_ses_domain_dkim.recolly_net.dkim_tokens[count.index]}.dkim.amazonses.com"]
 }
 
 resource "aws_route53_record" "ses_spf" {
@@ -182,7 +186,7 @@ config.action_mailer.default_url_options = { host: 'recolly.net', protocol: 'htt
 
 **補足**:
 
-- DKIM セレクタ値 (`<selector1>` など) は Terraform の `aws_sesv2_email_identity` リソース作成時に自動生成されるため、`count = 3` でループ登録する
+- DKIM セレクタ値 (`<selector1>` など) は Terraform の `aws_ses_domain_dkim` リソース作成時に自動生成されるため、`count = 3` でループ登録する
 - SPF TXT は既存レコードとマージが必要になる可能性あり（TXT は 1 ドメインに 1 レコードしか持てない）。`terraform plan` 実行前に Route53 console で既存レコードを確認する手順を運用手順書に含める
 - DMARC ポリシーは段階的に強化する想定：`p=none`（初期）→ `p=quarantine`（安定後）→ `p=reject`（完全運用）
 
@@ -279,7 +283,7 @@ Terraform CI の整備は別 Issue で対応。
 
 ### コード
 
-- [ ] `infra/ses.tf` が新規作成され、`aws_sesv2_email_identity` リソースが定義されている
+- [ ] `infra/ses.tf` が新規作成され、`aws_ses_domain_identity` と `aws_ses_domain_dkim` リソースが定義されている
 - [ ] `infra/route53.tf` に DKIM CNAME × 3 / SPF TXT / DMARC TXT が追加されている
 - [ ] `infra/iam.tf` に EC2 インスタンスロール用の `ses:SendEmail` / `ses:SendRawEmail` 最小権限ポリシーが追加されている
 - [ ] `backend/Gemfile` の production group に `gem 'aws-sdk-rails', '~> 4.0'` が追加されている
