@@ -48,9 +48,10 @@ Rails.application.configure do
   config.active_job.queue_adapter = :solid_queue
 
   # AWS SES 経由でメール送信（ADR-0037）
-  # aws-sdk-rails gem が提供する :ses_v2 delivery method を使用。
+  # aws-actionmailer-ses gem が提供する :ses_v2 delivery method を使用。
   # 認証は EC2 インスタンスロール（iam.tf）で自動取得されるため credentials 不要。
   config.action_mailer.delivery_method = :ses_v2
+  config.action_mailer.ses_v2_settings = { region: 'ap-northeast-1' }
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_deliveries = true
 
