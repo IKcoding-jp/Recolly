@@ -3,6 +3,79 @@
 require 'rails_helper'
 
 RSpec.describe 'Account Settings', type: :request do
+  describe 'POST /api/v1/account_settings/link_provider' do
+    let(:credential) { 'dummy.id.token' }
+    let(:verified_payload) do
+      { sub: 'google_new_sub', email: 'linked@example.com', name: 'Linked User' }
+    end
+
+    def stub_verifier(payload: verified_payload, error: nil)
+      verifier_double = instance_double(GoogleIdTokenVerifier)
+      if error
+        allow(verifier_double).to receive(:call).and_raise(error)
+      else
+        allow(verifier_double).to receive(:call).and_return(payload)
+      end
+      allow(GoogleIdTokenVerifier).to receive(:new).and_return(verifier_double)
+    end
+
+    before { stub_verifier }
+
+    context 'ログイン済み + 未連携' do
+      it 'UserProviderを作成して200を返す' do
+        user = User.create!(username: 'testuser', email: 'test@example.com', password: 'password123')
+        sign_in user
+
+        expect do
+          post '/api/v1/account_settings/link_provider', params: { credential: credential }, as: :json
+        end.to change(UserProvider, :count).by(1)
+
+        expect(response).to have_http_status(:ok)
+        json = response.parsed_body
+        expect(json['user']['id']).to eq(user.id)
+      end
+    end
+
+    context 'ログイン済み + 既に同プロバイダ連携済み' do
+      it '422を返す' do
+        user = User.create!(username: 'testuser', email: 'test@example.com', password: 'password123')
+        UserProvider.create!(user: user, provider: 'google_oauth2', provider_uid: 'google_new_sub')
+        sign_in user
+
+        post '/api/v1/account_settings/link_provider', params: { credential: credential }, as: :json
+        expect(response).to have_http_status(:unprocessable_content)
+      end
+    end
+
+    context '未ログイン' do
+      it '401を返す' do
+        post '/api/v1/account_settings/link_provider', params: { credential: credential }, as: :json
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context '無効なID Token' do
+      it '401を返す' do
+        user = User.create!(username: 'testuser', email: 'test@example.com', password: 'password123')
+        sign_in user
+        stub_verifier(error: Google::Auth::IDTokens::SignatureError.new('bad'))
+
+        post '/api/v1/account_settings/link_provider', params: { credential: credential }, as: :json
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'credentialが欠落' do
+      it '400を返す' do
+        user = User.create!(username: 'testuser', email: 'test@example.com', password: 'password123')
+        sign_in user
+
+        post '/api/v1/account_settings/link_provider', params: {}, as: :json
+        expect(response).to have_http_status(:bad_request)
+      end
+    end
+  end
+
   describe 'DELETE /api/v1/account_settings/unlink_provider' do
     context '複数のログイン手段がある場合' do
       it 'OAuth連携を解除できる' do

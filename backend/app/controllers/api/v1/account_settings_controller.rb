@@ -5,6 +5,18 @@ module Api
     class AccountSettingsController < ApplicationController
       before_action :authenticate_user!
 
+      # Google Identity Services (ADR-0035) の ID Token を受け取って
+      # 現在のユーザーに対してOAuthプロバイダ連携を追加する
+      def link_provider
+        credential = params[:credential]
+        return render json: { error: 'credentialが必要です' }, status: :bad_request if credential.blank?
+
+        payload = verify_google_credential(credential)
+        return render json: { error: '認証に失敗しました' }, status: :unauthorized if payload.nil?
+
+        create_provider_for_current_user(payload)
+      end
+
       def unlink_provider
         provider = current_user.user_providers.find_by(provider: params[:provider])
         return render json: { error: '連携が見つかりません' }, status: :not_found unless provider
@@ -32,6 +44,23 @@ module Api
       end
 
       private
+
+      def verify_google_credential(credential)
+        GoogleIdTokenVerifier.new(credential: credential).call
+      rescue Google::Auth::IDTokens::VerificationError, ArgumentError
+        nil
+      end
+
+      def create_provider_for_current_user(payload)
+        UserProvider.create!(
+          user: current_user,
+          provider: 'google_oauth2',
+          provider_uid: payload[:sub]
+        )
+        render json: { user: user_json(current_user.reload) }
+      rescue ActiveRecord::RecordInvalid
+        render json: { error: 'このプロバイダは既に連携済みです' }, status: :unprocessable_content
+      end
 
       def update_password
         assign_password_params

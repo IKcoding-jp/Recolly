@@ -1,12 +1,17 @@
 # frozen_string_literal: true
 
 module Oauth
+  # OAuth認証結果から既存ユーザー検索・新規ユーザー判定・メール衝突検出を行うサービス。
+  #
+  # 引数は検証済みの汎用Hash `{ provider:, uid:, email:, name: }` を受け取る。
+  # 以前はOmniAuth形式のauth_data（`info` サブキー持ち）を受け取っていたが、
+  # ADR-0035のGIS移行で形式が変わったため汎用化した。
   class FindOrCreateUserService
-    def initialize(auth_data)
-      @provider = auth_data[:provider]
-      @uid = auth_data[:uid]
-      @email = auth_data.dig(:info, :email)
-      @name = auth_data.dig(:info, :name)
+    def initialize(provider:, uid:, email: nil, name: nil)
+      @provider = provider
+      @uid = uid
+      @email = email
+      @name = name
     end
 
     def call

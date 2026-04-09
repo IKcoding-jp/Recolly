@@ -1,17 +1,18 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { AccountSettingsPage } from './AccountSettingsPage'
 import type { User } from '../../lib/types'
 
-// CSRFトークン取得をモック
+// APIモック
 vi.mock('../../lib/api', () => ({
-  csrfApi: {
-    getToken: vi.fn().mockResolvedValue({ token: 'test-csrf-token' }),
-  },
   accountApi: {
     unlinkProvider: vi.fn(),
     setPassword: vi.fn(),
+  },
+  googleAuthApi: {
+    signIn: vi.fn(),
+    linkProvider: vi.fn(),
   },
   ApiError: class ApiError extends Error {
     status: number
@@ -34,8 +35,20 @@ vi.mock('../../contexts/useAuth', () => ({
   }),
 }))
 
+// OAuthButtons は複雑なGIS初期化処理を含むため、
+// このテストでは単純なダミーに差し替える（機能テストはOAuthButtons側で実施）
+vi.mock('../../components/OAuthButtons/OAuthButtons', () => ({
+  OAuthButtons: ({ mode }: { mode?: string }) => (
+    <div data-testid={`oauth-buttons-${mode ?? 'sign_in'}`}>Googleログイン</div>
+  ),
+}))
+
 beforeEach(() => {
   vi.clearAllMocks()
+  mockUser = null
+})
+
+afterEach(() => {
   mockUser = null
 })
 
@@ -56,20 +69,11 @@ describe('AccountSettingsPage', () => {
     expect(screen.getAllByText('連携済み').length).toBeGreaterThanOrEqual(1)
   })
 
-  it('未連携プロバイダーに「連携する」ボタンを表示する', () => {
+  it('未連携プロバイダーにOAuthButtons（linkモード）を表示する', () => {
     mockUser = createUser({ providers: [], has_password: true })
     renderPage()
 
-    const connectButtons = screen.getAllByText('連携する')
-    expect(connectButtons).toHaveLength(1)
-  })
-
-  it('OAuth連携フォームのactionが相対パスであること', () => {
-    mockUser = createUser({ providers: [], has_password: true })
-    renderPage()
-
-    const form = document.querySelector('form[action]')
-    expect(form).toHaveAttribute('action', '/api/v1/auth/google_oauth2')
+    expect(screen.getByTestId('oauth-buttons-link')).toBeInTheDocument()
   })
 
   it('パスワード未設定時は「パスワードを設定」と表示する', () => {

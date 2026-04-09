@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import { Button } from '../../components/ui/Button/Button'
-import { csrfApi } from '../../lib/api'
+import { OAuthButtons } from '../../components/OAuthButtons/OAuthButtons'
 import { FormInput } from '../../components/ui/FormInput/FormInput'
 import { useAccountSettings } from './useAccountSettings'
 import styles from './AccountSettingsPage.module.css'
@@ -14,9 +13,9 @@ const PROVIDER_DISPLAY: Record<string, { name: string; icon: string }> = {
 const ALL_PROVIDERS = ['google_oauth2'] as const
 
 export function AccountSettingsPage() {
-  const [csrfToken, setCsrfToken] = useState('')
   const {
     user,
+    setUser,
     password,
     setPassword,
     passwordConfirmation,
@@ -26,22 +25,11 @@ export function AccountSettingsPage() {
     isSubmitting,
     unlinkingProvider,
     providerError,
+    setProviderError,
     canUnlink,
     handleUnlinkProvider,
     handlePasswordSubmit,
   } = useAccountSettings()
-
-  useEffect(() => {
-    const fetchToken = async () => {
-      try {
-        const data = await csrfApi.getToken()
-        setCsrfToken(data.token)
-      } catch {
-        // CSRFトークン取得失敗時はOAuth連携ボタンを無効化
-      }
-    }
-    void fetchToken()
-  }, [])
 
   if (!user) return null
 
@@ -95,12 +83,11 @@ export function AccountSettingsPage() {
                     )}
                   </div>
                 ) : (
-                  <form method="post" action={`/api/v1/auth/${provider}`}>
-                    <input type="hidden" name="authenticity_token" value={csrfToken} />
-                    <button type="submit" className={styles.connectButton} disabled={!csrfToken}>
-                      連携する
-                    </button>
-                  </form>
+                  <OAuthButtons
+                    mode="link"
+                    onLinkSuccess={(updatedUser) => setUser(updatedUser)}
+                    onLinkError={(message) => setProviderError(message)}
+                  />
                 )}
               </div>
             )

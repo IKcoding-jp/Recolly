@@ -13,7 +13,6 @@ import { HomePage } from './pages/HomePage/HomePage'
 import { SearchPage } from './pages/SearchPage/SearchPage'
 import { WorkDetailPage } from './pages/WorkDetailPage/WorkDetailPage'
 import { LibraryPage } from './pages/LibraryPage/LibraryPage'
-import { AuthCallbackPage } from './pages/AuthCallbackPage/AuthCallbackPage'
 import { OauthUsernamePage } from './pages/OauthUsernamePage/OauthUsernamePage'
 import { EmailPromptPage } from './pages/EmailPromptPage/EmailPromptPage'
 import { AccountSettingsPage } from './pages/AccountSettingsPage/AccountSettingsPage'
@@ -105,7 +104,6 @@ function App() {
           <Route path="/" element={<RootRedirect />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
-          <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/auth/complete" element={<OauthUsernamePage />} />
           <Route
             path="/dashboard"

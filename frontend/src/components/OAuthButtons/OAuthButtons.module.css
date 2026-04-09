@@ -26,36 +26,25 @@
   white-space: nowrap;
 }
 
-.oauthButton {
+/* Google Identity Services (ADR-0035) のボタンが描画されるコンテナ */
+/* GISが自身で内部ボタンを描画するため、コンテナ側は配置のみ制御する */
+.buttonContainer {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: var(--spacing-sm);
-  width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
+  min-height: 40px;
+}
+
+.loading {
+  text-align: center;
   font-family: var(--font-body);
-  font-size: var(--font-size-label);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text);
-  background-color: var(--color-bg-white);
-  border: var(--border-width) var(--border-style) var(--color-border);
-  cursor: pointer;
-  transition:
-    background-color var(--transition-fast),
-    color var(--transition-fast);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
 }
 
-.oauthButton:hover:not(:disabled) {
-  background-color: var(--color-text);
-  color: var(--color-bg-white);
-}
-
-.oauthButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.googleIcon {
-  font-size: var(--font-size-body);
-  font-weight: var(--font-weight-bold);
+.error {
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-error);
+  margin: 0;
 }

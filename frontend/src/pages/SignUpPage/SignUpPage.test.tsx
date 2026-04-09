@@ -5,6 +5,11 @@ import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from '../../contexts/AuthContext'
 import { SignUpPage } from './SignUpPage'
 
+// OAuthButtons は GIS SDK 初期化を含み、テストでは外部依存が多すぎるため差し替える
+vi.mock('../../components/OAuthButtons/OAuthButtons', () => ({
+  OAuthButtons: () => <div data-testid="oauth-buttons-mock">Googleログイン（mock）</div>,
+}))
+
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
@@ -15,11 +20,6 @@ beforeEach(() => {
     ok: false,
     status: 401,
     json: () => Promise.resolve({ error: 'ログインが必要です' }),
-  })
-  // OAuthButtons用のCSRFトークン取得
-  mockFetch.mockResolvedValueOnce({
-    ok: true,
-    json: () => Promise.resolve({ token: 'test-csrf-token' }),
   })
 })
 
@@ -93,6 +93,6 @@ describe('SignUpPage', () => {
 
   it('OAuthボタンが表示される', async () => {
     renderSignUpPage()
-    expect(await screen.findByText('Googleでログイン')).toBeInTheDocument()
+    expect(await screen.findByTestId('oauth-buttons-mock')).toBeInTheDocument()
   })
 })

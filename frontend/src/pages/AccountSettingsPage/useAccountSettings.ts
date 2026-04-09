@@ -74,6 +74,7 @@ export function useAccountSettings() {
 
   return {
     user,
+    setUser,
     password,
     setPassword,
     passwordConfirmation,
@@ -83,6 +84,7 @@ export function useAccountSettings() {
     isSubmitting,
     unlinkingProvider,
     providerError,
+    setProviderError,
     canUnlink,
     handleUnlinkProvider,
     handlePasswordSubmit,

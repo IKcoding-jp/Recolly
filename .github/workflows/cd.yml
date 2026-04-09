@@ -31,7 +31,16 @@ jobs:
       - run: npm ci
 
       - name: Build frontend
-        run: npx vite build
+        env:
+          # Google Identity Services (ADR-0035) のクライアントID
+          # ビルド時にVite環境変数として埋め込まれる（VITE_プレフィックス必須）
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+        run: |
+          if [ -z "$VITE_GOOGLE_CLIENT_ID" ]; then
+            echo "::error::VITE_GOOGLE_CLIENT_ID secret is not set. Googleログインが動作しません"
+            exit 1
+          fi
+          npx vite build
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
