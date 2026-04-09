@@ -107,4 +107,67 @@ describe('request', () => {
     const result = await request<{ message: string }>('/test')
     expect(result).toEqual(data)
   })
+
+  it('code フィールドがあれば errorMessages.ts 辞書経由でメッセージを返す', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 409,
+      json: () =>
+        Promise.resolve({
+          error: 'raw backend message',
+          code: 'email_already_registered',
+          message: 'raw backend message',
+        }),
+    })
+
+    await expect(request<never>('/test')).rejects.toThrow(
+      /このメールアドレスは既にメール\+パスワードで登録/,
+    )
+  })
+
+  it('ApiError に code プロパティがセットされる', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 422,
+      json: () =>
+        Promise.resolve({
+          error: '最後のログイン手段',
+          code: 'last_login_method',
+          message: '最後のログイン手段',
+        }),
+    })
+
+    try {
+      await request<never>('/test')
+      expect.fail('should have thrown')
+    } catch (err) {
+      expect(err).toBeInstanceOf(ApiError)
+      expect((err as ApiError).code).toBe('last_login_method')
+      expect((err as ApiError).status).toBe(422)
+    }
+  })
+
+  it('code がない場合は従来の error フィールドをそのまま使う', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      json: () => Promise.resolve({ error: 'ログインが必要です' }),
+    })
+
+    await expect(request<never>('/test')).rejects.toThrow('ログインが必要です')
+  })
+
+  it('fetch 自体が失敗（TypeError）したらネットワークエラーとして扱う', async () => {
+    mockFetch.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+
+    try {
+      await request<never>('/test')
+      expect.fail('should have thrown')
+    } catch (err) {
+      expect(err).toBeInstanceOf(ApiError)
+      expect((err as ApiError).code).toBe('network_error')
+      expect((err as ApiError).status).toBe(0)
+      expect((err as ApiError).message).toContain('ネットワーク')
+    }
+  })
 })
