@@ -38,4 +38,34 @@ RSpec.describe 'Api::V1::Passwords', type: :request do
       end
     end
   end
+
+  describe 'PUT /api/v1/password（新パスワード設定）' do
+    let(:raw_token) { user.send_reset_password_instructions }
+    let(:valid_params) do
+      {
+        user: {
+          reset_password_token: raw_token,
+          password: 'newpassword123',
+          password_confirmation: 'newpassword123'
+        }
+      }
+    end
+
+    context '正常系' do
+      it '有効なトークンでパスワード更新に成功する（200）' do
+        put user_password_path, params: valid_params, as: :json
+
+        expect(response).to have_http_status(:ok)
+        expect(response.parsed_body['message']).to eq('パスワードを更新しました')
+      end
+
+      it '更新後の新パスワードでログインできる' do
+        put user_password_path, params: valid_params, as: :json
+
+        user.reload
+        expect(user.valid_password?('newpassword123')).to be true
+        expect(user.valid_password?('password123')).to be false
+      end
+    end
+  end
 end
