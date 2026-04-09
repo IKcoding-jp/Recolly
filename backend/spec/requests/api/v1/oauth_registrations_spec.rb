@@ -6,11 +6,21 @@ RSpec.describe 'OAuth Registrations', type: :request do
   include ActiveSupport::Testing::TimeHelpers
 
   describe 'POST /api/v1/auth/complete_registration' do
+    let(:credential) { 'dummy.id.token' }
+    let(:verified_payload) do
+      { sub: 'google_12345', email: 'user@gmail.com', name: 'Test User' }
+    end
+
+    # GoogleIdTokenSessionsController経由でsession[:oauth_data]をセットする
+    # 以前はOmniAuthコールバックGETで同じことをしていた
+    def setup_oauth_session
+      verifier_double = instance_double(GoogleIdTokenVerifier, call: verified_payload)
+      allow(GoogleIdTokenVerifier).to receive(:new).and_return(verifier_double)
+      post '/api/v1/auth/google_id_token', params: { credential: credential }, as: :json
+    end
+
     context '有効なセッションデータがある場合' do
-      before do
-        mock_google_oauth
-        get '/api/v1/auth/google_oauth2/callback'
-      end
+      before { setup_oauth_session }
 
       it 'ユーザーとUserProviderを作成して201を返す' do
         expect do
@@ -60,10 +70,7 @@ RSpec.describe 'OAuth Registrations', type: :request do
     end
 
     context 'セッションデータの有効期限切れ' do
-      before do
-        mock_google_oauth
-        get '/api/v1/auth/google_oauth2/callback'
-      end
+      before { setup_oauth_session }
 
       it '401を返す' do
         travel 16.minutes do

@@ -6,7 +6,6 @@ class ApplicationController < ActionController::API
   protect_from_forgery with: :null_session
 
   # 既存APIはCSRFトークンを送信しないため、デフォルトで検証をスキップ
-  # OAuthフォームPOSTはomniauth-rails_csrf_protectionが保護する
   skip_forgery_protection
 
   # deviseがrespond_toを使うため、APIモードに手動追加

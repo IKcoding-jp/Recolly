@@ -8,8 +8,7 @@ Rails.application.routes.draw do
              controllers: {
                sessions: "api/v1/sessions",
                registrations: "api/v1/registrations",
-               passwords: "api/v1/passwords",
-               omniauth_callbacks: "api/v1/omniauth_callbacks"
+               passwords: "api/v1/passwords"
              }
 
   namespace :api do
@@ -18,6 +17,9 @@ Rails.application.routes.draw do
       resource :current_user, only: [:show], controller: "current_user"
 
       get 'csrf_token', to: 'csrf_tokens#show'
+
+      # Google Identity Services（ADR-0035）: ID Tokenを受け取ってログイン処理
+      post 'auth/google_id_token', to: 'google_id_token_sessions#create'
 
       post 'auth/complete_registration', to: 'oauth_registrations#create'
 
