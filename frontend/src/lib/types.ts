@@ -25,6 +25,8 @@ export type GoogleAuthResponse =
 
 export interface ErrorResponse {
   error?: string
+  code?: string
+  message?: string
   errors?: string[]
 }
 
