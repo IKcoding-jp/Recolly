@@ -21,6 +21,13 @@ class ApplicationController < ActionController::API
     render json: { error: 'リソースが見つかりません' }, status: :not_found
   end
 
+  # エラーレスポンス生成ヘルパー。
+  # バックエンドのエラーを {error, code, message} の統一形式で返す。
+  # error フィールドは既存フロントの後方互換用。code は機械判別用。
+  def render_error(code:, message:, status:)
+    render json: { error: message, code: code, message: message }, status: status
+  end
+
   # 未認証ユーザーへの401レスポンス（deviseのデフォルトリダイレクトを上書き）
   def authenticate_user!
     return if user_signed_in?
