@@ -7,7 +7,7 @@ RSpec.describe Recommendation, type: :model do
     it 'user_idが必須' do
       recommendation = described_class.new(user: nil)
       expect(recommendation).not_to be_valid
-      expect(recommendation.errors[:user]).to include('must exist')
+      expect(recommendation.errors[:user]).to include('を入力してください')
     end
 
     it '同じユーザーに2つ作れない' do
