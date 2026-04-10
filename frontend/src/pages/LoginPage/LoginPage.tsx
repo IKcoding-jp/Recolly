@@ -88,14 +88,48 @@ export function LoginPage() {
           />
           {error && <p className={styles.error}>{error}</p>}
           {isUnauthorized && (
-            <div className={styles.warningBanner}>
-              <p>
-                もしかして Google で登録していませんか？下の「Google
-                でログイン」からお試しください。
-              </p>
-              <p>
-                パスワードを忘れた方は <Link to="/password/new">こちらから再設定</Link> できます。
-              </p>
+            <div className={styles.hintCards}>
+              <Link to="/password/new" className={styles.hintCard}>
+                <span className={styles.hintIcon}>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M15 7a2 2 0 0 1 2 2m4 0a6 6 0 0 1-7.74 5.74L11 17H9v2H7v2H4a1 1 0 0 1-1-1v-2.59a1 1 0 0 1 .29-.7l6.97-6.97A6 6 0 0 1 21 9z" />
+                  </svg>
+                </span>
+                <span className={styles.hintText}>
+                  <span className={styles.hintTitle}>パスワードを再設定する</span>
+                  <span className={styles.hintDesc}>メールでリセットリンクを送ります</span>
+                </span>
+                <span className={styles.hintArrow}>›</span>
+              </Link>
+              <div className={styles.hintCard}>
+                <span className={styles.hintIcon}>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                    <polyline points="10 17 15 12 10 7" />
+                    <line x1="15" y1="12" x2="3" y2="12" />
+                  </svg>
+                </span>
+                <span className={styles.hintText}>
+                  <span className={styles.hintTitle}>Google でログインしてみる</span>
+                  <span className={styles.hintDesc}>
+                    Google で登録していれば下のボタンからどうぞ
+                  </span>
+                </span>
+              </div>
             </div>
           )}
           <Button variant="primary" type="submit" disabled={isSubmitting}>

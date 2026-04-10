@@ -115,9 +115,13 @@ describe('LoginPage', () => {
     await user.type(screen.getByLabelText('パスワード'), 'wrong')
     await user.click(screen.getByRole('button', { name: 'ログイン' }))
 
-    // エラーメッセージと警告バナーの両方が表示される
-    expect(await screen.findByText(/もしかして Google で登録/)).toBeInTheDocument()
-    expect(screen.getByText('こちらから再設定')).toHaveAttribute('href', '/password/new')
+    // エラーメッセージとヒントカードの両方が表示される
+    expect(await screen.findByText('パスワードを再設定する')).toBeInTheDocument()
+    expect(screen.getByText('パスワードを再設定する').closest('a')).toHaveAttribute(
+      'href',
+      '/password/new',
+    )
+    expect(screen.getByText('Google でログインしてみる')).toBeInTheDocument()
   })
 
   it('401 以外のエラー時は警告バナーが表示されない', async () => {
@@ -135,6 +139,6 @@ describe('LoginPage', () => {
     await user.click(screen.getByRole('button', { name: 'ログイン' }))
 
     expect(await screen.findByText('サーバーエラー')).toBeInTheDocument()
-    expect(screen.queryByText(/もしかして Google で登録/)).not.toBeInTheDocument()
+    expect(screen.queryByText('Google でログインしてみる')).not.toBeInTheDocument()
   })
 })
