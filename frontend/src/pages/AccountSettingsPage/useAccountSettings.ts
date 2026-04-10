@@ -16,7 +16,10 @@ export function useAccountSettings() {
   const [passwordSuccess, setPasswordSuccess] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [unlinkingProvider, setUnlinkingProvider] = useState<string | null>(null)
-  const [providerError, setProviderError] = useState('')
+  const [providerError, setProviderError] = useState<{
+    message: string
+    code?: string
+  } | null>(null)
 
   const totalMethods = user ? countLoginMethods(user.has_password, user.providers) : 0
 
@@ -24,7 +27,7 @@ export function useAccountSettings() {
   const canUnlink = totalMethods > 1
 
   const handleUnlinkProvider = async (provider: string) => {
-    setProviderError('')
+    setProviderError(null)
     setUnlinkingProvider(provider)
 
     try {
@@ -32,9 +35,9 @@ export function useAccountSettings() {
       setUser(response.user)
     } catch (err) {
       if (err instanceof ApiError) {
-        setProviderError(err.message)
+        setProviderError({ message: err.message, code: err.code })
       } else {
-        setProviderError('連携解除に失敗しました')
+        setProviderError({ message: '連携解除に失敗しました' })
       }
     } finally {
       setUnlinkingProvider(null)

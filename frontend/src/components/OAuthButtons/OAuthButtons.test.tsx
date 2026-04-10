@@ -193,6 +193,61 @@ describe('OAuthButtons', () => {
         expect(screen.getByText(/既にメール\+パスワードで登録/)).toBeInTheDocument()
       })
     })
+
+    it('email_already_registered エラー時に ActionErrorCard が表示される', async () => {
+      const { triggerCallback } = setupGoogleSdkMock()
+      mockSignIn.mockRejectedValue(
+        new ApiError(
+          'このメールアドレスは既にメール+パスワードで登録されています。メールでログインしてください',
+          409,
+          'email_already_registered',
+        ),
+      )
+
+      const mockScrollToEmail = vi.fn()
+      renderWithProviders(<OAuthButtons onScrollToEmailForm={mockScrollToEmail} />)
+      await waitFor(() => expect(window.google).toBeDefined())
+      triggerCallback('dummy-id-token')
+
+      await waitFor(() => {
+        expect(screen.getByText('ログイン方法が異なります')).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: 'メールでログイン' })).toBeInTheDocument()
+      })
+    })
+
+    it('email_registered_with_other_provider エラー時に ActionErrorCard が表示される（ボタンなし）', async () => {
+      const { triggerCallback } = setupGoogleSdkMock()
+      mockSignIn.mockRejectedValue(
+        new ApiError(
+          'このメールアドレスは既にGoogleで登録されています',
+          409,
+          'email_registered_with_other_provider',
+        ),
+      )
+
+      renderWithProviders(<OAuthButtons />)
+      await waitFor(() => expect(window.google).toBeDefined())
+      triggerCallback('dummy-id-token')
+
+      await waitFor(() => {
+        expect(screen.getByText('別のアカウントで登録済みです')).toBeInTheDocument()
+        expect(screen.queryByRole('button', { name: 'メールでログイン' })).not.toBeInTheDocument()
+      })
+    })
+
+    it('その他のエラーは従来通りテキスト表示', async () => {
+      const { triggerCallback } = setupGoogleSdkMock()
+      mockSignIn.mockRejectedValue(new ApiError('不明なエラー', 500))
+
+      renderWithProviders(<OAuthButtons />)
+      await waitFor(() => expect(window.google).toBeDefined())
+      triggerCallback('dummy-id-token')
+
+      await waitFor(() => {
+        expect(screen.getByText('不明なエラー')).toBeInTheDocument()
+        expect(screen.queryByText('ログイン方法が異なります')).not.toBeInTheDocument()
+      })
+    })
   })
 
   describe('linkモード', () => {
