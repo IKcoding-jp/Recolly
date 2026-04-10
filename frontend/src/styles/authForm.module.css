@@ -25,6 +25,102 @@
   font-size: var(--font-size-meta);
 }
 
+.success {
+  color: var(--color-success);
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-bg-white);
+  border: var(--border-width-thin) var(--border-style) var(--color-success);
+  border-radius: var(--radius-sm);
+  margin-top: var(--spacing-md);
+}
+
+.warningBanner {
+  background-color: var(--color-error-bg);
+  border-left: 3px solid var(--color-error);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  margin-top: var(--spacing-md);
+  color: var(--color-text);
+}
+
+.warningBanner p {
+  margin: var(--spacing-xs) 0;
+}
+
+.warningBanner a {
+  color: var(--color-text);
+  text-decoration: underline;
+  font-weight: var(--font-weight-medium);
+}
+
+.hintCards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.hintCard {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  text-decoration: none;
+  color: var(--color-text);
+  border: var(--border-width-thin) var(--border-style) var(--color-border-light);
+  background: var(--color-bg-white);
+  transition: background var(--transition-fast);
+  cursor: pointer;
+}
+
+.hintCard:hover {
+  background: var(--color-bg);
+}
+
+.hintIcon {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.hintIcon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.hintText {
+  flex: 1;
+}
+
+.hintTitle {
+  font-weight: var(--font-weight-medium);
+  display: block;
+  margin-bottom: 0.125rem;
+}
+
+.hintDesc {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+}
+
+.hintArrow {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-h3);
+}
+
 .link {
   text-align: center;
   margin-top: var(--spacing-md);

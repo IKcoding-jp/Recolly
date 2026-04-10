@@ -16,4 +16,5 @@ module ApiErrorCodes
   PASSWORD_MISMATCH                    = 'password_mismatch'
   EMAIL_ALREADY_SET                    = 'email_already_set'
   EMAIL_TAKEN                          = 'email_taken'
+  PASSWORD_RESET_FAILED                = 'password_reset_failed'
 end

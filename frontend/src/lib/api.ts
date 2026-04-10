@@ -32,10 +32,12 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
     return undefined as T
   }
 
-  const data: unknown = await response.json()
+  // Devise FailureApp 等が JSON でないレスポンスを返す場合に備え、
+  // JSON パース失敗時は null にフォールバックする
+  const data: unknown = await response.json().catch(() => null)
 
   if (!response.ok) {
-    const errorData = data as ErrorResponse
+    const errorData = (data ?? {}) as ErrorResponse
     const rawMessage =
       errorData.error ?? errorData.message ?? errorData.errors?.join(', ') ?? 'エラーが発生しました'
     // code があれば errorMessages.ts 辞書経由で日本語メッセージに変換、なければ raw を使う
@@ -93,6 +95,23 @@ export const authApi = {
     return request<{ message: string }>('/password', {
       method: 'POST',
       body: JSON.stringify({ user: { email } }),
+    })
+  },
+
+  updatePassword(
+    resetPasswordToken: string,
+    password: string,
+    passwordConfirmation: string,
+  ): Promise<{ message: string }> {
+    return request<{ message: string }>('/password', {
+      method: 'PUT',
+      body: JSON.stringify({
+        user: {
+          reset_password_token: resetPasswordToken,
+          password,
+          password_confirmation: passwordConfirmation,
+        },
+      }),
     })
   },
 }

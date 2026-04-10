@@ -91,4 +91,54 @@ describe('LoginPage', () => {
     renderLoginPage()
     expect(await screen.findByTestId('oauth-buttons-mock')).toBeInTheDocument()
   })
+
+  it('「パスワードをお忘れですか？」リンクが常時表示される', async () => {
+    renderLoginPage()
+    expect(await screen.findByText('パスワードをお忘れですか？')).toHaveAttribute(
+      'href',
+      '/password/new',
+    )
+  })
+
+  it('401 エラー時に警告バナー（パスワードリセット誘導 + Google 誘導）が表示される', async () => {
+    renderLoginPage()
+    const user = userEvent.setup()
+
+    // ログインAPI失敗（401）
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      json: () => Promise.resolve({ error: 'メールアドレスまたはパスワードが正しくありません' }),
+    })
+
+    await user.type(await screen.findByLabelText('メールアドレス'), 'test@example.com')
+    await user.type(screen.getByLabelText('パスワード'), 'wrong')
+    await user.click(screen.getByRole('button', { name: 'ログイン' }))
+
+    // エラーメッセージとヒントカードの両方が表示される
+    expect(await screen.findByText('パスワードを再設定する')).toBeInTheDocument()
+    expect(screen.getByText('パスワードを再設定する').closest('a')).toHaveAttribute(
+      'href',
+      '/password/new',
+    )
+    expect(screen.getByText('Google でログインしてみる')).toBeInTheDocument()
+  })
+
+  it('401 以外のエラー時は警告バナーが表示されない', async () => {
+    renderLoginPage()
+    const user = userEvent.setup()
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ error: 'サーバーエラー' }),
+    })
+
+    await user.type(await screen.findByLabelText('メールアドレス'), 'test@example.com')
+    await user.type(screen.getByLabelText('パスワード'), 'wrong')
+    await user.click(screen.getByRole('button', { name: 'ログイン' }))
+
+    expect(await screen.findByText('サーバーエラー')).toBeInTheDocument()
+    expect(screen.queryByText('Google でログインしてみる')).not.toBeInTheDocument()
+  })
 })

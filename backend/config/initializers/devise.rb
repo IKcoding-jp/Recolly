@@ -7,6 +7,9 @@ Devise.setup do |config|
   # メーラーの送信元アドレス（SES の検証ドメイン recolly.net と一致させる必要あり）
   config.mailer_sender = 'noreply@recolly.net'
 
+  # カスタムメーラーを使用（フロントエンド URL をテンプレートに注入するため）
+  config.mailer = 'DeviseMailer'
+
   # ORM設定
   require 'devise/orm/active_record'
 
