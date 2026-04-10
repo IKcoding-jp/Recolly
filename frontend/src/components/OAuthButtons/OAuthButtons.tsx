@@ -147,7 +147,7 @@ export function OAuthButtons({
   }
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${mode === 'link' ? styles.containerLink : ''}`}>
       {mode === 'sign_in' && (
         <div className={styles.divider}>
           <span className={styles.dividerText}>または</span>

@@ -5,6 +5,12 @@
   gap: var(--spacing-sm);
 }
 
+/* 設定ページの providerRow 内に埋め込まれるときは余白を除去してコンパクトにする */
+.containerLink {
+  margin-top: 0;
+  gap: 0;
+}
+
 .divider {
   display: flex;
   align-items: center;
