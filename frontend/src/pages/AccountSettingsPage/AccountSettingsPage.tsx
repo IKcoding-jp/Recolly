@@ -1,5 +1,6 @@
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import { Button } from '../../components/ui/Button/Button'
+import { ActionErrorCard } from '../../components/ui/ActionErrorCard/ActionErrorCard'
 import { OAuthButtons } from '../../components/OAuthButtons/OAuthButtons'
 import { FormInput } from '../../components/ui/FormInput/FormInput'
 import { useAccountSettings } from './useAccountSettings'
@@ -40,7 +41,24 @@ export function AccountSettingsPage() {
       {/* ログイン方法セクション */}
       <div className={styles.section}>
         <SectionTitle>ログイン方法</SectionTitle>
-        {providerError && <p className={styles.error}>{providerError}</p>}
+        {providerError && providerError.code === 'last_login_method' && (
+          <ActionErrorCard
+            title="解除できません"
+            message={providerError.message}
+            actionLabel="パスワードを設定する"
+            onAction={() => {
+              const form = document.getElementById('password-form')
+              if (form) {
+                form.scrollIntoView({ behavior: 'smooth' })
+                const input = form.querySelector<HTMLInputElement>('input[type="password"]')
+                input?.focus({ preventScroll: true })
+              }
+            }}
+          />
+        )}
+        {providerError && providerError.code !== 'last_login_method' && (
+          <p className={styles.error}>{providerError.message}</p>
+        )}
         <div className={styles.providerList}>
           {/* メール+パスワード */}
           <div className={styles.providerRow}>
@@ -86,7 +104,7 @@ export function AccountSettingsPage() {
                   <OAuthButtons
                     mode="link"
                     onLinkSuccess={(updatedUser) => setUser(updatedUser)}
-                    onLinkError={(message) => setProviderError(message)}
+                    onLinkError={(message) => setProviderError({ message })}
                   />
                 )}
               </div>
@@ -98,7 +116,7 @@ export function AccountSettingsPage() {
       {/* パスワード設定セクション */}
       <div className={styles.section}>
         <SectionTitle>{user.has_password ? 'パスワードを変更' : 'パスワードを設定'}</SectionTitle>
-        <form className={styles.form} onSubmit={handlePasswordSubmit}>
+        <form id="password-form" className={styles.form} onSubmit={handlePasswordSubmit}>
           <FormInput
             label={user.has_password ? '新しいパスワード' : 'パスワード'}
             id="password"

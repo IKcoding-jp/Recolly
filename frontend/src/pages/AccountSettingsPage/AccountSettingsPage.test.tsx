@@ -1,14 +1,18 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { AccountSettingsPage } from './AccountSettingsPage'
 import type { User } from '../../lib/types'
 
 // APIモック
+const mockUnlinkProvider = vi.fn()
+const mockSetPassword = vi.fn()
+
 vi.mock('../../lib/api', () => ({
   accountApi: {
-    unlinkProvider: vi.fn(),
-    setPassword: vi.fn(),
+    unlinkProvider: (...args: unknown[]) => mockUnlinkProvider(...args),
+    setPassword: (...args: unknown[]) => mockSetPassword(...args),
   },
   googleAuthApi: {
     signIn: vi.fn(),
@@ -16,10 +20,12 @@ vi.mock('../../lib/api', () => ({
   },
   ApiError: class ApiError extends Error {
     status: number
-    constructor(message: string, status: number) {
+    code?: string
+    constructor(message: string, status: number, code?: string) {
       super(message)
       this.name = 'ApiError'
       this.status = status
+      this.code = code
     }
   },
 }))
@@ -92,6 +98,46 @@ describe('AccountSettingsPage', () => {
     expect(screen.getByText('パスワードを変更')).toBeInTheDocument()
     expect(screen.getByLabelText('新しいパスワード')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '変更する' })).toBeInTheDocument()
+  })
+
+  it('連携解除失敗時（last_login_method）に ActionErrorCard が表示される', async () => {
+    const user = userEvent.setup()
+    mockUser = createUser({ providers: ['google_oauth2'], has_password: true })
+    const { ApiError: MockApiError } = await import('../../lib/api')
+    mockUnlinkProvider.mockRejectedValue(
+      new MockApiError(
+        '最後のログイン手段は解除できません。先にパスワードを設定するか、別のOAuthを連携してください',
+        422,
+        'last_login_method',
+      ),
+    )
+
+    renderPage()
+
+    const unlinkButton = screen.getByRole('button', { name: '解除' })
+    await user.click(unlinkButton)
+
+    await waitFor(() => {
+      expect(screen.getByText('解除できません')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'パスワードを設定する' })).toBeInTheDocument()
+    })
+  })
+
+  it('連携解除失敗時（その他エラー）は従来通りテキスト表示', async () => {
+    const user = userEvent.setup()
+    mockUser = createUser({ providers: ['google_oauth2'], has_password: true })
+    const { ApiError: MockApiError } = await import('../../lib/api')
+    mockUnlinkProvider.mockRejectedValue(new MockApiError('サーバーエラー', 500))
+
+    renderPage()
+
+    const unlinkButton = screen.getByRole('button', { name: '解除' })
+    await user.click(unlinkButton)
+
+    await waitFor(() => {
+      expect(screen.getByText('サーバーエラー')).toBeInTheDocument()
+      expect(screen.queryByText('解除できません')).not.toBeInTheDocument()
+    })
   })
 })
 
