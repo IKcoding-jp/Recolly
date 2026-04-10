@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError, googleAuthApi } from '../../lib/api'
 import { useAuth } from '../../contexts/useAuth'
+import { ActionErrorCard } from '../ui/ActionErrorCard/ActionErrorCard'
 import type { User } from '../../lib/types'
 import type { GoogleCredentialResponse } from '../../types/google-gsi'
 import styles from './OAuthButtons.module.css'
@@ -17,6 +18,8 @@ type OAuthButtonsProps = {
   mode?: 'sign_in' | 'link'
   onLinkSuccess?: (user: User) => void
   onLinkError?: (message: string) => void
+  // エラー時にメールログインフォームへスクロールするコールバック
+  onScrollToEmailForm?: () => void
 }
 
 // Google Identity Services (ADR-0035) を使ったOAuthボタン。
@@ -28,10 +31,11 @@ export function OAuthButtons({
   mode = 'sign_in',
   onLinkSuccess,
   onLinkError,
+  onScrollToEmailForm,
 }: OAuthButtonsProps = {}) {
   const buttonContainerRef = useRef<HTMLDivElement>(null)
   const [isSdkReady, setIsSdkReady] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<{ message: string; code?: string } | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const { setUser } = useAuth()
   const navigate = useNavigate()
@@ -52,7 +56,9 @@ export function OAuthButtons({
         setIsSdkReady(true)
         clearInterval(intervalId)
       } else if (elapsed >= GIS_POLL_TIMEOUT_MS) {
-        setError('Googleログインの読み込みに失敗しました。ページを再読み込みしてください')
+        setError({
+          message: 'Googleログインの読み込みに失敗しました。ページを再読み込みしてください',
+        })
         clearInterval(intervalId)
       }
     }, GIS_POLL_INTERVAL_MS)
@@ -66,7 +72,7 @@ export function OAuthButtons({
 
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
     if (!clientId) {
-      setError('Googleログインが設定されていません（VITE_GOOGLE_CLIENT_ID 未定義）')
+      setError({ message: 'Googleログインが設定されていません（VITE_GOOGLE_CLIENT_ID 未定義）' })
       return
     }
 
@@ -106,11 +112,18 @@ export function OAuthButtons({
         await handleSignIn(credential)
       }
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'ログインに失敗しました'
-      if (mode === 'link') {
-        onLinkError?.(message)
+      if (err instanceof ApiError) {
+        if (mode === 'link') {
+          onLinkError?.(err.message)
+        } else {
+          setError({ message: err.message, code: err.code })
+        }
       } else {
-        setError(message)
+        if (mode === 'link') {
+          onLinkError?.('ログインに失敗しました')
+        } else {
+          setError({ message: 'ログインに失敗しました' })
+        }
       }
     } finally {
       setIsProcessing(false)
@@ -128,7 +141,7 @@ export function OAuthButtons({
         navigate('/auth/complete', { replace: true })
         break
       case 'error':
-        setError(data.message)
+        setError({ message: data.message, code: data.code })
         break
     }
   }
@@ -147,7 +160,22 @@ export function OAuthButtons({
       />
       {!isSdkReady && !error && <div className={styles.loading}>Googleログインを読み込み中...</div>}
       {isProcessing && <div className={styles.loading}>処理中...</div>}
-      {error && <p className={styles.error}>{error}</p>}
+      {error && error.code === 'email_already_registered' && (
+        <ActionErrorCard
+          title="ログイン方法が異なります"
+          message={error.message}
+          actionLabel="メールでログイン"
+          onAction={onScrollToEmailForm}
+        />
+      )}
+      {error && error.code === 'email_registered_with_other_provider' && (
+        <ActionErrorCard title="別のアカウントで登録済みです" message={error.message} />
+      )}
+      {error &&
+        error.code !== 'email_already_registered' &&
+        error.code !== 'email_registered_with_other_provider' && (
+          <p className={styles.error}>{error.message}</p>
+        )}
     </div>
   )
 }

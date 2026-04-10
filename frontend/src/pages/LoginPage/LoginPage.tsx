@@ -67,7 +67,7 @@ export function LoginPage() {
         <Typography variant="h2">ログイン</Typography>
         <Divider />
         {successMessage && <p className={styles.success}>{successMessage}</p>}
-        <form className={styles.form} onSubmit={handleSubmit}>
+        <form id="email-login-form" className={styles.form} onSubmit={handleSubmit}>
           <FormInput
             label="メールアドレス"
             id="email"
@@ -136,7 +136,16 @@ export function LoginPage() {
             {isSubmitting ? 'ログイン中...' : 'ログイン'}
           </Button>
         </form>
-        <OAuthButtons />
+        <OAuthButtons
+          onScrollToEmailForm={() => {
+            const form = document.getElementById('email-login-form')
+            if (form) {
+              form.scrollIntoView({ behavior: 'smooth' })
+              const emailInput = form.querySelector<HTMLInputElement>('input[type="email"]')
+              emailInput?.focus({ preventScroll: true })
+            }
+          }}
+        />
         <div className={styles.link}>
           <Link to="/password/new">パスワードをお忘れですか？</Link>
         </div>
