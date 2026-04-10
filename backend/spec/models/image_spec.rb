@@ -24,14 +24,14 @@ RSpec.describe Image, type: :model do
     it 's3_keyが必須' do
       image = described_class.new(valid_attributes.merge(s3_key: nil))
       expect(image).not_to be_valid
-      expect(image.errors[:s3_key]).to include("can't be blank")
+      expect(image.errors[:s3_key]).to include('を入力してください')
     end
 
     it 's3_keyが一意' do
       described_class.create!(valid_attributes)
       duplicate = described_class.new(valid_attributes.merge(file_name: 'other.jpg'))
       expect(duplicate).not_to be_valid
-      expect(duplicate.errors[:s3_key]).to include('has already been taken')
+      expect(duplicate.errors[:s3_key]).to include('はすでに存在します')
     end
 
     it 'file_nameが必須' do
