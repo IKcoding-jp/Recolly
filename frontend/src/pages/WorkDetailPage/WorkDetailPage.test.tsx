@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { WorkDetailPage } from './WorkDetailPage'
 
@@ -92,8 +93,8 @@ describe('WorkDetailPage', () => {
       const slider = screen.getByRole('slider')
       expect(slider).toHaveAttribute('value', '7')
     })
-    // スコア表示も確認
-    expect(screen.getByText('7')).toBeInTheDocument()
+    // スコア表示も確認（目盛りの7とスコアの7で複数マッチする）
+    expect(screen.getAllByText('7').length).toBeGreaterThanOrEqual(1)
   })
 
   it('進捗が表示される', async () => {
@@ -117,21 +118,29 @@ describe('WorkDetailPage', () => {
     })
   })
 
-  it('感想セクションが表示される', async () => {
+  it('感想タブに切り替えると感想セクションが表示される', async () => {
+    const user = userEvent.setup()
     renderWithRouter('1')
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('作品の感想を書く...')).toBeInTheDocument()
+      expect(screen.getByText('進撃の巨人')).toBeInTheDocument()
     })
+    // 感想タブに切り替え
+    await user.click(screen.getByRole('button', { name: '感想' }))
+    expect(screen.getByPlaceholderText('作品の感想を書く...')).toBeInTheDocument()
   })
 
-  it('アニメの場合は話数ごとの感想セクションが表示される', async () => {
+  it('感想タブでアニメの場合は話数ごとの感想セクションが表示される', async () => {
+    const user = userEvent.setup()
     renderWithRouter('1')
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('この話の感想を書く...')).toBeInTheDocument()
+      expect(screen.getByText('進撃の巨人')).toBeInTheDocument()
     })
+    await user.click(screen.getByRole('button', { name: '感想' }))
+    expect(screen.getByPlaceholderText('この話の感想を書く...')).toBeInTheDocument()
   })
 
-  it('映画の場合は話数ごとの感想セクションが非表示', async () => {
+  it('映画の場合は感想タブでも話数ごとの感想セクションが非表示', async () => {
+    const user = userEvent.setup()
     vi.mocked(recordsApi.getAll).mockResolvedValue({
       records: [{ ...mockRecord, work: { ...mockRecord.work, media_type: 'movie' as const } }],
     })
@@ -139,6 +148,7 @@ describe('WorkDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByText('進撃の巨人')).toBeInTheDocument()
     })
+    await user.click(screen.getByRole('button', { name: '感想' }))
     expect(screen.queryByPlaceholderText('この話の感想を書く...')).not.toBeInTheDocument()
   })
 

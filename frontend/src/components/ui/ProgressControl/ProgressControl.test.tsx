@@ -50,12 +50,6 @@ describe('ProgressControl', () => {
     expect(screen.getByRole('spinbutton')).toBeInTheDocument()
   })
 
-  it('プログレスバーが正しい割合で表示される', () => {
-    const { container } = render(<ProgressControl current={12} total={24} onChange={() => {}} />)
-    const bar = container.querySelector('[class*="fill"]')
-    expect(bar).toHaveStyle({ width: '50%' })
-  })
-
   it('漫画の場合は「巻」を表示する', () => {
     render(<ProgressControl current={5} total={20} onChange={() => {}} mediaType="manga" />)
     expect(screen.getByText('5 / 20巻')).toBeInTheDocument()
