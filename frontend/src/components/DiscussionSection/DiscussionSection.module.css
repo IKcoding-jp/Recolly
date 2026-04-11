@@ -1,7 +1,5 @@
 .section {
-  margin-top: var(--spacing-2xl);
-  padding-top: var(--spacing-lg);
-  border-top: var(--border-width) var(--border-style) var(--color-border-light);
+  /* タブ内に配置されるため区切り線は不要 */
 }
 
 .header {

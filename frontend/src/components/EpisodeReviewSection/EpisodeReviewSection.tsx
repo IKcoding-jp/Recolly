@@ -46,39 +46,6 @@ export function EpisodeReviewSection({
 
   return (
     <div className={styles.container}>
-      <div className={styles.form}>
-        <div className={styles.formRow}>
-          <label className={styles.episodeLabel} htmlFor="episode-number">
-            第
-          </label>
-          <input
-            id="episode-number"
-            type="number"
-            className={styles.episodeInput}
-            value={episodeNumber}
-            onChange={(e) => setEpisodeNumber(Number(e.target.value))}
-            min={1}
-          />
-          <span className={styles.episodeLabel}>{unit}</span>
-        </div>
-        <FormTextarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          placeholder={`この${unit}の感想を書く...`}
-          rows={3}
-        />
-        <div className={styles.formActions}>
-          <Button
-            variant="primary"
-            size="sm"
-            disabled={isSubmitting || !body.trim()}
-            onClick={() => void handleSubmit()}
-          >
-            {isSubmitting ? '保存中...' : '保存'}
-          </Button>
-        </div>
-      </div>
-
       {sortedReviews.length > 0 && (
         <div className={styles.list}>
           {sortedReviews.map((review) => (
@@ -92,6 +59,41 @@ export function EpisodeReviewSection({
           ))}
         </div>
       )}
+
+      <div className={styles.formDivider}>
+        <div className={styles.form}>
+          <div className={styles.formRow}>
+            <label className={styles.episodeLabel} htmlFor="episode-number">
+              第
+            </label>
+            <input
+              id="episode-number"
+              type="number"
+              className={styles.episodeInput}
+              value={episodeNumber}
+              onChange={(e) => setEpisodeNumber(Number(e.target.value))}
+              min={1}
+            />
+            <span className={styles.episodeLabel}>{unit}</span>
+          </div>
+          <FormTextarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder={`この${unit}の感想を書く...`}
+            rows={3}
+          />
+          <div className={styles.formActions}>
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={isSubmitting || !body.trim()}
+              onClick={() => void handleSubmit()}
+            >
+              {isSubmitting ? '保存中...' : '保存'}
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

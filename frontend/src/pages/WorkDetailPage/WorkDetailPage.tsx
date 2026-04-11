@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { MediaType } from '../../lib/types'
 import {
   hasEpisodes,
@@ -31,12 +32,21 @@ const MEDIA_TYPE_LABELS: Record<MediaType, string> = {
 // 話数ごとの感想を表示するジャンル
 const HAS_EPISODES: MediaType[] = ['anime', 'drama', 'manga']
 
+type TabId = 'overview' | 'reviews' | 'community'
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'overview', label: '概要' },
+  { id: 'reviews', label: '感想' },
+  { id: 'community', label: 'コミュニティ' },
+]
+
 const formatDate = (date: string | null): string => {
   if (!date) return '---'
   return new Date(date).toLocaleDateString('ja-JP')
 }
 
 export function WorkDetailPage() {
+  const [activeTab, setActiveTab] = useState<TabId>('overview')
   const {
     record,
     isLoading,
@@ -73,8 +83,9 @@ export function WorkDetailPage() {
   return (
     <div className={styles.page}>
       <div className={styles.container}>
-        <div className={styles.layout}>
-          <aside className={styles.sidebar}>
+        {/* ヘッダー: カバー画像 + タイトル + ステータス + 評価 */}
+        <div className={styles.header}>
+          <div className={styles.coverArea}>
             {work.cover_image_url ? (
               <img
                 className={styles.cover}
@@ -84,17 +95,15 @@ export function WorkDetailPage() {
             ) : (
               <div className={styles.coverPlaceholder} />
             )}
-            <div className={styles.metadata}>
-              <div>{MEDIA_TYPE_LABELS[work.media_type]}</div>
-              {work.total_episodes !== null && <div>全{work.total_episodes}話</div>}
-            </div>
-          </aside>
-
-          <div className={styles.main}>
+          </div>
+          <div className={styles.titleArea}>
             <h1 className={styles.title}>{work.title}</h1>
+            <div className={styles.metadata}>
+              {MEDIA_TYPE_LABELS[work.media_type]}
+              {work.total_episodes !== null && ` · 全${String(work.total_episodes)}話`}
+            </div>
 
-            <div className={styles.section}>
-              <div className={styles.label}>ステータス</div>
+            <div className={styles.statusSection}>
               <StatusSelector
                 value={record.status}
                 onChange={handleStatusChange}
@@ -102,44 +111,61 @@ export function WorkDetailPage() {
               />
             </div>
 
-            <div className={styles.section}>
-              <div className={styles.label}>評価</div>
-              <RatingSlider
-                value={record.rating ?? 0}
-                onChange={(v) => handleRatingChange(v === 0 ? null : v)}
-              />
-            </div>
+            <RatingSlider
+              value={record.rating ?? 0}
+              onChange={(v) => handleRatingChange(v === 0 ? null : v)}
+              mediaType={work.media_type}
+            />
+          </div>
+        </div>
 
-            {hasEpisodes(work.media_type) && (
-              <div className={styles.section}>
-                <div className={styles.label}>進捗</div>
-                <ProgressControl
-                  current={record.current_episode}
-                  total={work.total_episodes}
-                  onChange={handleEpisodeChange}
-                  showFullControls
-                  mediaType={work.media_type}
-                />
-                {work.media_type === 'manga' &&
-                  isOngoing(work.metadata) &&
-                  getUnreadCount(record.current_episode, work.total_episodes) > 0 && (
-                    <div className={styles.newVolumeAlert}>
-                      📖 <strong>新刊</strong>が出ています！ {work.total_episodes}巻
-                    </div>
-                  )}
+        {/* タブナビゲーション */}
+        <div className={styles.tabs}>
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              className={`${styles.tab} ${activeTab === tab.id ? styles.tabActive : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* タブコンテンツ: 概要 */}
+        {activeTab === 'overview' && (
+          <div className={styles.tabContent}>
+            <div className={styles.dataRow}>
+              {hasEpisodes(work.media_type) && (
+                <div className={styles.dataItem}>
+                  <div className={styles.label}>進捗</div>
+                  <ProgressControl
+                    current={record.current_episode}
+                    total={work.total_episodes}
+                    onChange={handleEpisodeChange}
+                    showFullControls
+                    mediaType={work.media_type}
+                  />
+                  {work.media_type === 'manga' &&
+                    isOngoing(work.metadata) &&
+                    getUnreadCount(record.current_episode, work.total_episodes) > 0 && (
+                      <div className={styles.newVolumeAlert}>
+                        📖 <strong>新刊</strong>が出ています！ {work.total_episodes}巻
+                      </div>
+                    )}
+                </div>
+              )}
+              <div className={styles.dataItem}>
+                <div className={styles.label}>{getRewatchLabel(work.media_type)}</div>
+                <RewatchControl count={record.rewatch_count} onChange={handleRewatchCountChange} />
               </div>
-            )}
-
-            <div className={styles.section}>
-              <div className={styles.label}>{getRewatchLabel(work.media_type)}</div>
-              <RewatchControl count={record.rewatch_count} onChange={handleRewatchCountChange} />
-            </div>
-
-            <div className={styles.section}>
-              <div className={styles.label}>日付</div>
-              <div className={styles.dates}>
-                <div className={styles.dateItem}>開始: {formatDate(record.started_at)}</div>
-                <div className={styles.dateItem}>完了: {formatDate(record.completed_at)}</div>
+              <div className={styles.dataItem}>
+                <div className={styles.label}>開始日</div>
+                <div className={styles.dateValue}>{formatDate(record.started_at)}</div>
+              </div>
+              <div className={styles.dataItem}>
+                <div className={styles.label}>完了日</div>
+                <div className={styles.dateValue}>{formatDate(record.completed_at)}</div>
               </div>
             </div>
 
@@ -150,19 +176,30 @@ export function WorkDetailPage() {
 
             {work.description && (
               <div className={styles.section}>
-                <div className={styles.label}>あらすじ</div>
+                <div className={styles.sectionTitle}>あらすじ</div>
                 <p className={styles.description}>{work.description}</p>
               </div>
             )}
 
+            <div className={styles.deleteSection}>
+              <Button variant="secondary" onClick={openDeleteDialog}>
+                記録を削除
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* タブコンテンツ: 感想 */}
+        {activeTab === 'reviews' && (
+          <div className={styles.tabContent}>
             <div className={styles.section}>
-              <div className={styles.label}>感想</div>
+              <div className={styles.sectionTitle}>作品の感想</div>
               <ReviewSection reviewText={record.review_text} onSave={handleReviewTextSave} />
             </div>
 
             {HAS_EPISODES.includes(work.media_type) && (
               <div className={styles.section}>
-                <div className={styles.label}>
+                <div className={styles.sectionTitle}>
                   {UNIT_LABELS[work.media_type] === '巻' ? '巻数ごとの感想' : '話数ごとの感想'}
                 </div>
                 <EpisodeReviewSection
@@ -172,20 +209,19 @@ export function WorkDetailPage() {
                 />
               </div>
             )}
+          </div>
+        )}
 
+        {/* タブコンテンツ: コミュニティ */}
+        {activeTab === 'community' && (
+          <div className={styles.tabContent}>
             <DiscussionSection
               workId={work.id}
               totalEpisodes={work.total_episodes}
               hasRecord={!!record}
             />
-
-            <div className={styles.deleteSection}>
-              <Button variant="secondary" onClick={openDeleteDialog}>
-                記録を削除
-              </Button>
-            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <RecordDeleteDialog

@@ -4,6 +4,20 @@
   gap: var(--spacing-sm);
 }
 
+/* FormTextareaのボトムラインをアウトラインに上書き */
+.container textarea {
+  border: var(--border-width) var(--border-style) var(--color-border-light);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  min-height: 80px;
+  background: var(--color-bg-white);
+}
+
+.container textarea:focus {
+  border-color: var(--color-text);
+  border-bottom-color: var(--color-text);
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;

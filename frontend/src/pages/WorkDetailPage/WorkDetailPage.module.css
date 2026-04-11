@@ -9,20 +9,22 @@
   margin: 0 auto;
 }
 
-.layout {
+/* ===== ヘッダー: カバー画像 + タイトルエリア ===== */
+.header {
   display: flex;
   gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
 }
 
-.sidebar {
-  width: 180px;
+.coverArea {
+  width: 160px;
   flex-shrink: 0;
 }
 
 .cover {
   width: 100%;
-  border-radius: var(--radius-none);
   border: var(--border-width) var(--border-style) var(--color-border-light);
+  border-radius: var(--radius-none);
 }
 
 .coverPlaceholder {
@@ -32,15 +34,7 @@
   border: var(--border-width) var(--border-style) var(--color-border-light);
 }
 
-.metadata {
-  margin-top: var(--spacing-sm);
-  font-family: var(--font-body);
-  font-size: var(--font-size-meta);
-  color: var(--color-text-muted);
-  line-height: var(--line-height-normal);
-}
-
-.main {
+.titleArea {
   flex: 1;
   min-width: 0;
 }
@@ -50,12 +44,84 @@
   font-size: var(--font-size-h3);
   font-weight: var(--font-weight-bold);
   color: var(--color-text);
-  margin: 0 0 var(--spacing-lg);
+  margin: 0 0 var(--spacing-xs);
   line-height: var(--line-height-tight);
 }
 
+.metadata {
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-md);
+  letter-spacing: 0.05em;
+}
+
+.statusSection {
+  margin-bottom: var(--spacing-lg);
+}
+
+/* ===== タブ ===== */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: var(--border-width) var(--border-style) #e8e8e0;
+  margin-bottom: 28px;
+}
+
+.tab {
+  padding: 10px 20px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border: none;
+  border-bottom: var(--border-width) var(--border-style) transparent;
+  margin-bottom: -2px;
+  background: none;
+  transition: all var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--color-text-muted);
+}
+
+.tabActive {
+  color: var(--color-text);
+  border-bottom-color: var(--color-text);
+}
+
+/* ===== データ行（概要タブ） ===== */
+.dataRow {
+  display: flex;
+  gap: var(--spacing-xl);
+  flex-wrap: wrap;
+  margin-bottom: var(--spacing-lg);
+}
+
+.dataItem {
+  min-width: 120px;
+}
+
+.dateValue {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  margin-top: var(--spacing-xs);
+}
+
+/* ===== セクション ===== */
 .section {
   margin-bottom: var(--spacing-lg);
+}
+
+.sectionTitle {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin-bottom: 10px;
 }
 
 .label {
@@ -65,17 +131,6 @@
   margin-bottom: var(--spacing-xs);
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-wide);
-}
-
-.dates {
-  display: flex;
-  gap: var(--spacing-xl);
-}
-
-.dateItem {
-  font-family: var(--font-body);
-  font-size: var(--font-size-body);
-  color: var(--color-text);
 }
 
 .description {
@@ -103,12 +158,16 @@
   color: var(--color-manga);
 }
 
+/* ===== 削除セクション（右寄せ） ===== */
 .deleteSection {
-  margin-top: var(--spacing-2xl);
+  margin-top: 48px;
   padding-top: var(--spacing-lg);
-  border-top: var(--border-width) var(--border-style) var(--color-border-light);
+  border-top: var(--border-width-thin) var(--border-style) #e8e8e0;
+  display: flex;
+  justify-content: flex-end;
 }
 
+/* ===== ローディング・空状態 ===== */
 .loading {
   text-align: center;
   color: var(--color-text-muted);
@@ -123,27 +182,28 @@
   margin-top: var(--spacing-xl);
 }
 
+/* ===== レスポンシブ ===== */
 @media (max-width: 768px) {
   .page {
     padding: var(--spacing-md);
   }
 
-  .container {
-    max-width: 100%;
-  }
-
-  .layout {
+  .header {
     flex-direction: column;
+    align-items: center;
+    text-align: center;
   }
 
-  .sidebar {
-    width: 100%;
-    max-width: 200px;
-    margin: 0 auto;
+  .coverArea {
+    width: 140px;
   }
 
-  .dates {
-    flex-direction: column;
-    gap: var(--spacing-sm);
+  .statusSection {
+    display: flex;
+    justify-content: center;
+  }
+
+  .dataRow {
+    gap: var(--spacing-md);
   }
 }

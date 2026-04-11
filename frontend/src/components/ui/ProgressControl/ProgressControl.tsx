@@ -23,7 +23,6 @@ export function ProgressControl({
   const unit = (mediaType && UNIT_LABELS[mediaType]) ?? '話'
   const canIncrement = total === null || current < total
   const canDecrement = current > 0
-  const percentage = total ? Math.round((current / total) * 100) : null
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10)
@@ -71,11 +70,6 @@ export function ProgressControl({
           />
         )}
       </div>
-      {total !== null && percentage !== null && (
-        <div className={styles.bar}>
-          <div className={styles.fill} style={{ width: `${percentage}%` }} />
-        </div>
-      )}
     </div>
   )
 }

@@ -10,6 +10,26 @@
   font-size: var(--font-size-meta);
 }
 
+/* --- フォーム区切り --- */
+
+.formDivider {
+  padding-top: var(--spacing-lg);
+  border-top: var(--border-width-thin) var(--border-style) var(--color-border-light);
+}
+
+/* テキストエリアをアウトラインスタイルに */
+.form textarea {
+  border: var(--border-width) var(--border-style) var(--color-border-light);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  background: var(--color-bg-white);
+}
+
+.form textarea:focus {
+  border-color: var(--color-text);
+  border-bottom-color: var(--color-text);
+}
+
 /* --- 入力フォーム --- */
 
 .form {
@@ -70,8 +90,14 @@
 .cardHeader {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  justify-content: space-between;
   margin-bottom: var(--spacing-sm);
+}
+
+.cardHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
 .episodeTag {
