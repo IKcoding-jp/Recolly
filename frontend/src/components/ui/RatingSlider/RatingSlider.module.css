@@ -1,67 +1,106 @@
 .container {
   display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.label {
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
 }
 
 .sliderWrap {
-  flex: 1;
+  width: 100%;
 }
 
 .slider {
   -webkit-appearance: none;
   width: 100%;
-  height: 3px;
+  height: 6px;
   outline: none;
-  border-radius: var(--radius-none);
+  border-radius: 3px;
   background: var(--color-border-light);
+  cursor: pointer;
 }
 
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
-  background: var(--color-text);
+  width: 16px;
+  height: 16px;
+  background: var(--genre-color, var(--color-text));
   border-radius: var(--radius-full);
   cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  background: var(--color-text);
+  width: 16px;
+  height: 16px;
+  background: var(--genre-color, var(--color-text));
   border-radius: var(--radius-full);
   cursor: pointer;
   border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .slider::-moz-range-progress {
-  background: var(--color-text);
-  height: 3px;
+  background: var(--genre-color, var(--color-text));
+  height: 6px;
+  border-radius: 3px;
 }
 
-.labels {
+.ticks {
   display: flex;
   justify-content: space-between;
   margin-top: var(--spacing-xs);
+  padding: 0 1px;
+}
+
+.tick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 0;
+}
+
+.tickMark {
+  width: 1px;
+  height: 6px;
+  background: #d0d0c8;
+}
+
+.tickMajor {
+  height: 8px;
+  background: #b0b0a8;
+}
+
+.tickLabel {
   font-family: var(--font-body);
-  font-size: var(--font-size-meta);
+  font-size: 9px;
   color: var(--color-text-muted);
+  margin-top: 2px;
 }
 
 .scoreBlock {
   display: flex;
   align-items: baseline;
-  gap: 2px;
-  white-space: nowrap;
+  gap: 3px;
 }
 
 .score {
   font-family: var(--font-heading);
-  font-size: 36px;
+  font-size: 32px;
   font-weight: var(--font-weight-bold);
   line-height: 1;
-  color: var(--color-text);
 }
 
 .maxLabel {
