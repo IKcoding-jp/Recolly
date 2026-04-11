@@ -42,11 +42,13 @@ export function EpisodeReviewCard({
   return (
     <div className={styles.card}>
       <div className={styles.cardHeader}>
-        <span className={styles.episodeTag}>
-          第{review.episode_number}
-          {unit}
-        </span>
-        <span className={styles.cardDate}>{formattedDate}</span>
+        <div className={styles.cardHeaderLeft}>
+          <span className={styles.episodeTag}>
+            第{review.episode_number}
+            {unit}
+          </span>
+          <span className={styles.cardDate}>{formattedDate}</span>
+        </div>
         <div className={styles.cardActions}>
           {!isEditing && (
             <>
