@@ -57,6 +57,8 @@ export function RatingSlider({ value, onChange, mediaType }: RatingSliderProps) 
           }
         />
         <div className={styles.ticks}>
+          {/* スライダーのmin=0に対応する見えないスペーサー（0の位置） */}
+          <div className={styles.tickSpacer} />
           {Array.from({ length: 10 }, (_, i) => i + 1).map((tick) => (
             <div key={tick} className={styles.tick}>
               <div
