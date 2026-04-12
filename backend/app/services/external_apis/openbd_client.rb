@@ -6,6 +6,8 @@ module ExternalApis
   # APIキー不要・無料・ISBNベースで書誌情報と書影を提供する日本書籍データベース
   # WorkSearchService#enrich_books_via_openbd から使用される
   class OpenbdClient
+    # NOTE: Faradayは '/' 始まりのパスを渡されるとbase_urlのパス部を破棄する仕様。
+    # そのため BASE_URL にはホストのみを指定し、パスは ENDPOINT_PATH 側で持つ
     BASE_URL = 'https://api.openbd.jp'
     ENDPOINT_PATH = '/v1/get'
     USER_AGENT = 'Recolly/1.0 (https://github.com/IKcoding-jp/Recolly)'
