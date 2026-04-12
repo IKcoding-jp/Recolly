@@ -39,7 +39,7 @@
   background: var(--genre-color, var(--color-text));
   border-radius: var(--radius-full);
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-control-sm);
 }
 
 .slider::-moz-range-thumb {
@@ -49,7 +49,7 @@
   border-radius: var(--radius-full);
   cursor: pointer;
   border: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-control-sm);
 }
 
 .slider::-moz-range-progress {
