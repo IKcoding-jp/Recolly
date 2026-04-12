@@ -33,8 +33,8 @@ RSpec.describe ExternalApis::TitleMatcher, type: :service do
     end
 
     context 'クエリにシリーズ識別子が付き、候補が親作品の場合' do
-      it 'クエリが候補の1.5倍以上長く含む場合は false（親作品却下）' do
-        # '進撃の巨人 Season 2' (12) vs '進撃の巨人' (5) → 1.5倍以上 + 含む
+      it 'クエリが親と異なる接尾辞を持つ場合は false（normalize後の完全一致のみ採用）' do
+        # '進撃の巨人 Season 2' と '進撃の巨人' は normalize 後でも別物
         expect(described_class.title_match?('進撃の巨人 Season 2', '進撃の巨人')).to be false
       end
 
@@ -51,16 +51,37 @@ RSpec.describe ExternalApis::TitleMatcher, type: :service do
       end
     end
 
-    context '逆方向（候補がクエリの1.5倍以上長く含む場合）' do
-      it 'false を返す' do
+    context '逆方向（候補の方が長い場合）' do
+      it 'false を返す（normalize後の完全一致のみ採用）' do
         expect(described_class.title_match?('進撃の巨人', '進撃の巨人 Season 2')).to be false
       end
     end
 
-    context '部分一致（軽微な表記揺れ）の場合' do
-      it '長さ比が1.5倍未満で部分一致するなら true' do
-        # 表記揺れ例: 短い差分（記号など）を許容したい
-        expect(described_class.title_match?('ABCDE', 'ABCDEF')).to be true
+    context '短いタイトルでの誤マッチ防止' do
+      it '短いタイトル + 1.5倍以下の部分一致は false（呪術廻戦 vs 呪術廻戦 0 等）' do
+        expect(described_class.title_match?('呪術廻戦 0', '呪術廻戦')).to be false
+      end
+
+      it 'タイトルがほぼ等しいが1文字違うナンバリング（FF vs FFX 等）は false' do
+        expect(described_class.title_match?('FFX', 'FF')).to be false
+        expect(described_class.title_match?('ペルソナ4', 'ペルソナ')).to be false
+      end
+    end
+
+    context '英語クエリと日本語ローカライズ名の照合' do
+      it '英語クエリと日本語ローカライズ名は照合不能（false）であることを明示的にテスト' do
+        # AniList の title_english フォールバック経路で TMDB から日本語ローカライズ名が
+        # 返ってきた場合、 normalize 後も照合不能になることを文書化する
+        expect(described_class.title_match?('Attack on Titan', '進撃の巨人')).to be false
+        expect(described_class.title_match?('Steins;Gate', 'シュタインズ・ゲート')).to be false
+      end
+    end
+
+    context '不正な UTF-8 バイト列が含まれる場合' do
+      it '安全に false を返す' do
+        invalid = "\xff\xfe".dup.force_encoding('UTF-8')
+        expect(described_class.title_match?('進撃の巨人', invalid)).to be false
+        expect(described_class.title_match?(invalid, '進撃の巨人')).to be false
       end
     end
 
@@ -76,6 +97,11 @@ RSpec.describe ExternalApis::TitleMatcher, type: :service do
       it '候補が nil なら false' do
         expect(described_class.title_match?('進撃の巨人', nil)).to be false
       end
+
+      it '空白だけの文字列は false を返す（blank? で弾かれる）' do
+        expect(described_class.title_match?('   ', '進撃の巨人')).to be false
+        expect(described_class.title_match?('進撃の巨人', "\u3000\u3000")).to be false
+      end
     end
   end
 
@@ -83,6 +109,11 @@ RSpec.describe ExternalApis::TitleMatcher, type: :service do
     it 'NFKC 正規化と downcase と空白除去を組み合わせる' do
       # 全角ＡＢＣ → 半角abc、空白除去
       expect(described_class.normalize_for_match('ＡＢＣ DEF')).to eq('abcdef')
+    end
+
+    it '不正な UTF-8 バイト列に対しては空文字を返す' do
+      invalid = "\xff\xfe".dup.force_encoding('UTF-8')
+      expect(described_class.normalize_for_match(invalid)).to eq('')
     end
   end
 end
