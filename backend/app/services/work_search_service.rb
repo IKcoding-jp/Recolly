@@ -2,10 +2,12 @@
 
 class WorkSearchService
   CACHE_TTL = 12.hours
+  # 実装変更時にインクリメントしてキャッシュを無効化する
+  CACHE_VERSION = 'v2'
   ENRICHMENT_BATCH_SIZE = 5
 
   def search(query, media_type: nil)
-    cache_key = "work_search:#{media_type || 'all'}:#{query}"
+    cache_key = "work_search:#{CACHE_VERSION}:#{media_type || 'all'}:#{query}"
 
     Rails.cache.fetch(cache_key, expires_in: CACHE_TTL) do
       adapters = select_adapters(media_type)

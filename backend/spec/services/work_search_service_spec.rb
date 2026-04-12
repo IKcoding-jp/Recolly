@@ -330,5 +330,13 @@ RSpec.describe WorkSearchService, type: :service do
       expect(anilist_double).to have_received(:safe_search).twice
       expect(tmdb_double).to have_received(:safe_search).exactly(:once)
     end
+
+    it 'キャッシュキーに CACHE_VERSION を含めることで古い実装のキャッシュを無視する' do
+      # 古いフォーマットのキー（v無し）でデータを入れておく
+      Rails.cache.write('work_search:anime:テスト', [mock_result])
+      # 新しい検索は新しいキー形式で保存される
+      service.search('テスト', media_type: 'anime')
+      expect(Rails.cache.exist?('work_search:v2:anime:テスト')).to be true
+    end
   end
 end
