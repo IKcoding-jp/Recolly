@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { motion } from 'motion/react'
 import { discussionsApi } from '../../lib/discussionsApi'
+import { useRecollyMotion } from '../../lib/motion'
 import { Button } from '../ui/Button/Button'
 import styles from './DiscussionCreateModal.module.css'
 
@@ -20,6 +22,8 @@ export function DiscussionCreateModal({ workId, totalEpisodes, onClose, onCreate
   const [hasSpoiler, setHasSpoiler] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const m = useRecollyMotion()
 
   const isTitleOver = title.length > TITLE_MAX_LENGTH
   const isBodyOver = body.length > BODY_MAX_LENGTH
@@ -61,8 +65,15 @@ export function DiscussionCreateModal({ workId, totalEpisodes, onClose, onCreate
   }
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <motion.div
+      className={styles.overlay}
+      onClick={onClose}
+      variants={m.overlay}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+    >
+      <motion.div className={styles.modal} onClick={(e) => e.stopPropagation()} variants={m.modal}>
         <div className={styles.header}>
           <h3 className={styles.title}>ディスカッションを作成</h3>
         </div>
@@ -141,7 +152,7 @@ export function DiscussionCreateModal({ workId, totalEpisodes, onClose, onCreate
             {isSubmitting ? '作成中...' : '作成'}
           </Button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
