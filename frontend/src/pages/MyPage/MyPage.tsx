@@ -1,3 +1,4 @@
+import { AnimatePresence } from 'motion/react'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import { EmailPromptBanner } from '../../components/EmailPromptBanner/EmailPromptBanner'
 import { StatsSummary } from '../../components/StatsSummary/StatsSummary'
@@ -11,7 +12,7 @@ export function MyPage() {
 
   return (
     <div className={styles.container}>
-      {user?.email_missing && <EmailPromptBanner />}
+      <AnimatePresence>{user?.email_missing && <EmailPromptBanner />}</AnimatePresence>
       <SectionTitle>マイページ</SectionTitle>
       {isLoading && <div className={styles.loading}>読み込み中...</div>}
       {!isLoading && statistics && <StatsSummary statistics={statistics} />}
