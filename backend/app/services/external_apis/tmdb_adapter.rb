@@ -25,6 +25,7 @@ module ExternalApis
 
     # AniListの結果に対して、TMDBから日本語の説明文を取得する
     # タイトルでTMDBを検索し、最初にマッチしたmovie/tvの日本語overviewを返す
+    # ただし TMDB が曖昧マッチで親作品（Season 1 等）を返すケースは TitleMatcher で弾く
     # 見つからない場合やエラー時はnilを返す（呼び出し元で英語説明をフォールバックに使う）
     def fetch_japanese_description(query)
       response = tmdb_connection.get('/3/search/multi',
@@ -33,7 +34,7 @@ module ExternalApis
                                      language: 'ja')
 
       results = response.body['results'] || []
-      best_match_overview(results)
+      best_match_description(results, query)
     rescue Faraday::Error => e
       Rails.logger.error("[TmdbAdapter] 日本語説明取得エラー: #{e.message}")
       nil
@@ -73,13 +74,23 @@ module ExternalApis
       combined
     end
 
-    # 日本のアニメーション作品を判定（AniListで取得するため、TMDBからは除外する）
-    # genre_ids に Animation(16) が含まれ、かつ原語が日本語の場合はアニメとみなす
-    # 日本語原語の作品を優先してoverviewを返す（同名の外国作品との誤マッチを防止）
-    def best_match_overview(results)
+    # 候補から最も適切な日本語説明を選ぶ
+    # 1. movie/tv のみ対象
+    # 2. 日本語原語を優先（同名の外国作品との誤マッチを防止）
+    # 3. 選択した結果の name/title が query と十分一致しない場合は nil
+    #    （TMDB が 'X Season 2' で親作品 'X' を返す誤マッチ防止）
+    # 注: title_match? は「絞り込み後の match に対してのみ」呼ぶこと。
+    # 先に title_match? でフィルタすると日本語原語優先の挙動が崩れるため。
+    def best_match_description(results, query)
       candidates = results.select { |item| %w[movie tv].include?(item['media_type']) }
       match = candidates.find { |item| item['original_language'] == 'ja' } || candidates.first
-      match&.dig('overview').presence
+      return nil unless match
+
+      # tv は name、movie は title を使う
+      match_title = match['name'] || match['title']
+      return nil unless TitleMatcher.title_match?(query, match_title)
+
+      match['overview'].presence
     end
 
     # search/movie エンドポイントで映画を検索

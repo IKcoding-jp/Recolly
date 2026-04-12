@@ -164,7 +164,7 @@ RSpec.describe ExternalApis::WikipediaClient, type: :service do
   end
 
   describe '#search_and_fetch_extract' do
-    context '検索で記事が見つかる場合' do
+    context '検索結果のタイトルがクエリと一致する場合' do
       before do
         # 1回目: search API（query.list.search）
         stub_request(:get, /ja.wikipedia.org/)
@@ -186,8 +186,50 @@ RSpec.describe ExternalApis::WikipediaClient, type: :service do
       end
 
       it '検索→概要取得の2段階で日本語説明を返す' do
-        extract = client.search_and_fetch_extract('呪術廻戦 第2期')
+        extract = client.search_and_fetch_extract('呪術廻戦')
         expect(extract).to eq('呪術廻戦は芥見下々による日本の漫画作品。')
+      end
+    end
+
+    context '全角/半角の軽微な表記揺れがある場合' do
+      before do
+        # 全角!と半角!の表記揺れを吸収できるか確認
+        stub_request(:get, /ja.wikipedia.org/)
+          .with(query: hash_including(list: 'search'))
+          .to_return(status: 200, body: {
+            'query' => { 'search' => [{ 'title' => 'けいおん!' }] }
+          }.to_json, headers: { 'Content-Type' => 'application/json' })
+        stub_request(:get, /ja.wikipedia.org/)
+          .with(query: hash_including(prop: 'extracts'))
+          .to_return(status: 200, body: {
+            'query' => { 'pages' => { '1' => { 'title' => 'けいおん!', 'extract' => '軽音部の物語' } } }
+          }.to_json, headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it '全角/半角の軽微な表記揺れは許容する' do
+        expect(client.search_and_fetch_extract('けいおん！')).to eq('軽音部の物語')
+      end
+    end
+
+    context 'クエリにシリーズ識別子が含まれ、検索が親作品を返す場合' do
+      before do
+        # query='進撃の巨人 Season 2' で検索 → Wikipedia は親記事 '進撃の巨人' を返す
+        stub_request(:get, /ja.wikipedia.org/)
+          .with(query: hash_including(list: 'search'))
+          .to_return(status: 200, body: {
+            'query' => { 'search' => [{ 'title' => '進撃の巨人' }] }
+          }.to_json, headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it 'タイトル一致しないため nil を返す（誤った親作品の説明を採用しない）' do
+        expect(client.search_and_fetch_extract('進撃の巨人 Season 2')).to be_nil
+        # 親記事の extract API は呼ばれない
+        expect(WebMock).not_to have_requested(:get, /ja.wikipedia.org/)
+          .with(query: hash_including(prop: 'extracts'))
+      end
+
+      it 'OVA 等のサブタイトルでも親作品を弾く' do
+        expect(client.search_and_fetch_extract('進撃の巨人 OVA')).to be_nil
       end
     end
 
