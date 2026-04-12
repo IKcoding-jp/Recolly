@@ -40,10 +40,20 @@ module ExternalApis
           published_date: info['publishedDate'],
           page_count: info['pageCount'],
           categories: info['categories'],
+          # ISBNはopenBD補完に使用する。ISBN-13を優先し、なければISBN-10
+          isbn: extract_isbn(info),
           # ratingsCountで人気度を推定。100件レビューで正規化上限1.0
           popularity: normalize_popularity(info['ratingsCount'])
         }.compact
       )
+    end
+
+    # industryIdentifiersからISBNを抽出。ISBN-13を最優先、なければISBN-10
+    def extract_isbn(info)
+      identifiers = info['industryIdentifiers'] || []
+      isbn13 = identifiers.find { |i| i['type'] == 'ISBN_13' }
+      isbn10 = identifiers.find { |i| i['type'] == 'ISBN_10' }
+      isbn13&.dig('identifier') || isbn10&.dig('identifier')
     end
 
     # Google Booksのレビュー数を0.0〜1.0に正規化
