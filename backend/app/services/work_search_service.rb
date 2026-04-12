@@ -15,8 +15,7 @@ class WorkSearchService
       results = results.select { |r| r.media_type == media_type } if media_type.present?
 
       enrich_books_via_openbd(results)
-      enrich_anilist_descriptions(results)
-      remove_english_descriptions(results)
+      enrich_missing_descriptions(results)
       sort_by_popularity(results)
     end
   end
@@ -99,33 +98,37 @@ class WorkSearchService
     result.description ||= data[:description]
   end
 
-  # AniListの結果にTMDB→Wikipediaの順で日本語説明を補完する
-  # AniListの説明は英語のため、日本語の説明が見つかれば置き換える
+  # 説明が空 or 英語の全結果を対象に日本語説明を補完する
+  # 以前は AniList 結果のみが対象だったが、IGDB（ゲーム）・Google Books（本）・TMDB（映画/ドラマ）にも拡張
   # 外部APIへの同時接続数を制限するため、5件ずつのバッチで並列処理する
-  def enrich_anilist_descriptions(results)
-    anilist_results = results.select { |r| r.external_api_source == 'anilist' }
-    return if anilist_results.empty?
+  def enrich_missing_descriptions(results)
+    needs_enrichment = results.select do |r|
+      r.description.blank? || english_text?(r.description)
+    end
+    return if needs_enrichment.empty?
 
-    anilist_results.each_slice(ENRICHMENT_BATCH_SIZE) do |batch|
+    needs_enrichment.each_slice(ENRICHMENT_BATCH_SIZE) do |batch|
       threads = batch.map do |result|
-        Thread.new { enrich_single_description(result) }
+        Thread.new { try_enrich_description(result) }
       end
       threads.each(&:join)
     end
   end
 
-  # スレッドごとに独立したアダプターインスタンスを使用する
-  # （Faradayコネクションの共有を避けるため）
-  def enrich_single_description(result)
+  # 補完の試行順:
+  # 1. TMDB日本語説明（映画・ドラマは元々これで取れる。AniList結果は title_english/title_romaji も試す）
+  # 2. Wikipedia search_and_fetch_extract（完全一致制約を回避した検索→取得の2段階）
+  # 3. 元の説明にフォールバック（英語でも nil にせずそのまま残す）
+  def try_enrich_description(result)
     tmdb = ExternalApis::TmdbAdapter.new
     wikipedia = ExternalApis::WikipediaClient.new
+
     description = fetch_japanese_description_from_tmdb(result, tmdb)
-    description ||= wikipedia.fetch_extract(result.title)
+    description ||= wikipedia.search_and_fetch_extract(result.title)
     result.description = resolve_description(description, result.description)
   end
 
-  # TMDBで日本語説明を検索（日本語タイトル優先で複数パターンを順番に試す）
-  # 日本語タイトルの方がTMDB（language: 'ja'）でのマッチ精度が高い
+  # TMDBで日本語説明を検索（メタデータにtitle_english/title_romajiがあれば順番に試す）
   def fetch_japanese_description_from_tmdb(result, tmdb)
     queries = [
       result.title,
@@ -140,19 +143,15 @@ class WorkSearchService
     nil
   end
 
-  # 全結果から英語の説明文を除去する（IGDB等の英語説明も対象）
-  def remove_english_descriptions(results)
-    results.each { |r| r.description = nil if english_text?(r.description) }
-  end
-
-  # 日本語説明が見つかればそれを使い、見つからなければ英語説明を除去する
+  # 日本語説明が見つかればそれを使う。見つからなくても元の説明を消さない（英語でも残す）
+  # 以前の remove_english_descriptions は「英語なら nil 化」という破壊的動作だったため廃止
   def resolve_description(japanese_desc, original_desc)
     return japanese_desc if japanese_desc.present?
 
-    english_text?(original_desc) ? nil : original_desc
+    original_desc
   end
 
-  # 文字列の半分以上がASCII文字なら英語と判定
+  # 文字列の半分以上がASCII文字なら英語と判定（補完対象の選定に使用）
   def english_text?(text)
     return false if text.blank?
 

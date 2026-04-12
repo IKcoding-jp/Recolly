@@ -26,10 +26,11 @@ RSpec.describe WorkSearchService, type: :service do
     allow(ExternalApis::GoogleBooksAdapter).to receive(:new).and_return(google_books_double)
     allow(ExternalApis::IgdbAdapter).to receive(:new).and_return(igdb_double)
     # Wikipedia補完のデフォルト（見つからない場合）
-    wiki_double = instance_double(ExternalApis::WikipediaClient, fetch_extract: nil)
+    # Task 6 で fetch_extract から search_and_fetch_extract に切り替えた
+    wiki_double = instance_double(ExternalApis::WikipediaClient, search_and_fetch_extract: nil)
     allow(ExternalApis::WikipediaClient).to receive(:new).and_return(wiki_double)
     # instance_spy はnull objectのため、スタブしないと自身を返す
-    # enrich_anilist_descriptions で description に spy が入りマーシャリング失敗を防ぐ
+    # enrich_missing_descriptions で description に spy が入りマーシャリング失敗を防ぐ
     allow(tmdb_double).to receive_messages(safe_search: [], fetch_japanese_description: nil)
     allow(anilist_double).to receive(:safe_search).and_return([mock_result])
     allow(google_books_double).to receive(:safe_search).and_return([])
@@ -197,8 +198,10 @@ RSpec.describe WorkSearchService, type: :service do
     end
   end
 
-  describe '英語説明文の除去' do
-    it 'IGDB等の英語説明文をnilにする' do
+  describe '英語説明の保持' do
+    # Task 6 以降: 破壊的な remove_english_descriptions を廃止し、
+    # Wikipedia/TMDBで日本語説明が取れなかった場合は英語をそのまま残す方針に変更した
+    it 'IGDB等の英語説明文は補完できなくても元の英語のまま残す' do
       english_game = ExternalApis::BaseAdapter::SearchResult.new(
         'Elden Ring', 'game', 'An action RPG developed by FromSoftware.',
         nil, nil, '119133', 'igdb', { popularity: 0.9 }
@@ -207,10 +210,10 @@ RSpec.describe WorkSearchService, type: :service do
       allow(anilist_double).to receive(:safe_search).and_return([])
 
       results = service.search('エルデンリング')
-      expect(results.first.description).to be_nil
+      expect(results.first.description).to eq('An action RPG developed by FromSoftware.')
     end
 
-    it '日本語の説明文は除去しない' do
+    it '日本語の説明文はそのまま維持する' do
       japanese_game = ExternalApis::BaseAdapter::SearchResult.new(
         'モンスターハンター', 'game', 'カプコンが開発したアクションゲーム。',
         nil, nil, '1111', 'igdb', { popularity: 0.8 }
@@ -231,7 +234,10 @@ RSpec.describe WorkSearchService, type: :service do
         { popularity: 1.0, title_english: 'Attack on Titan', title_romaji: 'Shingeki no Kyojin' }
       )
     end
-    let(:wikipedia_client_double) { instance_double(ExternalApis::WikipediaClient, fetch_extract: nil) }
+    # Task 6 で fetch_extract から search_and_fetch_extract に変更
+    let(:wikipedia_client_double) do
+      instance_double(ExternalApis::WikipediaClient, search_and_fetch_extract: nil)
+    end
 
     before do
       allow(anilist_double).to receive(:safe_search).and_return([anilist_result])
@@ -247,11 +253,12 @@ RSpec.describe WorkSearchService, type: :service do
       expect(results.first.description).to eq('巨人が支配する世界で人類が生き残りをかけて戦う')
     end
 
-    it 'TMDBでもWikipediaでも見つからない場合は英語説明を除去する' do
+    # Task 6 で破壊的な英語説明除去を廃止したため、英語が残る方向に期待値を更新
+    it 'TMDBでもWikipediaでも見つからない場合は英語説明をそのまま残す' do
       allow(tmdb_double).to receive(:fetch_japanese_description).and_return(nil)
 
       results = service.search('マイナーアニメ')
-      expect(results.first.description).to be_nil
+      expect(results.first.description).to eq('In a world ruled by giants...')
     end
 
     it '日本語タイトルで見つからない場合、英語→ローマ字の順にフォールバックする' do # rubocop:disable RSpec/ExampleLength
@@ -297,24 +304,27 @@ RSpec.describe WorkSearchService, type: :service do
         allow(tmdb_double).to receive(:fetch_japanese_description).and_return(nil)
       end
 
+      # Task 6 で fetch_extract → search_and_fetch_extract に切り替え
       it 'TMDBで見つからない場合、Wikipediaから日本語説明を取得する' do
-        allow(wikipedia_client_double).to receive(:fetch_extract)
+        allow(wikipedia_client_double).to receive(:search_and_fetch_extract)
           .with('マイナーアニメ').and_return('マイナーアニメは、日本のテレビアニメ作品。')
 
         results = service.search('マイナーアニメ')
         expect(results.first.description).to eq('マイナーアニメは、日本のテレビアニメ作品。')
       end
 
-      it 'TMDBでもWikipediaでも見つからない場合、英語説明を除去する' do
-        allow(wikipedia_client_double).to receive(:fetch_extract)
+      # Task 6 で破壊的な英語除去を廃止したため、英語が残る期待に変更
+      it 'TMDBでもWikipediaでも見つからない場合、英語説明を残す' do
+        allow(wikipedia_client_double).to receive(:search_and_fetch_extract)
           .with('マイナーアニメ').and_return(nil)
 
         results = service.search('マイナーアニメ')
-        expect(results.first.description).to be_nil
+        expect(results.first.description).to eq('A minor anime series.')
       end
     end
 
-    it '日本語説明が見つからなかった場合、英語説明を除去する' do
+    # Task 6 で破壊的な英語除去を廃止したため、英語が残る期待に変更
+    it '日本語説明が見つからなかった場合、英語説明をそのまま残す' do
       english_anime = ExternalApis::BaseAdapter::SearchResult.new(
         'マイナーOVA', 'anime', 'This is a minor OVA episode.',
         nil, 1, '88888', 'anilist',
@@ -324,7 +334,7 @@ RSpec.describe WorkSearchService, type: :service do
       allow(tmdb_double).to receive(:fetch_japanese_description).and_return(nil)
 
       results = service.search('マイナーOVA')
-      expect(results.first.description).to be_nil
+      expect(results.first.description).to eq('This is a minor OVA episode.')
     end
 
     context '複数AniList結果の並列補完' do # rubocop:disable RSpec/MultipleMemoizedHelpers
@@ -361,6 +371,67 @@ RSpec.describe WorkSearchService, type: :service do
         descriptions = results.map(&:description)
         expect(descriptions).to contain_exactly('作品Aの日本語説明', '作品Bの日本語説明')
       end
+    end
+  end
+
+  describe '#search 全ソース対象のWikipedia補完' do
+    let(:wiki_double) { instance_double(ExternalApis::WikipediaClient) }
+    let(:igdb_result) do
+      ExternalApis::BaseAdapter::SearchResult.new(
+        'Zelda', 'game', 'An action-adventure game series.', 'https://img.igdb', nil,
+        'g1', 'igdb', { popularity: 0.9 }
+      )
+    end
+    let(:google_book_without_desc) do
+      ExternalApis::BaseAdapter::SearchResult.new(
+        '嫌われる勇気', 'book', nil, 'https://img.gbooks', nil,
+        'gb1', 'google_books', { isbn: '9784478025819', popularity: 0.8 }
+      )
+    end
+
+    before do
+      allow(ExternalApis::WikipediaClient).to receive(:new).and_return(wiki_double)
+      allow(ExternalApis::OpenbdClient).to receive(:new).and_return(
+        instance_double(ExternalApis::OpenbdClient, fetch: nil)
+      )
+    end
+
+    it 'IGDB（ゲーム）の英語説明も Wikipedia 補完の対象になる' do
+      allow(wiki_double).to receive(:search_and_fetch_extract).with('Zelda')
+                                                              .and_return('ゼルダの伝説はアクションアドベンチャーゲーム。')
+      allow(igdb_double).to receive(:safe_search).and_return([igdb_result])
+
+      results = service.search('Zelda', media_type: 'game')
+      expect(results.first.description).to eq('ゼルダの伝説はアクションアドベンチャーゲーム。')
+    end
+
+    it 'Google Books の空説明も Wikipedia 補完の対象になる' do
+      allow(wiki_double).to receive(:search_and_fetch_extract).with('嫌われる勇気')
+                                                              .and_return('嫌われる勇気はアドラー心理学の入門書。')
+      allow(google_books_double).to receive(:safe_search).and_return([google_book_without_desc])
+
+      results = service.search('嫌われる勇気', media_type: 'book')
+      expect(results.first.description).to eq('嫌われる勇気はアドラー心理学の入門書。')
+    end
+
+    it 'Wikipedia で見つからず英語しかない場合は英語説明を残す' do
+      allow(wiki_double).to receive(:search_and_fetch_extract).and_return(nil)
+      allow(igdb_double).to receive(:safe_search).and_return([igdb_result])
+
+      results = service.search('Zelda', media_type: 'game')
+      # nil にはならず、元の英語説明が残る（破壊的削除の廃止）
+      expect(results.first.description).to eq('An action-adventure game series.')
+    end
+
+    it 'TMDBで日本語説明が取れれば Wikipedia を呼ばない' do
+      # TMDBアダプタのフェッチをモック
+      allow(tmdb_double).to receive(:fetch_japanese_description).and_return('ゲーム日本語説明')
+      allow(wiki_double).to receive(:search_and_fetch_extract)
+      allow(igdb_double).to receive(:safe_search).and_return([igdb_result])
+
+      results = service.search('Zelda', media_type: 'game')
+      expect(results.first.description).to eq('ゲーム日本語説明')
+      expect(wiki_double).not_to have_received(:search_and_fetch_extract)
     end
   end
 
