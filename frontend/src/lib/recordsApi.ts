@@ -3,7 +3,9 @@ import { request } from './api'
 
 type RecordCreateOptions = {
   status?: RecordStatus
-  rating?: number
+  // rating は「未設定」を null として明示的にバックエンドに送る契約のため null を許容する
+  // （テスト: SearchPage.test.tsx の「連続で異なる作品を記録する」が request body の rating を null で検証）
+  rating?: number | null
 }
 
 type RecordUpdateParams = {
