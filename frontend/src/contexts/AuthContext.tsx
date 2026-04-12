@@ -1,15 +1,28 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { authApi, ApiError } from '../lib/api'
 import type { User } from '../lib/types'
 import { AuthContext } from './authContextValue'
+import { identifyUser, resetAnalytics } from '../lib/analytics/posthog'
 
 export type { AuthContextValue } from './authContextValue'
 export { AuthContext } from './authContextValue'
 
+// User.providers から signup_method を導出する。
+// Google 連携済みかつパスワード未設定なら 'google' とみなし、それ以外は 'email'。
+// (両方に紐付いている場合は email 優先 = 直接メール登録も行ったユーザーとして扱う)
+function deriveSignupMethod(user: User): 'email' | 'google' {
+  if (!user.has_password && user.providers.includes('google_oauth2')) {
+    return 'google'
+  }
+  return 'email'
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  // 直前に identify したユーザー ID。同一ユーザーで重複 identify しないための記録
+  const lastIdentifiedIdRef = useRef<number | null>(null)
 
   // 初回ロード時にセッション確認
   useEffect(() => {
@@ -19,6 +32,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .catch(() => setUser(null))
       .finally(() => setIsLoading(false))
   }, [])
+
+  // user state の変化を監視して PostHog の identify / reset を発火。
+  // login / signup / OAuth complete / initial session 復帰 / logout の全パスで
+  // 確実に 1 回ずつ走るよう、user state 変化の単一ポイントで扱う。
+  useEffect(() => {
+    if (isLoading) return
+    if (user) {
+      if (lastIdentifiedIdRef.current === user.id) return
+      lastIdentifiedIdRef.current = user.id
+      identifyUser({
+        id: user.id,
+        signup_method: deriveSignupMethod(user),
+        signup_date: user.created_at,
+      })
+    } else if (lastIdentifiedIdRef.current !== null) {
+      // 直前に identify していたユーザーがログアウトした場合のみ reset する
+      lastIdentifiedIdRef.current = null
+      resetAnalytics()
+    }
+  }, [user, isLoading])
 
   const login = useCallback(async (email: string, password: string) => {
     const data = await authApi.login(email, password)
