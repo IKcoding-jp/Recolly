@@ -31,6 +31,18 @@ module ExternalApis
       nil
     end
 
+    # 検索APIで記事タイトルを探し、見つかった最上位記事の概要を返す
+    # 完全一致を要求する fetch_extract と違い、タイトルの表記揺れや副題付きでもマッチする
+    # 例: "呪術廻戦 第2期" で検索 → "呪術廻戦" 記事の概要を返す
+    def search_and_fetch_extract(query)
+      return nil if query.blank?
+
+      titles = search(query, limit: 1)
+      return nil if titles.empty?
+
+      fetch_extract(titles.first)
+    end
+
     # 日本語Wikipediaの言語間リンクから英語タイトルを取得する
     def fetch_english_title(title)
       response = connection.get('', langlink_params(title))

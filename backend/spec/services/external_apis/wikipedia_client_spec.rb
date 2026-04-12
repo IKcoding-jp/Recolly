@@ -162,4 +162,55 @@ RSpec.describe ExternalApis::WikipediaClient, type: :service do
       expect(client.fetch_categories(['テスト'])).to eq({})
     end
   end
+
+  describe '#search_and_fetch_extract' do
+    context '検索で記事が見つかる場合' do
+      before do
+        # 1回目: search API（query.list.search）
+        stub_request(:get, /ja.wikipedia.org/)
+          .with(query: hash_including(list: 'search'))
+          .to_return(status: 200, body: {
+            'query' => {
+              'search' => [{ 'title' => '呪術廻戦' }]
+            }
+          }.to_json, headers: { 'Content-Type' => 'application/json' })
+
+        # 2回目: extract API（query.pages）
+        stub_request(:get, /ja.wikipedia.org/)
+          .with(query: hash_including(prop: 'extracts'))
+          .to_return(status: 200, body: {
+            'query' => {
+              'pages' => { '1' => { 'title' => '呪術廻戦', 'extract' => '呪術廻戦は芥見下々による日本の漫画作品。' } }
+            }
+          }.to_json, headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it '検索→概要取得の2段階で日本語説明を返す' do
+        extract = client.search_and_fetch_extract('呪術廻戦 第2期')
+        expect(extract).to eq('呪術廻戦は芥見下々による日本の漫画作品。')
+      end
+    end
+
+    context '検索で記事が0件の場合' do
+      before do
+        stub_request(:get, /ja.wikipedia.org/)
+          .with(query: hash_including(list: 'search'))
+          .to_return(status: 200, body: {
+            'query' => { 'search' => [] }
+          }.to_json, headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it 'nil を返す' do
+        expect(client.search_and_fetch_extract('存在しない作品xyz123')).to be_nil
+      end
+    end
+
+    context 'クエリが空の場合' do
+      it 'nil を返しAPI呼び出しは発生しない' do
+        expect(client.search_and_fetch_extract('')).to be_nil
+        expect(client.search_and_fetch_extract(nil)).to be_nil
+        expect(WebMock).not_to have_requested(:get, /ja.wikipedia.org/)
+      end
+    end
+  end
 end
