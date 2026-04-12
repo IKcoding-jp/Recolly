@@ -1,5 +1,5 @@
-/// <reference types="vitest" />
-import { defineConfig } from 'vite'
+// Vitest の test 設定を含む型を使うため、'vite' ではなく 'vitest/config' から import する
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 

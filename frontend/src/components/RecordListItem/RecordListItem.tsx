@@ -10,12 +10,15 @@ type RecordListItemProps = {
 export function RecordListItem({ record }: RecordListItemProps) {
   const { work } = record
   const hasRating = record.rating !== null
-  const hasEpisodes = work.total_episodes !== null
+  // ローカル const を経由することで TypeScript の型 narrowing が効くようにする
+  // （オブジェクトのプロパティアクセスは narrowing されないため）
+  const totalEpisodes = work.total_episodes
+  const hasEpisodes = totalEpisodes !== null
 
   // 進捗の割合を計算（プログレスバー描画用）
   const progressPercent =
-    hasEpisodes && work.total_episodes > 0
-      ? Math.min((record.current_episode / work.total_episodes) * 100, 100)
+    totalEpisodes !== null && totalEpisodes > 0
+      ? Math.min((record.current_episode / totalEpisodes) * 100, 100)
       : 0
 
   return (

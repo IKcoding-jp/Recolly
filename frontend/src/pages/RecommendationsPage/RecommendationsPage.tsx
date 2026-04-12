@@ -41,6 +41,8 @@ export function RecommendationsPage() {
           media_type: modalWork.media_type as MediaType,
           description: modalWork.description,
           cover_image_url: modalWork.cover_url,
+          // RecommendedWork は総話数情報を持たないため null を明示的に設定
+          total_episodes: null,
           external_api_id: modalWork.external_api_id,
           external_api_source: modalWork.external_api_source,
           metadata: modalWork.metadata,
