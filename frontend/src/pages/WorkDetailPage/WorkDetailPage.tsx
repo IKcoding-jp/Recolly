@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import { useRecollyMotion } from '../../lib/motion'
 import type { MediaType } from '../../lib/types'
 import {
@@ -232,13 +232,16 @@ export function WorkDetailPage() {
         )}
       </motion.div>
 
-      <RecordDeleteDialog
-        isOpen={showDeleteDialog}
-        workTitle={work.title}
-        onConfirm={confirmDelete}
-        onCancel={closeDeleteDialog}
-        isLoading={isDeleting}
-      />
+      <AnimatePresence>
+        {showDeleteDialog && (
+          <RecordDeleteDialog
+            workTitle={work.title}
+            onConfirm={confirmDelete}
+            onCancel={closeDeleteDialog}
+            isLoading={isDeleting}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -4,7 +4,6 @@ import { RecordDeleteDialog } from './RecordDeleteDialog'
 
 describe('RecordDeleteDialog', () => {
   const defaultProps = {
-    isOpen: true,
     workTitle: '進撃の巨人',
     onConfirm: vi.fn(),
     onCancel: vi.fn(),
@@ -31,10 +30,5 @@ describe('RecordDeleteDialog', () => {
     render(<RecordDeleteDialog {...defaultProps} onCancel={handleCancel} />)
     await user.click(screen.getByRole('button', { name: 'キャンセル' }))
     expect(handleCancel).toHaveBeenCalled()
-  })
-
-  it('isOpen=false のとき何も表示しない', () => {
-    const { container } = render(<RecordDeleteDialog {...defaultProps} isOpen={false} />)
-    expect(container.innerHTML).toBe('')
   })
 })
