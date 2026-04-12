@@ -274,7 +274,6 @@ export function SearchPage() {
 
         {results.length > 0 && (
           <motion.div
-            key={`${query}-${genre}-${results.length}`}
             className={styles.results}
             variants={m.listContainer}
             initial="hidden"
