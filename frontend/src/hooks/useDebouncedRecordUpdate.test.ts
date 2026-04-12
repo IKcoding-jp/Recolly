@@ -40,6 +40,7 @@ const mockRecord: UserRecord = {
 
 describe('useDebouncedRecordUpdate', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     vi.useFakeTimers()
     vi.mocked(recordsApi.update).mockResolvedValue({
       record: { ...mockRecord, rating: 8 },
