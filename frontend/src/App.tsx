@@ -8,6 +8,7 @@ import { ProtectedRoute } from './components/ProtectedRoute/ProtectedRoute'
 import { NavBar } from './components/ui/NavBar/NavBar'
 import { BottomTabBar } from './components/ui/BottomTabBar/BottomTabBar'
 import { UpdatePrompt } from './components/ui/UpdatePrompt/UpdatePrompt'
+import { PageviewTracker } from './components/PageviewTracker/PageviewTracker'
 import appStyles from './App.module.css'
 
 // ページコンポーネントは全て lazy-load する（code splitting）
@@ -142,6 +143,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <PageviewTracker />
         <AnimatePresence>
           {needRefresh && (
             <UpdatePrompt
