@@ -14,6 +14,8 @@ import { Button } from '../../components/ui/Button/Button'
 import { LayoutSwitcher } from '../../components/ui/LayoutSwitcher/LayoutSwitcher'
 import { useLayoutPreference } from '../../hooks/useLayoutPreference'
 import { useLibrary } from './useLibrary'
+import { motion } from 'motion/react'
+import { useRecollyMotion } from '../../lib/motion'
 import styles from './LibraryPage.module.css'
 
 export function LibraryPage() {
@@ -39,6 +41,8 @@ export function LibraryPage() {
     setPage,
     setTags,
   } = useLibrary(perPage)
+
+  const m = useRecollyMotion()
 
   const handleTagToggle = (tagName: string) => {
     const next = selectedTags.includes(tagName)
@@ -159,7 +163,8 @@ export function LibraryPage() {
 
       {!isLoading && !error && records.length > 0 && (
         <>
-          <div
+          <motion.div
+            key={`${layout}-${page}-${status ?? 'all'}-${mediaType ?? 'all'}-${sort}-${selectedTags.join(',')}`}
             className={
               layout === 'card'
                 ? styles.cardGrid
@@ -167,18 +172,18 @@ export function LibraryPage() {
                   ? styles.compactList
                   : styles.list
             }
+            variants={m.listContainer}
+            initial="hidden"
+            animate="visible"
           >
-            {records.map((record) => {
-              switch (layout) {
-                case 'card':
-                  return <RecordCardItem key={record.id} record={record} />
-                case 'compact':
-                  return <RecordCompactItem key={record.id} record={record} />
-                default:
-                  return <RecordListItem key={record.id} record={record} />
-              }
-            })}
-          </div>
+            {records.map((record) => (
+              <motion.div key={record.id} variants={m.fadeInUp}>
+                {layout === 'card' && <RecordCardItem record={record} />}
+                {layout === 'compact' && <RecordCompactItem record={record} />}
+                {layout === 'list' && <RecordListItem record={record} />}
+              </motion.div>
+            ))}
+          </motion.div>
           <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
         </>
       )}
