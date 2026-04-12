@@ -580,6 +580,64 @@ RSpec.describe WorkSearchService, type: :service do
       expect(season3.description).to eq('母親の命を奪った巨人を駆逐するため戦う。')
       expect(season3.metadata[:description_from_parent]).to be_nil
     end
+
+    # プレフィックスマッチで対応する幅広いシリーズパターンを検証する
+    # ビルダーで SearchResult 生成を 1 行化し、例あたりの行数を抑えて RSpec/ExampleLength を満たす
+    # rubocop:disable RSpec/MultipleMemoizedHelpers
+    context 'プレフィックスマッチによる幅広いシリーズ識別子対応' do
+      def build_result(title, description, popularity)
+        ExternalApis::BaseAdapter::SearchResult.new(
+          title, 'anime', description, nil, 12, SecureRandom.hex(4), 'anilist', { popularity: popularity }
+        )
+      end
+
+      def stub_anilist_with(results)
+        allow(anilist_double).to receive(:safe_search).and_return(results)
+      end
+
+      it '"2nd Season" のような英語序数パターンも流用する' do
+        parent = build_result('Re:ゼロから始める異世界生活', '無力な少年が手にしたのは、死して時間を巻き戻す力。', 1.0)
+        child = build_result('Re:ゼロから始める異世界生活 2nd Season', 'Even after dying countless times, Subaru.', 0.9)
+        stub_anilist_with([parent, child])
+        matched = service.search('Re:ゼロ', media_type: 'anime').find { |r| r.title.include?('2nd Season') }
+        expect(matched.description).to eq('無力な少年が手にしたのは、死して時間を巻き戻す力。')
+        expect(matched.metadata[:description_from_parent]).to be true
+      end
+
+      it '年号サフィックス（HUNTER×HUNTER (2011) 等）も流用する' do
+        parent = build_result('HUNTER×HUNTER', 'ハンターと呼ばれる人々がいる。', 0.9)
+        remake = build_result('HUNTER×HUNTER (2011)', 'A new adaption of the manga.', 1.0)
+        stub_anilist_with([parent, remake])
+        matched = service.search('HUNTER×HUNTER', media_type: 'anime').find { |r| r.title == 'HUNTER×HUNTER (2011)' }
+        expect(matched.description).to eq('ハンターと呼ばれる人々がいる。')
+      end
+
+      it 'コロン区切りサブタイトル（HUNTER×HUNTER: Greed Island 等）も流用する' do
+        parent = build_result('HUNTER×HUNTER', 'ハンターと呼ばれる人々がいる。', 0.9)
+        arc = build_result('HUNTER×HUNTER: Greed Island', 'After the battle with the Spiders.', 0.5)
+        stub_anilist_with([parent, arc])
+        matched = service.search('HUNTER×HUNTER', media_type: 'anime').find { |r| r.title.include?('Greed Island') }
+        expect(matched.description).to eq('ハンターと呼ばれる人々がいる。')
+      end
+
+      it '任意の日本語サブタイトル（横行跋扈のポリオマニア 等）も流用する' do
+        parent = build_result('シュタインズ・ゲート', '岡部倫太郎が時間軸を巡る物語。', 1.0)
+        spinoff = build_result('シュタインズ・ゲート 横行跋扈のポリオマニア', 'Special episode included.', 0.3)
+        stub_anilist_with([parent, spinoff])
+        matched = service.search('シュタインズ・ゲート', media_type: 'anime').find { |r| r.title.include?('横行跋扈') }
+        expect(matched.description).to eq('岡部倫太郎が時間軸を巡る物語。')
+      end
+
+      it '親が複数候補ある場合、より長くマッチする親を優先する' do
+        short_parent = build_result('進撃の', '短い親の説明', 0.5)
+        long_parent = build_result('進撃の巨人', '長い親の正しい説明', 1.0)
+        child = build_result('進撃の巨人 Season 2', 'English desc', 0.9)
+        stub_anilist_with([short_parent, long_parent, child])
+        matched = service.search('進撃の巨人', media_type: 'anime').find { |r| r.title == '進撃の巨人 Season 2' }
+        expect(matched.description).to eq('長い親の正しい説明')
+      end
+    end
+    # rubocop:enable RSpec/MultipleMemoizedHelpers
   end
 
   describe 'キャッシュ' do

@@ -9,13 +9,10 @@ class WorkSearchService # rubocop:disable Metrics/ClassLength
   CACHE_VERSION = 'v3'
   ENRICHMENT_BATCH_SIZE = 5
 
-  # シリーズもの（Season N, OVA, 完結編, 第N期 等）を検出する正規表現
-  # "進撃の巨人 Season 2" → ["進撃の巨人", "Season 2"]
-  # "進撃の巨人 完結編 前編" → ["進撃の巨人", "完結編 前編"]
-  # 親タイトル（最短マッチ）+ 半角/全角スペース + シリーズ識別子 の構造で検出する
-  # rubocop:disable Layout/LineLength
-  SERIES_PATTERN = /\A(.+?)[\s　]+(Season[\s　]*[\d０-９]+.*|Part[\s　]*[\d０-９]+.*|OVA.*|Special.*|The[\s　]*Final[\s　]*Season.*|Final[\s　]*Season.*|完結編.*|外伝.*|第[\d０-９]+期.*|シーズン[\s　]*[\d０-９]+.*|劇場版.*)\z/i
-  # rubocop:enable Layout/LineLength
+  # 親プレフィックスマッチで親が子の何倍以下の長さなら採用するかの閾値
+  # 0.8 = 親が子の長さの80%以下
+  # "進撃の巨人"(5) と "進撃の巨人ファン"(8) のような誤マッチを軽減する
+  PARENT_PREFIX_RATIO = 0.8
 
   def search(query, media_type: nil)
     cache_key = "work_search:#{CACHE_VERSION}:#{media_type || 'all'}:#{query}"
@@ -177,13 +174,13 @@ class WorkSearchService # rubocop:disable Metrics/ClassLength
   # 流用した結果には metadata[:description_from_parent] = true を付与し、
   # フロント側で「※シリーズ全体の説明」と注釈表示する
   def share_series_descriptions(results)
-    parents = build_parent_map(results)
+    parents = build_parent_candidates(results)
     return if parents.empty?
 
     results.each do |result|
       next unless needs_parent_description?(result)
 
-      parent = find_matching_parent(result, parents)
+      parent = find_parent_by_prefix(result, parents)
       next unless parent
 
       result.description = parent.description
@@ -191,14 +188,12 @@ class WorkSearchService # rubocop:disable Metrics/ClassLength
     end
   end
 
-  # 親候補の正規化タイトル → 親 result のマップを構築する
-  # 親候補の条件: シリーズ識別子を含まず、日本語説明を持っている
-  def build_parent_map(results)
-    results.each_with_object({}) do |r, map|
-      next if series_subitem?(r.title)
-      next if r.description.blank? || english_text?(r.description)
-
-      map[normalize_for_parent_match(r.title)] = r
+  # 親候補リストを構築する
+  # 親の条件: 日本語説明を持っていること
+  # （シリーズ識別子の有無は判定しない。プレフィックスマッチで子を検出する）
+  def build_parent_candidates(results)
+    results.select do |r|
+      r.description.present? && !english_text?(r.description)
     end
   end
 
@@ -208,21 +203,32 @@ class WorkSearchService # rubocop:disable Metrics/ClassLength
     result.description.blank? || english_text?(result.description)
   end
 
-  # 結果のタイトルからシリーズ親を探す
-  # "進撃の巨人 Season 2" → 親候補 "進撃の巨人" → parents マップから取得
-  def find_matching_parent(result, parents)
-    match = SERIES_PATTERN.match(result.title)
-    return nil unless match
+  # 結果に対して、プレフィックスとしてマッチする親候補を探す
+  # - 親の正規化タイトルが子の正規化タイトルの先頭部分と完全一致する
+  # - 親が子よりも十分短い（親の長さが子の 80% 以下）
+  # - 正規表現で series 識別子を列挙するよりも汎用的で、
+  #   "進撃の巨人 Season 2", "Re:ゼロ 2nd Season", "HUNTER×HUNTER (2011)",
+  #   "HUNTER×HUNTER: Greed Island", "シュタインズ・ゲート ゼロ" 等を包括的に検出できる
+  # 複数の親候補がマッチする場合はより詳細（長い）な親を優先する
+  def find_parent_by_prefix(result, parents)
+    child_norm = normalize_for_parent_match(result.title)
+    return nil if child_norm.blank?
 
-    parent_title = match[1].to_s.strip
-    return nil if parent_title.blank?
-
-    parents[normalize_for_parent_match(parent_title)]
+    matched = parents.select { |parent| valid_prefix_parent?(parent, result, child_norm) }
+    matched.max_by { |parent| normalize_for_parent_match(parent.title).length }
   end
 
-  # シリーズ識別子（Season N, OVA, 完結編 等）を持つ作品か判定
-  def series_subitem?(title)
-    SERIES_PATTERN.match?(title)
+  # 親候補が対象結果のプレフィックス親として成立するか判定する
+  def valid_prefix_parent?(parent, result, child_norm)
+    return false if parent.equal?(result) # 自分自身は除外
+
+    parent_norm = normalize_for_parent_match(parent.title)
+    return false if parent_norm.blank?
+    return false if parent_norm == child_norm # 同名の重複は親子関係ではない
+    return false unless child_norm.start_with?(parent_norm)
+
+    # 親が子よりも十分短いことを確認（誤マッチ軽減のための閾値）
+    parent_norm.length <= child_norm.length * PARENT_PREFIX_RATIO
   end
 
   # 親マッチ用の表記揺れ吸収（NFKC + 大小文字 + 空白除去）
