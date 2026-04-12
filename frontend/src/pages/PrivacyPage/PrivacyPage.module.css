@@ -1,0 +1,20 @@
+.page {
+  min-height: 100%;
+  padding: var(--spacing-xl) var(--spacing-md);
+  color: var(--color-text);
+}
+
+.content {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.section {
+  margin-top: var(--spacing-xl);
+}
+
+.list {
+  margin: var(--spacing-md) 0;
+  padding-left: var(--spacing-lg);
+  line-height: 1.8;
+}
