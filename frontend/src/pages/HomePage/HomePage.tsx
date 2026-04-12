@@ -1,4 +1,4 @@
-import { motion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import { WatchingListItem } from '../../components/WatchingListItem/WatchingListItem'
 import { DashboardEmptyState } from '../../components/DashboardEmptyState/DashboardEmptyState'
@@ -15,7 +15,7 @@ export function HomePage() {
 
   return (
     <div className={styles.container}>
-      {user?.email_missing && <EmailPromptBanner />}
+      <AnimatePresence>{user?.email_missing && <EmailPromptBanner />}</AnimatePresence>
       {isLoading && <div className={styles.loading}>読み込み中...</div>}
       {error && <div className={styles.error}>{error}</div>}
       {!isLoading && !error && records.length === 0 && <DashboardEmptyState />}
