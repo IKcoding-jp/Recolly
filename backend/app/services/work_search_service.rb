@@ -71,10 +71,9 @@ class WorkSearchService
     book_results = results.select { |r| openbd_enrichment_target?(r) }
     return if book_results.empty?
 
-    openbd = ExternalApis::OpenbdClient.new
     book_results.each_slice(ENRICHMENT_BATCH_SIZE) do |batch|
       threads = batch.map do |result|
-        Thread.new { enrich_single_book(result, openbd) }
+        Thread.new { enrich_single_book(result) }
       end
       threads.each(&:join)
     end
@@ -88,8 +87,11 @@ class WorkSearchService
     result.metadata[:isbn].present?
   end
 
+  # スレッドごとに独立したクライアントインスタンスを使用する
+  # （Faradayコネクションの共有を避けるため、AniList補完と同じ方針）
   # 欠損している項目だけを補完する（既存データは上書きしない）
-  def enrich_single_book(result, openbd)
+  def enrich_single_book(result)
+    openbd = ExternalApis::OpenbdClient.new
     data = openbd.fetch(result.metadata[:isbn])
     return if data.nil?
 

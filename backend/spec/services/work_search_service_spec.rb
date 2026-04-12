@@ -159,8 +159,10 @@ RSpec.describe WorkSearchService, type: :service do
     it 'ISBN がない結果は openBD 対象外' do
       allow(openbd_double).to receive(:fetch)
       service.search('本テスト', media_type: 'book')
-      # book_without_isbn に対する fetch 呼び出しがないことを確認
-      expect(openbd_double).to have_received(:fetch).with('9784101001340').at_most(:once)
+      # ISBNを持つ結果のfetchは呼ばれる
+      expect(openbd_double).to have_received(:fetch).with('9784101001340')
+      # ISBNがない結果に対するfetchは呼ばれない
+      expect(openbd_double).not_to have_received(:fetch).with(nil)
     end
   end
 
