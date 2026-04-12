@@ -38,6 +38,13 @@ vi.mock('../../lib/api', () => ({
   },
 }))
 
+// PostHog ラッパーをモック化
+vi.mock('../../lib/analytics/posthog', () => ({
+  captureEvent: vi.fn(),
+}))
+
+import { captureEvent } from '../../lib/analytics/posthog'
+
 beforeEach(() => {
   vi.clearAllMocks()
 })
@@ -102,6 +109,28 @@ describe('OauthUsernamePage', () => {
       expect(mockCompleteRegistration).toHaveBeenCalledWith('testuser')
       expect(mockSetUser).toHaveBeenCalled()
       expect(mockNavigate).toHaveBeenCalledWith('/auth/email-setup', { replace: true })
+    })
+  })
+
+  it('登録完了時に signup_completed イベントを method=google で発火する', async () => {
+    mockCompleteRegistration.mockResolvedValue({
+      user: {
+        id: 42,
+        username: 'alice',
+        email: 'alice@example.com',
+        email_missing: false,
+        providers: ['google_oauth2'],
+      },
+    })
+
+    renderPage()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('ユーザー名'), 'alice')
+    await user.click(screen.getByRole('button', { name: '登録する' }))
+
+    await waitFor(() => {
+      expect(captureEvent).toHaveBeenCalledWith('signup_completed', { method: 'google' })
     })
   })
 })
