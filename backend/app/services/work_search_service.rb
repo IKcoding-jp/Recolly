@@ -16,7 +16,7 @@ class WorkSearchService
 
       enrich_books_via_openbd(results)
       enrich_missing_descriptions(results)
-      sort_by_popularity(results)
+      sort_by_quality_and_popularity(results)
     end
   end
 
@@ -159,8 +159,20 @@ class WorkSearchService
     ascii_ratio > 0.5
   end
 
-  # 各アダプターが返すmetadata[:popularity]（0.0〜1.0に正規化済み）で降順ソート
-  def sort_by_popularity(results)
-    results.sort_by { |r| -(r.metadata[:popularity] || 0) }
+  # 品質スコア（0.0〜1.0）: 画像あり=0.5, 説明あり=0.5
+  # 両方ある = 1.0、片方 = 0.5、どちらもない = 0.0
+  def quality_score(result)
+    score = 0.0
+    score += 0.5 if result.cover_image_url.present?
+    score += 0.5 if result.description.present?
+    score
+  end
+
+  # 品質スコア降順 → 人気度降順の2段ソート
+  # 情報がしっかりある結果を上位に並べることで、欠損結果を下位に押し下げる
+  def sort_by_quality_and_popularity(results)
+    results.sort_by do |r|
+      [-quality_score(r), -(r.metadata[:popularity] || 0)]
+    end
   end
 end

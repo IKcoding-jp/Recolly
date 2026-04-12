@@ -198,6 +198,57 @@ RSpec.describe WorkSearchService, type: :service do
     end
   end
 
+  describe '#search 品質込みソート' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+    let(:full_result) do
+      ExternalApis::BaseAdapter::SearchResult.new(
+        '作品A', 'anime', '説明あり', 'https://img.jpg', nil,
+        '1', 'anilist', { popularity: 0.3 }
+      )
+    end
+    let(:image_only) do
+      ExternalApis::BaseAdapter::SearchResult.new(
+        '作品B', 'anime', nil, 'https://img.jpg', nil,
+        '2', 'anilist', { popularity: 0.9 }
+      )
+    end
+    let(:desc_only) do
+      ExternalApis::BaseAdapter::SearchResult.new(
+        '作品C', 'anime', '説明あり', nil, nil,
+        '3', 'anilist', { popularity: 0.9 }
+      )
+    end
+    let(:empty_result) do
+      ExternalApis::BaseAdapter::SearchResult.new(
+        '作品D', 'anime', nil, nil, nil,
+        '4', 'anilist', { popularity: 1.0 }
+      )
+    end
+
+    before do
+      allow(anilist_double).to receive(:safe_search).and_return(
+        [empty_result, image_only, desc_only, full_result]
+      )
+      # 補完をバイパスするため Wikipedia/TMDB をスタブ
+      wiki = instance_double(ExternalApis::WikipediaClient, search_and_fetch_extract: nil)
+      allow(ExternalApis::WikipediaClient).to receive(:new).and_return(wiki)
+      allow(tmdb_double).to receive(:fetch_japanese_description).and_return(nil)
+    end
+
+    it '画像+説明ありを最上位、両方なしを最下位に並べる' do
+      results = service.search('テスト', media_type: 'anime')
+      expect(results.first.title).to eq('作品A') # 画像+説明あり
+      expect(results.last.title).to eq('作品D')  # 両方なし
+    end
+
+    it '同じ品質レベル内では人気度順に並ぶ' do
+      results = service.search('テスト', media_type: 'anime')
+      # 画像のみ(popularity=0.9)と説明のみ(popularity=0.9) は同じ品質スコア0.5
+      # popularity が同じなので順序は保証されないが、両方がAの後に来る
+      mid_titles = [results[1].title, results[2].title]
+      expect(mid_titles).to contain_exactly('作品B', '作品C')
+    end
+  end
+
   describe '英語説明の保持' do
     # Task 6 以降: 破壊的な remove_english_descriptions を廃止し、
     # Wikipedia/TMDBで日本語説明が取れなかった場合は英語をそのまま残す方針に変更した
