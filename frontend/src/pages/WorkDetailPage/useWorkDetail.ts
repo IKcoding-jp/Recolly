@@ -3,8 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom'
 import type { UserRecord, RecordStatus } from '../../lib/types'
 import { recordsApi } from '../../lib/recordsApi'
 import { worksApi } from '../../lib/worksApi'
+import { useDebouncedRecordUpdate } from '../../hooks/useDebouncedRecordUpdate'
 
-type WorkDetailState = {
+export type WorkDetailState = {
   record: UserRecord | null
   isLoading: boolean
   isDeleting: boolean
@@ -94,18 +95,24 @@ export function useWorkDetail() {
     [updateRecord],
   )
 
+  // デバウンス付きハンドラー用（スライダー・エピソード・再視聴回数）
+  const debouncedUpdate = useDebouncedRecordUpdate({
+    record: state.record,
+    setState,
+  })
+
   const handleRatingChange = useCallback(
     (rating: number | null) => {
-      void updateRecord({ rating })
+      debouncedUpdate({ rating })
     },
-    [updateRecord],
+    [debouncedUpdate],
   )
 
   const handleEpisodeChange = useCallback(
     (episode: number) => {
-      void updateRecord({ current_episode: episode })
+      debouncedUpdate({ current_episode: episode })
     },
-    [updateRecord],
+    [debouncedUpdate],
   )
 
   const handleReviewTextSave = useCallback(
@@ -117,9 +124,9 @@ export function useWorkDetail() {
 
   const handleRewatchCountChange = useCallback(
     (count: number) => {
-      void updateRecord({ rewatch_count: count })
+      debouncedUpdate({ rewatch_count: count })
     },
-    [updateRecord],
+    [debouncedUpdate],
   )
 
   const openDeleteDialog = useCallback(() => {
