@@ -227,6 +227,51 @@ describe('useDebouncedRecordUpdate', () => {
     }
   })
 
+  it('nullを含むparamsがAPIに正しく送信される（評価クリア）', async () => {
+    const setState = vi.fn()
+    vi.mocked(recordsApi.update).mockResolvedValue({
+      record: { ...mockRecord, rating: null },
+    })
+    const { result } = renderHook(() => useDebouncedRecordUpdate({ record: mockRecord, setState }))
+
+    act(() => {
+      result.current({ rating: null })
+    })
+
+    await act(async () => {
+      vi.advanceTimersByTime(300)
+    })
+
+    // rating: null がその��ま送信される（undefinedに変換されない）
+    expect(recordsApi.update).toHaveBeenCalledWith(1, { rating: null })
+  })
+
+  it('異なるフィールドを300ms以内に操作すると、paramsがマージされてAPI送信される', async () => {
+    const setState = vi.fn()
+    vi.mocked(recordsApi.update).mockResolvedValue({
+      record: { ...mockRecord, rating: 8, current_episode: 5 },
+    })
+    const { result } = renderHook(() => useDebouncedRecordUpdate({ record: mockRecord, setState }))
+
+    act(() => {
+      // ratingを変更
+      result.current({ rating: 8 })
+    })
+    act(() => {
+      // 200ms後にepisodeを変更（300ms以内）
+      vi.advanceTimersByTime(200)
+      result.current({ current_episode: 5 })
+    })
+
+    await act(async () => {
+      vi.advanceTimersByTime(300)
+    })
+
+    // 両方のフィールドがマージされてAPI送信される
+    expect(recordsApi.update).toHaveBeenCalledTimes(1)
+    expect(recordsApi.update).toHaveBeenCalledWith(1, { rating: 8, current_episode: 5 })
+  })
+
   it('delayMsでデバウンス時間をカスタマイズできる', async () => {
     const setState = vi.fn()
     const { result } = renderHook(() =>

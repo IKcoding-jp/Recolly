@@ -103,7 +103,7 @@ export function useWorkDetail() {
 
   const handleRatingChange = useCallback(
     (rating: number | null) => {
-      debouncedUpdate({ rating: rating ?? undefined })
+      debouncedUpdate({ rating })
     },
     [debouncedUpdate],
   )

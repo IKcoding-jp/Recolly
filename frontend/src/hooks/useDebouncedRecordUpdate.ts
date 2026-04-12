@@ -29,6 +29,9 @@ export function useDebouncedRecordUpdate({
   // 世代カウンター: 新しい操作が来たらインクリメント。
   // API応答時にカウンターが変わっていたら、古いレスポンスとして無視する。
   const generationRef = useRef(0)
+  // デバウンス期間中のparamsを累積する。
+  // 異なるフィールド（rating→episode等）を300ms以内に操作しても両方APIに送る。
+  const pendingParamsRef = useRef<DebouncedFields>({})
 
   // アンマウント時にタイマーをクリア
   useEffect(() => {
@@ -51,6 +54,9 @@ export function useDebouncedRecordUpdate({
       // 世代を進める（新しい操作サイクルの開始を記録）
       generationRef.current += 1
 
+      // paramsを累積（異なるフィールドの操作を300ms以内にしても両方送る）
+      pendingParamsRef.current = { ...pendingParamsRef.current, ...params }
+
       // 楽観的更新: UIを即座に更新
       setState((prev) => {
         if (!prev.record) return prev
@@ -71,9 +77,11 @@ export function useDebouncedRecordUpdate({
       timerRef.current = setTimeout(() => {
         timerRef.current = null
         snapshotRef.current = null
+        const mergedParams = pendingParamsRef.current
+        pendingParamsRef.current = {}
 
         recordsApi
-          .update(record.id, params)
+          .update(record.id, mergedParams)
           .then((res) => {
             // 新しい操作が始まっていたら、この古いレスポンスは無視
             if (generationRef.current !== generation) return
