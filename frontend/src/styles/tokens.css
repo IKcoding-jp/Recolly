@@ -81,8 +81,12 @@
   --radius-full: 9999px;
 
   /* --- トランジション --- */
-  --transition-fast: 150ms ease;
-  --transition-normal: 250ms ease;
+  --transition-fast: 160ms cubic-bezier(0.32, 0.72, 0, 1);
+  --transition-normal: 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: 380ms cubic-bezier(0.16, 1, 0.3, 1);
+  --easing-snap: cubic-bezier(0.32, 0.72, 0, 1);
+  --easing-calm: cubic-bezier(0.16, 1, 0.3, 1);
+  --easing-exit: cubic-bezier(0.7, 0, 0.84, 0);
 
   /* --- ブレークポイント --- */
   /* メディアクエリではCSS変数を直接使用できないため、値の一元管理用として定義。 */
@@ -91,4 +95,18 @@
   /*   タブレット: max-width: 1024px */
   --breakpoint-mobile-max: 768px;
   --breakpoint-tablet-max: 1024px;
+}
+
+/* ===== prefers-reduced-motion 対応 ===== */
+/* OS設定で「動きを減らす」が有効な場合、全アニメーションを実質無効化する */
+/* WCAG 2.1 SC 2.3.3 準拠。!important はアクセシビリティ対応の例外として許容 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
