@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom'
 import { AnimatePresence } from 'motion/react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
@@ -8,21 +9,64 @@ import { NavBar } from './components/ui/NavBar/NavBar'
 import { BottomTabBar } from './components/ui/BottomTabBar/BottomTabBar'
 import { UpdatePrompt } from './components/ui/UpdatePrompt/UpdatePrompt'
 import appStyles from './App.module.css'
-import { LoginPage } from './pages/LoginPage/LoginPage'
-import { SignUpPage } from './pages/SignUpPage/SignUpPage'
-import { PasswordNewPage } from './pages/PasswordNewPage/PasswordNewPage'
-import { PasswordEditPage } from './pages/PasswordEditPage/PasswordEditPage'
-import { HomePage } from './pages/HomePage/HomePage'
-import { SearchPage } from './pages/SearchPage/SearchPage'
-import { WorkDetailPage } from './pages/WorkDetailPage/WorkDetailPage'
-import { LibraryPage } from './pages/LibraryPage/LibraryPage'
-import { OauthUsernamePage } from './pages/OauthUsernamePage/OauthUsernamePage'
-import { EmailPromptPage } from './pages/EmailPromptPage/EmailPromptPage'
-import { AccountSettingsPage } from './pages/AccountSettingsPage/AccountSettingsPage'
-import { CommunityPage } from './pages/CommunityPage/CommunityPage'
-import { DiscussionDetailPage } from './pages/DiscussionDetailPage/DiscussionDetailPage'
-import { UserProfilePage } from './pages/UserProfilePage/UserProfilePage'
-import { RecommendationsPage } from './pages/RecommendationsPage/RecommendationsPage'
+
+// ページコンポーネントは全て lazy-load する（code splitting）
+// 初回アクセス時に現在のルートに必要なチャンクのみダウンロードされる
+const LoginPage = lazy(() =>
+  import('./pages/LoginPage/LoginPage').then((m) => ({ default: m.LoginPage })),
+)
+const SignUpPage = lazy(() =>
+  import('./pages/SignUpPage/SignUpPage').then((m) => ({ default: m.SignUpPage })),
+)
+const PasswordNewPage = lazy(() =>
+  import('./pages/PasswordNewPage/PasswordNewPage').then((m) => ({ default: m.PasswordNewPage })),
+)
+const PasswordEditPage = lazy(() =>
+  import('./pages/PasswordEditPage/PasswordEditPage').then((m) => ({
+    default: m.PasswordEditPage,
+  })),
+)
+const HomePage = lazy(() =>
+  import('./pages/HomePage/HomePage').then((m) => ({ default: m.HomePage })),
+)
+const SearchPage = lazy(() =>
+  import('./pages/SearchPage/SearchPage').then((m) => ({ default: m.SearchPage })),
+)
+const WorkDetailPage = lazy(() =>
+  import('./pages/WorkDetailPage/WorkDetailPage').then((m) => ({ default: m.WorkDetailPage })),
+)
+const LibraryPage = lazy(() =>
+  import('./pages/LibraryPage/LibraryPage').then((m) => ({ default: m.LibraryPage })),
+)
+const OauthUsernamePage = lazy(() =>
+  import('./pages/OauthUsernamePage/OauthUsernamePage').then((m) => ({
+    default: m.OauthUsernamePage,
+  })),
+)
+const EmailPromptPage = lazy(() =>
+  import('./pages/EmailPromptPage/EmailPromptPage').then((m) => ({ default: m.EmailPromptPage })),
+)
+const AccountSettingsPage = lazy(() =>
+  import('./pages/AccountSettingsPage/AccountSettingsPage').then((m) => ({
+    default: m.AccountSettingsPage,
+  })),
+)
+const CommunityPage = lazy(() =>
+  import('./pages/CommunityPage/CommunityPage').then((m) => ({ default: m.CommunityPage })),
+)
+const DiscussionDetailPage = lazy(() =>
+  import('./pages/DiscussionDetailPage/DiscussionDetailPage').then((m) => ({
+    default: m.DiscussionDetailPage,
+  })),
+)
+const UserProfilePage = lazy(() =>
+  import('./pages/UserProfilePage/UserProfilePage').then((m) => ({ default: m.UserProfilePage })),
+)
+const RecommendationsPage = lazy(() =>
+  import('./pages/RecommendationsPage/RecommendationsPage').then((m) => ({
+    default: m.RecommendationsPage,
+  })),
+)
 
 // 認証済みならダッシュボードへ、未認証ならログインページへ
 function RootRedirect() {
@@ -106,107 +150,109 @@ function App() {
             />
           )}
         </AnimatePresence>
-        <Routes>
-          <Route path="/" element={<RootRedirect />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignUpPage />} />
-          <Route path="/password/new" element={<PasswordNewPage />} />
-          <Route path="/password/edit" element={<PasswordEditPage />} />
-          <Route path="/auth/complete" element={<OauthUsernamePage />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <AuthenticatedLayout>
-                  <HomePage />
-                </AuthenticatedLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/mypage" element={<MyPageRedirect />} />
-          <Route
-            path="/search"
-            element={
-              <ProtectedRoute>
-                <AuthenticatedLayout>
-                  <SearchPage />
-                </AuthenticatedLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/library"
-            element={
-              <ProtectedRoute>
-                <AuthenticatedLayout>
-                  <LibraryPage />
-                </AuthenticatedLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/works/:id"
-            element={
-              <ProtectedRoute>
-                <AuthenticatedLayout>
-                  <WorkDetailPage />
-                </AuthenticatedLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/recommendations"
-            element={
-              <ProtectedRoute>
-                <AuthenticatedLayout>
-                  <RecommendationsPage />
-                </AuthenticatedLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/auth/email-setup"
-            element={
-              <ProtectedRoute>
-                <EmailPromptPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <AuthenticatedLayout>
-                  <AccountSettingsPage />
-                </AuthenticatedLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/community"
-            element={
-              <OptionalAuthLayout>
-                <CommunityPage />
-              </OptionalAuthLayout>
-            }
-          />
-          <Route
-            path="/discussions/:id"
-            element={
-              <OptionalAuthLayout>
-                <DiscussionDetailPage />
-              </OptionalAuthLayout>
-            }
-          />
-          <Route
-            path="/users/:id"
-            element={
-              <OptionalAuthLayout>
-                <UserProfilePage />
-              </OptionalAuthLayout>
-            }
-          />
-        </Routes>
+        <Suspense fallback={<div className={appStyles.loading}>読み込み中...</div>}>
+          <Routes>
+            <Route path="/" element={<RootRedirect />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignUpPage />} />
+            <Route path="/password/new" element={<PasswordNewPage />} />
+            <Route path="/password/edit" element={<PasswordEditPage />} />
+            <Route path="/auth/complete" element={<OauthUsernamePage />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <AuthenticatedLayout>
+                    <HomePage />
+                  </AuthenticatedLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/mypage" element={<MyPageRedirect />} />
+            <Route
+              path="/search"
+              element={
+                <ProtectedRoute>
+                  <AuthenticatedLayout>
+                    <SearchPage />
+                  </AuthenticatedLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/library"
+              element={
+                <ProtectedRoute>
+                  <AuthenticatedLayout>
+                    <LibraryPage />
+                  </AuthenticatedLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/works/:id"
+              element={
+                <ProtectedRoute>
+                  <AuthenticatedLayout>
+                    <WorkDetailPage />
+                  </AuthenticatedLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/recommendations"
+              element={
+                <ProtectedRoute>
+                  <AuthenticatedLayout>
+                    <RecommendationsPage />
+                  </AuthenticatedLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/auth/email-setup"
+              element={
+                <ProtectedRoute>
+                  <EmailPromptPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <AuthenticatedLayout>
+                    <AccountSettingsPage />
+                  </AuthenticatedLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/community"
+              element={
+                <OptionalAuthLayout>
+                  <CommunityPage />
+                </OptionalAuthLayout>
+              }
+            />
+            <Route
+              path="/discussions/:id"
+              element={
+                <OptionalAuthLayout>
+                  <DiscussionDetailPage />
+                </OptionalAuthLayout>
+              }
+            />
+            <Route
+              path="/users/:id"
+              element={
+                <OptionalAuthLayout>
+                  <UserProfilePage />
+                </OptionalAuthLayout>
+              }
+            />
+          </Routes>
+        </Suspense>
       </AuthProvider>
     </BrowserRouter>
   )
