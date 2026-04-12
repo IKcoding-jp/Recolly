@@ -26,6 +26,9 @@ export function useDebouncedRecordUpdate({
 }: UseDebouncedRecordUpdateParams): (params: DebouncedFields) => void {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const snapshotRef = useRef<UserRecord | null>(null)
+  // 世代カウンター: 新しい操作が来たらインクリメント。
+  // API応答時にカウンターが変わっていたら、古いレスポンスとして無視する。
+  const generationRef = useRef(0)
 
   // アンマウント時にタイマーをクリア
   useEffect(() => {
@@ -45,6 +48,9 @@ export function useDebouncedRecordUpdate({
         snapshotRef.current = record
       }
 
+      // 世代を進める（新しい操作サイクルの開始を記録）
+      generationRef.current += 1
+
       // 楽観的更新: UIを即座に更新
       setState((prev) => {
         if (!prev.record) return prev
@@ -61,6 +67,7 @@ export function useDebouncedRecordUpdate({
 
       // 新しいタイマーをセット
       const snapshot = snapshotRef.current
+      const generation = generationRef.current
       timerRef.current = setTimeout(() => {
         timerRef.current = null
         snapshotRef.current = null
@@ -68,6 +75,8 @@ export function useDebouncedRecordUpdate({
         recordsApi
           .update(record.id, params)
           .then((res) => {
+            // 新しい操作が始まっていたら、この古いレスポンスは無視
+            if (generationRef.current !== generation) return
             // API成功: サーバーレスポンスでstateを確定
             setState((prev) => {
               if (!prev.record) return prev
@@ -75,6 +84,8 @@ export function useDebouncedRecordUpdate({
             })
           })
           .catch(() => {
+            // 新しい操作が始まっていたら、ロールバックも不要
+            if (generationRef.current !== generation) return
             // API失敗: スナップショットにロールバック
             setState((prev) => {
               if (!prev.record || !snapshot) return prev

@@ -163,6 +163,70 @@ describe('useDebouncedRecordUpdate', () => {
     expect(recordsApi.update).toHaveBeenCalledWith(1, { current_episode: 6 })
   })
 
+  it('API応答中に新しい操作が来た場合、古いレスポンスは無視される', async () => {
+    // 1回目のAPI呼び出しは解決を手動制御する
+    let resolveFirst!: (value: { record: UserRecord }) => void
+    vi.mocked(recordsApi.update).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFirst = resolve
+        }),
+    )
+
+    const setState = vi.fn()
+    const { result, rerender } = renderHook(
+      ({ record }) => useDebouncedRecordUpdate({ record, setState }),
+      { initialProps: { record: mockRecord } },
+    )
+
+    // 1回目: current_episode を 4 に変更
+    act(() => {
+      result.current({ current_episode: 4 })
+    })
+
+    // 300ms後にAPI呼び出し（レスポンスはまだ返らない）
+    await act(async () => {
+      vi.advanceTimersByTime(300)
+    })
+    expect(recordsApi.update).toHaveBeenCalledTimes(1)
+
+    // 楽観的更新された record でフックを再レンダー
+    const optimisticRecord = { ...mockRecord, current_episode: 4 }
+    rerender({ record: optimisticRecord })
+
+    // 2回目のAPIは即座に解決するようにモック
+    vi.mocked(recordsApi.update).mockResolvedValueOnce({
+      record: { ...mockRecord, current_episode: 5 },
+    })
+
+    // 2回目: API応答待ち中に +1 操作
+    act(() => {
+      result.current({ current_episode: 5 })
+    })
+
+    // 1回目のAPIレスポンスが到着（current_episode: 4）
+    await act(async () => {
+      resolveFirst({ record: { ...mockRecord, current_episode: 4 } })
+    })
+
+    // 古いレスポンスは無視されるべき → setStateで4に戻されない
+    // setState呼び出し: 1回目=楽観的(4), 2回目=楽観的(5)
+    // 1回目のAPI成功のsetStateは呼ばれない（世代が変わったため）
+    const allSetStateCalls = setState.mock.calls
+    // 最後のsetState呼び出しのコールバックを検証
+    const lastCall = allSetStateCalls[allSetStateCalls.length - 1][0]
+    if (typeof lastCall === 'function') {
+      const result2 = lastCall({
+        record: { ...mockRecord, current_episode: 5 },
+        isLoading: false,
+        isDeleting: false,
+        showDeleteDialog: false,
+      })
+      // 5のままであること（4に戻らない）
+      expect(result2.record.current_episode).toBe(5)
+    }
+  })
+
   it('delayMsでデバウンス時間をカスタマイズできる', async () => {
     const setState = vi.fn()
     const { result } = renderHook(() =>
