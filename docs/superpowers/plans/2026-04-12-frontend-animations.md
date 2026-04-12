@@ -41,10 +41,17 @@ Expected: `"motion": "^X.Y.Z"` 形式で表示される（X >= 11）
 - [ ] **Step 3: ビルドが通ることを確認**
 
 ```bash
-cd frontend && npm run build
+cd frontend && npx vite build
 ```
 
 Expected: `vite v8.x.x building for production...` → エラーなく完了
+
+> **注:** `npm run build`（= `tsc -b && vite build`）ではなく `npx vite build` を使う。
+> Recolly の本番デプロイ（cd.yml）も `npx vite build` で行われており、TypeScript の型チェックを
+> ビルドに含めていない。既存の型エラー4件（RecordListItem / RecommendationsPage /
+> SearchPage / vite.config.ts）が main から持ち越されているため、`tsc -b` を含むビルドは失敗する。
+> 既存型エラーは別Issueで管理する。本タスクでは「motion追加が新たにビルドを壊さない」ことを
+> 確認する目的で `vite build` のみ実行する。
 
 - [ ] **Step 4: コミット**
 
@@ -595,10 +602,12 @@ EOF
 - [ ] **Step 4: ビルドが通ることを確認**
 
 ```bash
-cd frontend && npm run build
+cd frontend && npx vite build
 ```
 
 Expected: エラーなし
+
+> **注:** `npm run build` ではなく `npx vite build`。Task 1 の注釈と同じ理由（既存型エラー回避）。
 
 - [ ] **Step 5: 既存テストが全て通ることを確認**
 
@@ -2523,10 +2532,13 @@ Expected: エラー・警告なし
 - [ ] **Step 3: ビルド実行**
 
 ```bash
-cd frontend && npm run build
+cd frontend && npx vite build
 ```
 
 Expected: ビルド成功、bundle size を記録（motion 追加で +60KB 程度の増加が想定範囲）
+
+> **注:** `npm run build` ではなく `npx vite build`。Task 1 の注釈と同じ理由（既存型エラー回避）。
+> 既存型エラー4件は別Issueで管理する。
 
 - [ ] **Step 4: 開発サーバー起動して手動巡回**
 
