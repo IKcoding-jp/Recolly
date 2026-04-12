@@ -486,6 +486,102 @@ RSpec.describe WorkSearchService, type: :service do
     end
   end
 
+  describe '#search シリーズ親説明流用' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+    let(:parent_with_japanese) do
+      ExternalApis::BaseAdapter::SearchResult.new(
+        '進撃の巨人', 'anime', '繁栄を築き上げた人類は巨人により滅亡の淵に立たされた。',
+        'https://img.parent', 25, '1', 'anilist', { popularity: 1.0 }
+      )
+    end
+    let(:season2_english) do
+      ExternalApis::BaseAdapter::SearchResult.new(
+        '進撃の巨人 Season 2', 'anime', 'Eren Jaeger swore to wipe out every last Titan.',
+        'https://img.s2', 12, '2', 'anilist', { popularity: 0.9 }
+      )
+    end
+    let(:final_season_english) do
+      ExternalApis::BaseAdapter::SearchResult.new(
+        '進撃の巨人 The Final Season', 'anime', 'It has been four years since the Scout Regiment.',
+        'https://img.fs', 16, '3', 'anilist', { popularity: 0.8 }
+      )
+    end
+    let(:gaiden_english) do
+      ExternalApis::BaseAdapter::SearchResult.new(
+        '進撃の巨人 外伝 悔いなき選択', 'anime', 'This prequel to megahit Attack on Titan.',
+        nil, 2, '4', 'anilist', { popularity: 0.5 }
+      )
+    end
+
+    before do
+      # Wikipedia/TMDB 補完はバイパス（親の日本語は既に取れている前提）
+      wiki = instance_double(ExternalApis::WikipediaClient, search_and_fetch_extract: nil)
+      allow(ExternalApis::WikipediaClient).to receive(:new).and_return(wiki)
+      allow(tmdb_double).to receive(:fetch_japanese_description).and_return(nil)
+      allow(anilist_double).to receive(:safe_search).and_return(
+        [parent_with_japanese, season2_english, final_season_english, gaiden_english]
+      )
+    end
+
+    it 'シリーズ子の英語説明を親の日本語説明で流用する' do
+      results = service.search('進撃の巨人', media_type: 'anime')
+      season2 = results.find { |r| r.title == '進撃の巨人 Season 2' }
+      expect(season2.description).to eq('繁栄を築き上げた人類は巨人により滅亡の淵に立たされた。')
+    end
+
+    it '流用した子に metadata[:description_from_parent] = true を付与する' do
+      results = service.search('進撃の巨人', media_type: 'anime')
+      season2 = results.find { |r| r.title == '進撃の巨人 Season 2' }
+      expect(season2.metadata[:description_from_parent]).to be true
+    end
+
+    it '親自身は流用対象にならない（自分の説明を保持し、フラグも付かない）' do
+      results = service.search('進撃の巨人', media_type: 'anime')
+      parent = results.find { |r| r.title == '進撃の巨人' }
+      expect(parent.description).to eq('繁栄を築き上げた人類は巨人により滅亡の淵に立たされた。')
+      expect(parent.metadata[:description_from_parent]).to be_nil
+    end
+
+    it 'The Final Season や 外伝 など複数のシリーズ識別子パターンで流用する' do
+      results = service.search('進撃の巨人', media_type: 'anime')
+      final = results.find { |r| r.title == '進撃の巨人 The Final Season' }
+      gaiden = results.find { |r| r.title == '進撃の巨人 外伝 悔いなき選択' }
+      expect(final.description).to eq('繁栄を築き上げた人類は巨人により滅亡の淵に立たされた。')
+      expect(gaiden.description).to eq('繁栄を築き上げた人類は巨人により滅亡の淵に立たされた。')
+    end
+
+    it '親が結果に含まれない場合は流用せず英語のまま残す' do
+      allow(anilist_double).to receive(:safe_search).and_return([season2_english])
+      results = service.search('進撃の巨人 Season 2', media_type: 'anime')
+      expect(results.first.description).to eq('Eren Jaeger swore to wipe out every last Titan.')
+      expect(results.first.metadata[:description_from_parent]).to be_nil
+    end
+
+    it '親の説明が英語のままの場合は流用しない' do
+      english_parent = ExternalApis::BaseAdapter::SearchResult.new(
+        '進撃の巨人', 'anime', 'A massive series of giants threatening humanity.',
+        nil, 25, '1', 'anilist', { popularity: 1.0 }
+      )
+      allow(anilist_double).to receive(:safe_search).and_return([english_parent, season2_english])
+      results = service.search('進撃の巨人', media_type: 'anime')
+      season2 = results.find { |r| r.title == '進撃の巨人 Season 2' }
+      expect(season2.description).to eq('Eren Jaeger swore to wipe out every last Titan.')
+      expect(season2.metadata[:description_from_parent]).to be_nil
+    end
+
+    it '既に日本語説明を持つ子（Season 3 等）は流用しない' do
+      season3_japanese = ExternalApis::BaseAdapter::SearchResult.new(
+        '進撃の巨人 Season 3', 'anime', '母親の命を奪った巨人を駆逐するため戦う。',
+        nil, 22, '5', 'anilist', { popularity: 0.85 }
+      )
+      allow(anilist_double).to receive(:safe_search).and_return([parent_with_japanese, season3_japanese])
+      results = service.search('進撃の巨人', media_type: 'anime')
+      season3 = results.find { |r| r.title == '進撃の巨人 Season 3' }
+      # 既存の日本語説明が保持される
+      expect(season3.description).to eq('母親の命を奪った巨人を駆逐するため戦う。')
+      expect(season3.metadata[:description_from_parent]).to be_nil
+    end
+  end
+
   describe 'キャッシュ' do
     # キャッシュ動作テストではメモリストアを使用（test環境のデフォルトは:null_store）
     around do |example|
@@ -520,7 +616,7 @@ RSpec.describe WorkSearchService, type: :service do
       Rails.cache.write('work_search:anime:テスト', [mock_result])
       # 新しい検索は新しいキー形式で保存される
       service.search('テスト', media_type: 'anime')
-      expect(Rails.cache.exist?('work_search:v2:anime:テスト')).to be true
+      expect(Rails.cache.exist?('work_search:v3:anime:テスト')).to be true
     end
   end
 end

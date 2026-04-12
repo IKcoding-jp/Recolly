@@ -1,10 +1,21 @@
 # frozen_string_literal: true
 
-class WorkSearchService
+# 検索パイプラインは fetch → enrich_books → enrich_missing_descriptions →
+# share_series_descriptions → sort の順で処理する。各段階を private メソッドとして
+# 分割しているため行数は膨らむが、意味のある単位で命名しており責務は単一である。
+class WorkSearchService # rubocop:disable Metrics/ClassLength
   CACHE_TTL = 12.hours
   # 実装変更時にインクリメントしてキャッシュを無効化する
-  CACHE_VERSION = 'v2'
+  CACHE_VERSION = 'v3'
   ENRICHMENT_BATCH_SIZE = 5
+
+  # シリーズもの（Season N, OVA, 完結編, 第N期 等）を検出する正規表現
+  # "進撃の巨人 Season 2" → ["進撃の巨人", "Season 2"]
+  # "進撃の巨人 完結編 前編" → ["進撃の巨人", "完結編 前編"]
+  # 親タイトル（最短マッチ）+ 半角/全角スペース + シリーズ識別子 の構造で検出する
+  # rubocop:disable Layout/LineLength
+  SERIES_PATTERN = /\A(.+?)[\s　]+(Season[\s　]*[\d０-９]+.*|Part[\s　]*[\d０-９]+.*|OVA.*|Special.*|The[\s　]*Final[\s　]*Season.*|Final[\s　]*Season.*|完結編.*|外伝.*|第[\d０-９]+期.*|シーズン[\s　]*[\d０-９]+.*|劇場版.*)\z/i
+  # rubocop:enable Layout/LineLength
 
   def search(query, media_type: nil)
     cache_key = "work_search:#{CACHE_VERSION}:#{media_type || 'all'}:#{query}"
@@ -16,6 +27,7 @@ class WorkSearchService
 
       enrich_books_via_openbd(results)
       enrich_missing_descriptions(results)
+      share_series_descriptions(results)
       sort_by_quality_and_popularity(results)
     end
   end
@@ -157,6 +169,65 @@ class WorkSearchService
 
     ascii_ratio = text.count("\x20-\x7E").to_f / text.length
     ascii_ratio > 0.5
+  end
+
+  # シリーズ作品（"進撃の巨人 Season 2" 等）の説明欄が英語のままの場合に、
+  # 同じ検索結果リスト内に存在する親作品（"進撃の巨人"）の日本語説明を流用する
+  # 各シーズン固有の日本語説明データが世の中に存在しないため、シリーズ全体の概要として使う
+  # 流用した結果には metadata[:description_from_parent] = true を付与し、
+  # フロント側で「※シリーズ全体の説明」と注釈表示する
+  def share_series_descriptions(results)
+    parents = build_parent_map(results)
+    return if parents.empty?
+
+    results.each do |result|
+      next unless needs_parent_description?(result)
+
+      parent = find_matching_parent(result, parents)
+      next unless parent
+
+      result.description = parent.description
+      result.metadata[:description_from_parent] = true
+    end
+  end
+
+  # 親候補の正規化タイトル → 親 result のマップを構築する
+  # 親候補の条件: シリーズ識別子を含まず、日本語説明を持っている
+  def build_parent_map(results)
+    results.each_with_object({}) do |r, map|
+      next if series_subitem?(r.title)
+      next if r.description.blank? || english_text?(r.description)
+
+      map[normalize_for_parent_match(r.title)] = r
+    end
+  end
+
+  # 親説明流用が必要かどうか判定する
+  # 説明が空 or 英語の場合のみ補完対象（既に日本語説明があるなら流用しない）
+  def needs_parent_description?(result)
+    result.description.blank? || english_text?(result.description)
+  end
+
+  # 結果のタイトルからシリーズ親を探す
+  # "進撃の巨人 Season 2" → 親候補 "進撃の巨人" → parents マップから取得
+  def find_matching_parent(result, parents)
+    match = SERIES_PATTERN.match(result.title)
+    return nil unless match
+
+    parent_title = match[1].to_s.strip
+    return nil if parent_title.blank?
+
+    parents[normalize_for_parent_match(parent_title)]
+  end
+
+  # シリーズ識別子（Season N, OVA, 完結編 等）を持つ作品か判定
+  def series_subitem?(title)
+    SERIES_PATTERN.match?(title)
+  end
+
+  # 親マッチ用の表記揺れ吸収（NFKC + 大小文字 + 空白除去）
+  def normalize_for_parent_match(text)
+    text.unicode_normalize(:nfkc).downcase.gsub(/\s+/, '')
   end
 
   # 品質スコア（0.0〜1.0）: 画像あり=0.5, 説明あり=0.5
