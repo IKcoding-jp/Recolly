@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from '../../contexts/AuthContext'
@@ -10,11 +10,21 @@ vi.mock('../../components/OAuthButtons/OAuthButtons', () => ({
   OAuthButtons: () => <div data-testid="oauth-buttons-mock">Googleログイン（mock）</div>,
 }))
 
+// PostHog ラッパーをモック化
+vi.mock('../../lib/analytics/posthog', () => ({
+  captureEvent: vi.fn(),
+  identifyUser: vi.fn(),
+  resetAnalytics: vi.fn(),
+}))
+
+import { captureEvent } from '../../lib/analytics/posthog'
+
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
 beforeEach(() => {
   mockFetch.mockReset()
+  vi.mocked(captureEvent).mockClear()
   // 初回セッション確認: 未認証
   mockFetch.mockResolvedValueOnce({
     ok: false,
@@ -51,7 +61,19 @@ describe('SignUpPage', () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () =>
-        Promise.resolve({ user: { id: 1, username: 'newuser', email: 'new@example.com' } }),
+        Promise.resolve({
+          user: {
+            id: 1,
+            username: 'newuser',
+            email: 'new@example.com',
+            avatar_url: null,
+            bio: null,
+            created_at: '2026-04-13T00:00:00Z',
+            has_password: true,
+            providers: [],
+            email_missing: false,
+          },
+        }),
     })
 
     await user.type(await screen.findByLabelText('ユーザー名'), 'newuser')
@@ -94,5 +116,39 @@ describe('SignUpPage', () => {
   it('OAuthボタンが表示される', async () => {
     renderSignUpPage()
     expect(await screen.findByTestId('oauth-buttons-mock')).toBeInTheDocument()
+  })
+
+  it('登録成功時に signup_completed イベントを method=email で発火する', async () => {
+    renderSignUpPage()
+    const user = userEvent.setup()
+
+    // 登録API成功
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          user: {
+            id: 1,
+            username: 'newuser',
+            email: 'new@example.com',
+            avatar_url: null,
+            bio: null,
+            created_at: '2026-04-13T00:00:00Z',
+            has_password: true,
+            providers: [],
+            email_missing: false,
+          },
+        }),
+    })
+
+    await user.type(await screen.findByLabelText('ユーザー名'), 'newuser')
+    await user.type(screen.getByLabelText('メールアドレス'), 'new@example.com')
+    await user.type(screen.getByLabelText('パスワード'), 'password123')
+    await user.type(screen.getByLabelText('パスワード（確認）'), 'password123')
+    await user.click(screen.getByRole('button', { name: 'アカウントを作成' }))
+
+    await waitFor(() => {
+      expect(captureEvent).toHaveBeenCalledWith('signup_completed', { method: 'email' })
+    })
   })
 })

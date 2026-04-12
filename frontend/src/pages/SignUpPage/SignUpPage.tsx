@@ -8,6 +8,8 @@ import { Button } from '../../components/ui/Button/Button'
 import { Divider } from '../../components/ui/Divider/Divider'
 import { OAuthButtons } from '../../components/OAuthButtons/OAuthButtons'
 import { FormInput } from '../../components/ui/FormInput/FormInput'
+import { captureEvent } from '../../lib/analytics/posthog'
+import { ANALYTICS_EVENTS } from '../../lib/analytics/events'
 import styles from '../../styles/authForm.module.css'
 
 export function SignUpPage() {
@@ -33,6 +35,9 @@ export function SignUpPage() {
 
     try {
       await signup(username, email, password, passwordConfirmation)
+      // 登録完了イベント発火（method: email）
+      // ジャンル横断率や signup → 記録ファネル分析の基点になる
+      captureEvent(ANALYTICS_EVENTS.SIGNUP_COMPLETED, { method: 'email' })
       navigate('/dashboard')
     } catch (err) {
       if (err instanceof ApiError) {
