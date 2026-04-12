@@ -6,13 +6,9 @@
 class WorkSearchService # rubocop:disable Metrics/ClassLength
   CACHE_TTL = 12.hours
   # 実装変更時にインクリメントしてキャッシュを無効化する
-  CACHE_VERSION = 'v3'
+  # v4: シリーズ親説明流用の境界文字判定を追加（normalize 空白保持 + ratio 廃止）
+  CACHE_VERSION = 'v4'
   ENRICHMENT_BATCH_SIZE = 5
-
-  # 親プレフィックスマッチで親が子の何倍以下の長さなら採用するかの閾値
-  # 0.8 = 親が子の長さの80%以下
-  # "進撃の巨人"(5) と "進撃の巨人ファン"(8) のような誤マッチを軽減する
-  PARENT_PREFIX_RATIO = 0.8
 
   def search(query, media_type: nil)
     cache_key = "work_search:#{CACHE_VERSION}:#{media_type || 'all'}:#{query}"
@@ -205,7 +201,8 @@ class WorkSearchService # rubocop:disable Metrics/ClassLength
 
   # 結果に対して、プレフィックスとしてマッチする親候補を探す
   # - 親の正規化タイトルが子の正規化タイトルの先頭部分と完全一致する
-  # - 親が子よりも十分短い（親の長さが子の 80% 以下）
+  # - 親プレフィックスの直後が「文字/数字」でないこと（境界文字判定）
+  #   → "進撃の巨人ファンクラブ" や "FATEstay" のような同単語の続きを別作品として除外する
   # - 正規表現で series 識別子を列挙するよりも汎用的で、
   #   "進撃の巨人 Season 2", "Re:ゼロ 2nd Season", "HUNTER×HUNTER (2011)",
   #   "HUNTER×HUNTER: Greed Island", "シュタインズ・ゲート ゼロ" 等を包括的に検出できる
@@ -219,21 +216,34 @@ class WorkSearchService # rubocop:disable Metrics/ClassLength
   end
 
   # 親候補が対象結果のプレフィックス親として成立するか判定する
+  # 境界文字判定: 親プレフィックスの直後の1文字が letter (\p{L}) または number (\p{N}) なら、
+  # 同じ単語の続きと見なし別作品として除外する。
+  # OK 例: "進撃の巨人 Season 2"（直後が空白）、"HUNTER×HUNTER: Greed Island"（直後が記号）
+  # NG 例: "進撃の巨人ファンクラブ"（直後が "フ" = L）、"FATEstay"（直後が "s" = L）
   def valid_prefix_parent?(parent, result, child_norm)
     return false if parent.equal?(result) # 自分自身は除外
 
     parent_norm = normalize_for_parent_match(parent.title)
-    return false if parent_norm.blank?
-    return false if parent_norm == child_norm # 同名の重複は親子関係ではない
-    return false unless child_norm.start_with?(parent_norm)
+    return false unless prefix_parent_structure_ok?(parent_norm, child_norm)
 
-    # 親が子よりも十分短いことを確認（誤マッチ軽減のための閾値）
-    parent_norm.length <= child_norm.length * PARENT_PREFIX_RATIO
+    boundary_char = child_norm[parent_norm.length]
+    !boundary_char&.match?(/[\p{L}\p{N}]/)
   end
 
-  # 親マッチ用の表記揺れ吸収（NFKC + 大小文字 + 空白除去）
+  # プレフィックスマッチの構造的条件（親が空でなく、子と同名でなく、子の真のプレフィックスである）
+  def prefix_parent_structure_ok?(parent_norm, child_norm)
+    return false if parent_norm.blank?
+    return false if parent_norm == child_norm
+    return false unless child_norm.start_with?(parent_norm)
+
+    child_norm.length > parent_norm.length
+  end
+
+  # 親マッチ用の表記揺れ吸収（NFKC 正規化 + 小文字化）
+  # 空白は「親プレフィックスの境界判定」で必要になるため削除せず単一の半角空白に統一する。
+  # 連続する空白や全角空白は NFKC + gsub で1個の半角空白に潰す。
   def normalize_for_parent_match(text)
-    text.unicode_normalize(:nfkc).downcase.gsub(/\s+/, '')
+    text.unicode_normalize(:nfkc).downcase.strip.gsub(/\s+/, ' ')
   end
 
   # 品質スコア（0.0〜1.0）: 画像あり=0.5, 説明あり=0.5

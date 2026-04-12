@@ -638,6 +638,71 @@ RSpec.describe WorkSearchService, type: :service do
       end
     end
     # rubocop:enable RSpec/MultipleMemoizedHelpers
+
+    # 親プレフィックスの直後が文字/数字の場合は同じ単語の続きと見なし別作品として除外する
+    # ratio 閾値（廃止）の代わりに境界文字判定で誤マッチを防ぐ
+    # rubocop:disable RSpec/MultipleMemoizedHelpers
+    context 'プレフィックスマッチの誤マッチ防止（境界文字判定）' do
+      def build_result(title, description, popularity)
+        ExternalApis::BaseAdapter::SearchResult.new(
+          title, 'anime', description, nil, 12, SecureRandom.hex(4), 'anilist', { popularity: popularity }
+        )
+      end
+
+      def stub_anilist_with(results)
+        allow(anilist_double).to receive(:safe_search).and_return(results)
+      end
+
+      it '親直後が日本語文字続きの場合は流用しない（進撃の巨人 → 進撃の巨人ファンクラブ）' do
+        parent = build_result('進撃の巨人', '繁栄を築き上げた人類は巨人により滅亡の淵に立たされた。', 1.0)
+        fanclub = build_result('進撃の巨人ファンクラブ', 'A fan club for Attack on Titan.', 0.1)
+        stub_anilist_with([parent, fanclub])
+        results = service.search('進撃の巨人', media_type: 'anime')
+        fc = results.find { |r| r.title == '進撃の巨人ファンクラブ' }
+        expect(fc.description).to eq('A fan club for Attack on Titan.')
+        expect(fc.metadata[:description_from_parent]).to be_nil
+      end
+
+      it '親直後が英文字の場合は流用しない（FATE → FATEstay）' do
+        parent = build_result('FATE', 'フェイト本編の日本語説明', 1.0)
+        other = build_result('FATEstay', 'Different work entirely', 0.5)
+        stub_anilist_with([parent, other])
+        results = service.search('FATE', media_type: 'anime')
+        o = results.find { |r| r.title == 'FATEstay' }
+        expect(o.description).to eq('Different work entirely')
+        expect(o.metadata[:description_from_parent]).to be_nil
+      end
+
+      it '親直後が日本語文字続きの場合は流用しない（呪術 → 呪術廻戦）' do
+        parent = build_result('呪術', '呪術の解説', 0.3)
+        other = build_result('呪術廻戦', 'Jujutsu Kaisen English description', 1.0)
+        stub_anilist_with([parent, other])
+        results = service.search('呪術', media_type: 'anime')
+        o = results.find { |r| r.title == '呪術廻戦' }
+        expect(o.description).to eq('Jujutsu Kaisen English description')
+        expect(o.metadata[:description_from_parent]).to be_nil
+      end
+
+      it '親直後が記号（":"）の場合は流用する（HUNTER×HUNTER → HUNTER×HUNTER: Greed Island）' do
+        parent = build_result('HUNTER×HUNTER', 'ハンターと呼ばれる人々がいる。', 0.9)
+        arc = build_result('HUNTER×HUNTER: Greed Island', 'After the battle.', 0.5)
+        stub_anilist_with([parent, arc])
+        results = service.search('HUNTER×HUNTER', media_type: 'anime')
+        a = results.find { |r| r.title == 'HUNTER×HUNTER: Greed Island' }
+        expect(a.description).to eq('ハンターと呼ばれる人々がいる。')
+      end
+
+      it '長尺タイトル（13字以上）でも短いシリーズ識別子が付けば流用する（PARENT_PREFIX_RATIO 廃止の検証）' do
+        parent = build_result('転生したらスライムだった件', '転生したスライムが異世界で...', 1.0)
+        season2 = build_result('転生したらスライムだった件 第2期', 'Slime continues his journey.', 0.9)
+        stub_anilist_with([parent, season2])
+        results = service.search('スライム', media_type: 'anime')
+        s2 = results.find { |r| r.title.include?('第2期') }
+        expect(s2.description).to eq('転生したスライムが異世界で...')
+        expect(s2.metadata[:description_from_parent]).to be true
+      end
+    end
+    # rubocop:enable RSpec/MultipleMemoizedHelpers
   end
 
   describe 'キャッシュ' do
@@ -674,7 +739,7 @@ RSpec.describe WorkSearchService, type: :service do
       Rails.cache.write('work_search:anime:テスト', [mock_result])
       # 新しい検索は新しいキー形式で保存される
       service.search('テスト', media_type: 'anime')
-      expect(Rails.cache.exist?('work_search:v3:anime:テスト')).to be true
+      expect(Rails.cache.exist?('work_search:v4:anime:テスト')).to be true
     end
   end
 end
