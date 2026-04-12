@@ -13,6 +13,8 @@ class WorkSearchService
       adapters = select_adapters(media_type)
       results = fetch_from_adapters_in_parallel(adapters, query, media_type)
       results = results.select { |r| r.media_type == media_type } if media_type.present?
+
+      enrich_books_via_openbd(results)
       enrich_anilist_descriptions(results)
       remove_english_descriptions(results)
       sort_by_popularity(results)
@@ -61,6 +63,38 @@ class WorkSearchService
       ExternalApis::GoogleBooksAdapter.new,
       ExternalApis::IgdbAdapter.new
     ]
+  end
+
+  # Google Booksの結果のうち画像・説明が欠損しているものを openBD で補完する
+  # ISBN が metadata にない結果はスキップする（openBDはISBNベース）
+  def enrich_books_via_openbd(results)
+    book_results = results.select { |r| openbd_enrichment_target?(r) }
+    return if book_results.empty?
+
+    openbd = ExternalApis::OpenbdClient.new
+    book_results.each_slice(ENRICHMENT_BATCH_SIZE) do |batch|
+      threads = batch.map do |result|
+        Thread.new { enrich_single_book(result, openbd) }
+      end
+      threads.each(&:join)
+    end
+  end
+
+  # openBD 補完対象の判定（google_books由来で画像か説明が欠損しISBNを持つ）
+  def openbd_enrichment_target?(result)
+    return false unless result.external_api_source == 'google_books'
+    return false unless result.cover_image_url.blank? || result.description.blank?
+
+    result.metadata[:isbn].present?
+  end
+
+  # 欠損している項目だけを補完する（既存データは上書きしない）
+  def enrich_single_book(result, openbd)
+    data = openbd.fetch(result.metadata[:isbn])
+    return if data.nil?
+
+    result.cover_image_url ||= data[:cover_image_url]
+    result.description ||= data[:description]
   end
 
   # AniListの結果にTMDB→Wikipediaの順で日本語説明を補完する

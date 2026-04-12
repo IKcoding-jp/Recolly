@@ -104,6 +104,66 @@ RSpec.describe WorkSearchService, type: :service do
     end
   end
 
+  describe '#search openBD補完' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+    let(:openbd_double) { instance_double(ExternalApis::OpenbdClient) }
+    let(:book_without_image) do
+      ExternalApis::BaseAdapter::SearchResult.new(
+        '人間失格', 'book', nil, nil, nil, 'gbid1', 'google_books',
+        { isbn: '9784101001340', popularity: 0.5 }
+      )
+    end
+    let(:book_with_full_data) do
+      ExternalApis::BaseAdapter::SearchResult.new(
+        'ノルウェイの森', 'book', '既存の説明', 'https://existing.jpg',
+        nil, 'gbid2', 'google_books',
+        { isbn: '9784101001341', popularity: 0.5 }
+      )
+    end
+    let(:book_without_isbn) do
+      ExternalApis::BaseAdapter::SearchResult.new(
+        '謎の本', 'book', nil, nil, nil, 'gbid3', 'google_books',
+        { popularity: 0.5 }
+      )
+    end
+
+    before do
+      allow(ExternalApis::OpenbdClient).to receive(:new).and_return(openbd_double)
+      allow(google_books_double).to receive(:safe_search).and_return(
+        [book_without_image, book_with_full_data, book_without_isbn]
+      )
+    end
+
+    it 'ISBN がある欠損結果に openBD のデータを補完する' do
+      allow(openbd_double).to receive(:fetch).with('9784101001340').and_return(
+        { cover_image_url: 'https://openbd.jp/cover.jpg', description: '恥の多い生涯。' }
+      )
+      results = service.search('本テスト', media_type: 'book')
+      target = results.find { |r| r.title == '人間失格' }
+      expect(target.cover_image_url).to eq('https://openbd.jp/cover.jpg')
+      expect(target.description).to eq('恥の多い生涯。')
+    end
+
+    it '既存のデータは openBD で上書きしない' do
+      allow(openbd_double).to receive(:fetch).and_return(
+        { cover_image_url: 'https://openbd.jp/other.jpg', description: '別の説明' }
+      )
+      results = service.search('本テスト', media_type: 'book')
+      target = results.find { |r| r.title == 'ノルウェイの森' }
+      # 既存の画像・説明が維持される
+      expect(target.cover_image_url).to eq('https://existing.jpg')
+      expect(target.description).to eq('既存の説明')
+      # openBD fetch は呼ばれない（欠損がないため）
+      expect(openbd_double).not_to have_received(:fetch).with('9784101001341')
+    end
+
+    it 'ISBN がない結果は openBD 対象外' do
+      allow(openbd_double).to receive(:fetch)
+      service.search('本テスト', media_type: 'book')
+      # book_without_isbn に対する fetch 呼び出しがないことを確認
+      expect(openbd_double).to have_received(:fetch).with('9784101001340').at_most(:once)
+    end
+  end
+
   describe '人気順ソート' do
     let(:low_pop) do
       ExternalApis::BaseAdapter::SearchResult.new(
