@@ -603,14 +603,14 @@ import { useRecollyMotion } from '../../lib/motion'
 
 ```json
 "dependencies": {
-  "motion": "^11.x",
+  "motion": "^12.38.0",
   "react": "^19.2.4",
   "react-dom": "^19.2.4",
   "react-router-dom": "^7.13.1"
 }
 ```
 
-具体的なバージョン番号は実装フェーズで `npm install motion` 実行時の最新stableに固定する。React 19 サポートは v11以降。
+実装時点で v12.38.0（React 19 公式サポート、現行安定版）にアップデートして導入した。当初 spec 起草時は v11+ を想定していたが、`npm install motion` 実行時に v12 系が最新 stable だったため v12 を採用。motion v12 は v11 の後継メジャーで React 19 サポートも継続している。
 
 ### 8.4 全変更ファイル一覧
 
