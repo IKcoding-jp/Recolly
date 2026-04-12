@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { motion } from 'motion/react'
+import { useRecollyMotion } from '../../lib/motion'
 import type { SearchResult, MediaType, RecordStatus } from '../../lib/types'
 import { worksApi } from '../../lib/worksApi'
 import { recordsApi } from '../../lib/recordsApi'
@@ -50,6 +52,8 @@ export function SearchPage() {
   const [modalWork, setModalWork] = useState<SearchResult | null>(null)
   // 手動登録で作成したWorkのID（Record作成時に使用）
   const [manualWorkId, setManualWorkId] = useState<number | null>(null)
+
+  const m = useRecollyMotion()
 
   // 検索リクエストのキャンセル用 AbortController を保持する
   // 新しい検索が開始されたら古いリクエストを中断する
@@ -269,20 +273,26 @@ export function SearchPage() {
           )}
 
         {results.length > 0 && (
-          <div className={styles.results}>
+          <motion.div
+            className={styles.results}
+            variants={m.listContainer}
+            initial="hidden"
+            animate="visible"
+          >
             {results.map((work) => {
               const workKey = `${work.external_api_source}:${work.external_api_id}`
               return (
-                <WorkCard
-                  key={workKey}
-                  work={work}
-                  onRecord={handleOpenModal}
-                  isRecorded={recordedIds.has(workKey)}
-                  isLoading={loadingId === workKey}
-                />
+                <motion.div key={workKey} variants={m.fadeInUp}>
+                  <WorkCard
+                    work={work}
+                    onRecord={handleOpenModal}
+                    isRecorded={recordedIds.has(workKey)}
+                    isLoading={loadingId === workKey}
+                  />
+                </motion.div>
               )
             })}
-          </div>
+          </motion.div>
         )}
 
         <div className={styles.manualSection}>

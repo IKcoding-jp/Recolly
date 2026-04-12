@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
+import { useRecollyMotion } from '../../lib/motion'
 import type { MediaType } from '../../lib/types'
 import {
   hasEpisodes,
@@ -61,6 +63,7 @@ export function WorkDetailPage() {
     closeDeleteDialog,
     confirmDelete,
   } = useWorkDetail()
+  const m = useRecollyMotion()
 
   if (isLoading) {
     return (
@@ -82,9 +85,14 @@ export function WorkDetailPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.container}>
+      <motion.div
+        className={styles.container}
+        variants={m.listContainer}
+        initial="hidden"
+        animate="visible"
+      >
         {/* ヘッダー: カバー画像 + タイトル + ステータス + 評価 */}
-        <div className={styles.header}>
+        <motion.div className={styles.header} variants={m.fadeInUp}>
           <div className={styles.coverArea}>
             {work.cover_image_url ? (
               <img
@@ -117,10 +125,10 @@ export function WorkDetailPage() {
               mediaType={work.media_type}
             />
           </div>
-        </div>
+        </motion.div>
 
         {/* タブナビゲーション */}
-        <div className={styles.tabs}>
+        <motion.div className={styles.tabs} variants={m.fadeInUp}>
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -130,11 +138,11 @@ export function WorkDetailPage() {
               {tab.label}
             </button>
           ))}
-        </div>
+        </motion.div>
 
         {/* タブコンテンツ: 概要 */}
         {activeTab === 'overview' && (
-          <div className={styles.tabContent}>
+          <motion.div className={styles.tabContent} variants={m.fadeInUp}>
             <div className={styles.dataRow}>
               {hasEpisodes(work.media_type) && (
                 <div className={styles.dataItem}>
@@ -186,12 +194,12 @@ export function WorkDetailPage() {
                 記録を削除
               </Button>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* タブコンテンツ: 感想 */}
         {activeTab === 'reviews' && (
-          <div className={styles.tabContent}>
+          <motion.div className={styles.tabContent} variants={m.fadeInUp}>
             <div className={styles.section}>
               <div className={styles.sectionTitle}>作品の感想</div>
               <ReviewSection reviewText={record.review_text} onSave={handleReviewTextSave} />
@@ -209,28 +217,31 @@ export function WorkDetailPage() {
                 />
               </div>
             )}
-          </div>
+          </motion.div>
         )}
 
         {/* タブコンテンツ: コミュニティ */}
         {activeTab === 'community' && (
-          <div className={styles.tabContent}>
+          <motion.div className={styles.tabContent} variants={m.fadeInUp}>
             <DiscussionSection
               workId={work.id}
               totalEpisodes={work.total_episodes}
               hasRecord={!!record}
             />
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
 
-      <RecordDeleteDialog
-        isOpen={showDeleteDialog}
-        workTitle={work.title}
-        onConfirm={confirmDelete}
-        onCancel={closeDeleteDialog}
-        isLoading={isDeleting}
-      />
+      <AnimatePresence>
+        {showDeleteDialog && (
+          <RecordDeleteDialog
+            workTitle={work.title}
+            onConfirm={confirmDelete}
+            onCancel={closeDeleteDialog}
+            isLoading={isDeleting}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

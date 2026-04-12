@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { motion, AnimatePresence } from 'motion/react'
 import type { User } from '../../../lib/types'
+import { useRecollyMotion } from '../../../lib/motion'
 import styles from './UserMenu.module.css'
 
 type UserMenuProps = {
@@ -10,6 +12,7 @@ type UserMenuProps = {
 
 export function UserMenu({ user, onLogout }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const m = useRecollyMotion()
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -44,23 +47,31 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
       >
         {initials}
       </button>
-      {isOpen && (
-        <div className={styles.dropdown}>
-          <div className={styles.header}>{user.username}</div>
-          <div className={styles.email}>{user.email}</div>
-          <div className={styles.divider} />
-          <Link to={`/users/${user.id}`} className={styles.item} onClick={() => setIsOpen(false)}>
-            プロフィール
-          </Link>
-          <Link to="/settings" className={styles.item} onClick={() => setIsOpen(false)}>
-            設定
-          </Link>
-          <div className={styles.divider} />
-          <button className={styles.item} onClick={onLogout}>
-            ログアウト
-          </button>
-        </div>
-      )}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className={styles.dropdown}
+            variants={m.dropdown}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <div className={styles.header}>{user.username}</div>
+            <div className={styles.email}>{user.email}</div>
+            <div className={styles.divider} />
+            <Link to={`/users/${user.id}`} className={styles.item} onClick={() => setIsOpen(false)}>
+              プロフィール
+            </Link>
+            <Link to="/settings" className={styles.item} onClick={() => setIsOpen(false)}>
+              設定
+            </Link>
+            <div className={styles.divider} />
+            <button className={styles.item} onClick={onLogout}>
+              ログアウト
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -21,12 +21,15 @@
   color: var(--color-text);
   background: transparent;
   cursor: pointer;
-  transition: border-color var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .select:focus {
   outline: none;
   border-bottom-color: var(--color-text);
+  box-shadow: 0 1px 0 0 var(--color-text);
 }
 
 .selectError {

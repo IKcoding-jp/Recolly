@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion } from 'motion/react'
 import { Link } from 'react-router-dom'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import { Button } from '../../components/ui/Button/Button'
@@ -6,6 +7,7 @@ import { RecordModal } from '../../components/RecordModal/RecordModal'
 import { useRecommendations } from '../../hooks/useRecommendations'
 import { recordsApi } from '../../lib/recordsApi'
 import { getGenreLabel, getMediaTypeLabel } from '../../lib/mediaTypeUtils'
+import { useRecollyMotion } from '../../lib/motion'
 import type { MediaType, RecordStatus } from '../../lib/types'
 import type { RecommendedWork } from '../../types/recommendation'
 import { AnalysisSummaryCard } from './AnalysisSummaryCard'
@@ -17,6 +19,7 @@ export function RecommendationsPage() {
   const [modalWork, setModalWork] = useState<RecommendedWork | null>(null)
   const [recordingId, setRecordingId] = useState<string | null>(null)
   const [recordedIds, setRecordedIds] = useState<Set<string>>(new Set())
+  const m = useRecollyMotion()
 
   const handleOpenModal = (work: RecommendedWork) => {
     setModalWork(work)
@@ -153,73 +156,83 @@ export function RecommendationsPage() {
   if (status === 'ready' && data) {
     return (
       <div className={styles.container}>
-        <div className={styles.pageHeader}>
-          <h1 className={styles.pageTitle}>おすすめ</h1>
-          <p className={styles.pageSubtitle}>
-            あなたの記録データから好みを分析し、ジャンルを超えた作品をおすすめします
-          </p>
-        </div>
+        <motion.div variants={m.listContainer} initial="hidden" animate="visible">
+          <motion.div className={styles.pageHeader} variants={m.fadeInUp}>
+            <h1 className={styles.pageTitle}>おすすめ</h1>
+            <p className={styles.pageSubtitle}>
+              あなたの記録データから好みを分析し、ジャンルを超えた作品をおすすめします
+            </p>
+          </motion.div>
 
-        {/* 更新バー */}
-        <div className={styles.updateBar}>
-          <div className={styles.updateInfo}>
-            <span className={styles.updateDot} />
-            <span>{data.record_count}件の記録をもとに分析</span>
-          </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => void refresh()}
-            disabled={isRefreshing}
-          >
-            {isRefreshing ? '更新中...' : '分析を更新'}
-          </Button>
-        </div>
-
-        {/* 好み分析サマリー */}
-        {data.analysis && <AnalysisSummaryCard analysis={data.analysis} />}
-
-        {/* あなたへのおすすめ */}
-        {data.recommended_works.length > 0 && (
-          <>
-            <SectionTitle>あなたへのおすすめ</SectionTitle>
-            <div className={styles.recList}>
-              {data.recommended_works.map((work) => (
-                <RecommendedWorkCard
-                  key={`${work.external_api_source}:${work.external_api_id}`}
-                  work={work}
-                  onRecord={handleOpenModal}
-                  isLoading={recordingId === `${work.external_api_source}:${work.external_api_id}`}
-                  isRecorded={recordedIds.has(
-                    `${work.external_api_source}:${work.external_api_id}`,
-                  )}
-                />
-              ))}
+          {/* 更新バー */}
+          <motion.div className={styles.updateBar} variants={m.fadeInUp}>
+            <div className={styles.updateInfo}>
+              <span className={styles.updateDot} />
+              <span>{data.record_count}件の記録をもとに分析</span>
             </div>
-          </>
-        )}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => void refresh()}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? '更新中...' : '分析を更新'}
+            </Button>
+          </motion.div>
 
-        {/* いつもと違うジャンルに挑戦 */}
-        {data.challenge_works.length > 0 && (
-          <>
-            <SectionTitle className={styles.challengeTitle}>
-              いつもと違うジャンルに挑戦
-            </SectionTitle>
-            <div className={styles.recList}>
-              {data.challenge_works.map((work) => (
-                <RecommendedWorkCard
-                  key={`${work.external_api_source}:${work.external_api_id}`}
-                  work={work}
-                  onRecord={handleOpenModal}
-                  isLoading={recordingId === `${work.external_api_source}:${work.external_api_id}`}
-                  isRecorded={recordedIds.has(
-                    `${work.external_api_source}:${work.external_api_id}`,
-                  )}
-                />
-              ))}
-            </div>
-          </>
-        )}
+          {/* 好み分析サマリー */}
+          {data.analysis && (
+            <motion.div variants={m.fadeInUp}>
+              <AnalysisSummaryCard analysis={data.analysis} />
+            </motion.div>
+          )}
+
+          {/* あなたへのおすすめ */}
+          {data.recommended_works.length > 0 && (
+            <motion.div variants={m.fadeInUp}>
+              <SectionTitle>あなたへのおすすめ</SectionTitle>
+              <div className={styles.recList}>
+                {data.recommended_works.map((work) => (
+                  <RecommendedWorkCard
+                    key={`${work.external_api_source}:${work.external_api_id}`}
+                    work={work}
+                    onRecord={handleOpenModal}
+                    isLoading={
+                      recordingId === `${work.external_api_source}:${work.external_api_id}`
+                    }
+                    isRecorded={recordedIds.has(
+                      `${work.external_api_source}:${work.external_api_id}`,
+                    )}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* いつもと違うジャンルに挑戦 */}
+          {data.challenge_works.length > 0 && (
+            <motion.div variants={m.fadeInUp}>
+              <SectionTitle className={styles.challengeTitle}>
+                いつもと違うジャンルに挑戦
+              </SectionTitle>
+              <div className={styles.recList}>
+                {data.challenge_works.map((work) => (
+                  <RecommendedWorkCard
+                    key={`${work.external_api_source}:${work.external_api_id}`}
+                    work={work}
+                    onRecord={handleOpenModal}
+                    isLoading={
+                      recordingId === `${work.external_api_source}:${work.external_api_id}`
+                    }
+                    isRecorded={recordedIds.has(
+                      `${work.external_api_source}:${work.external_api_id}`,
+                    )}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </motion.div>
 
         {/* 記録モーダル */}
         <RecordModal

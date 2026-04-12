@@ -1,8 +1,9 @@
+import { motion } from 'motion/react'
 import { Button } from '../ui/Button/Button'
+import { useRecollyMotion } from '../../lib/motion'
 import styles from './RecordDeleteDialog.module.css'
 
 type RecordDeleteDialogProps = {
-  isOpen: boolean
   workTitle: string
   onConfirm: () => void
   onCancel: () => void
@@ -10,17 +11,23 @@ type RecordDeleteDialogProps = {
 }
 
 export function RecordDeleteDialog({
-  isOpen,
   workTitle,
   onConfirm,
   onCancel,
   isLoading,
 }: RecordDeleteDialogProps) {
-  if (!isOpen) return null
+  const m = useRecollyMotion()
 
   return (
-    <div className={styles.overlay} onClick={onCancel}>
-      <div className={styles.dialog} onClick={(e) => e.stopPropagation()}>
+    <motion.div
+      className={styles.overlay}
+      onClick={onCancel}
+      variants={m.overlay}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+    >
+      <motion.div className={styles.dialog} onClick={(e) => e.stopPropagation()} variants={m.modal}>
         <h3 className={styles.title}>記録を削除</h3>
         <p className={styles.message}>
           「{workTitle}」の記録を削除しますか？この操作は取り消せません。
@@ -33,7 +40,7 @@ export function RecordDeleteDialog({
             {isLoading ? '削除中...' : '削除する'}
           </Button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }

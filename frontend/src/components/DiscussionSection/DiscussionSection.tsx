@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { AnimatePresence } from 'motion/react'
 import type { Discussion } from '../../lib/types'
 import { discussionsApi } from '../../lib/discussionsApi'
 import { SectionTitle } from '../ui/SectionTitle/SectionTitle'
@@ -116,16 +117,18 @@ export function DiscussionSection({ workId, totalEpisodes, hasRecord }: Props) {
         </>
       )}
 
-      {showCreateModal && (
-        <DiscussionCreateModal
-          workId={workId}
-          totalEpisodes={totalEpisodes}
-          onClose={() => {
-            setShowCreateModal(false)
-          }}
-          onCreated={handleCreated}
-        />
-      )}
+      <AnimatePresence>
+        {showCreateModal && (
+          <DiscussionCreateModal
+            workId={workId}
+            totalEpisodes={totalEpisodes}
+            onClose={() => {
+              setShowCreateModal(false)
+            }}
+            onCreated={handleCreated}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

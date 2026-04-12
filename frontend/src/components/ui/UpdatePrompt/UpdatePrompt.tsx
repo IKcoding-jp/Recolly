@@ -1,16 +1,23 @@
+import { motion } from 'motion/react'
+import { useRecollyMotion } from '../../../lib/motion'
 import styles from './UpdatePrompt.module.css'
 
 type UpdatePromptProps = {
-  needRefresh: boolean
   onRefresh: () => void
   onClose: () => void
 }
 
-export function UpdatePrompt({ needRefresh, onRefresh, onClose }: UpdatePromptProps) {
-  if (!needRefresh) return null
+export function UpdatePrompt({ onRefresh, onClose }: UpdatePromptProps) {
+  const m = useRecollyMotion()
 
   return (
-    <div className={styles.toast}>
+    <motion.div
+      className={styles.toast}
+      variants={m.toast}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+    >
       <span className={styles.message}>新しいバージョンがあります</span>
       <button className={styles.refreshButton} onClick={onRefresh}>
         更新する
@@ -18,6 +25,6 @@ export function UpdatePrompt({ needRefresh, onRefresh, onClose }: UpdatePromptPr
       <button className={styles.closeButton} onClick={onClose} aria-label="閉じる">
         ✕
       </button>
-    </div>
+    </motion.div>
   )
 }

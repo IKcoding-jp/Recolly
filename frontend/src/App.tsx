@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom'
+import { AnimatePresence } from 'motion/react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { AuthProvider } from './contexts/AuthContext'
 import { useAuth } from './contexts/useAuth'
@@ -97,11 +98,14 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <UpdatePrompt
-          needRefresh={needRefresh}
-          onRefresh={() => void updateServiceWorker(true)}
-          onClose={() => setNeedRefresh(false)}
-        />
+        <AnimatePresence>
+          {needRefresh && (
+            <UpdatePrompt
+              onRefresh={() => void updateServiceWorker(true)}
+              onClose={() => setNeedRefresh(false)}
+            />
+          )}
+        </AnimatePresence>
         <Routes>
           <Route path="/" element={<RootRedirect />} />
           <Route path="/login" element={<LoginPage />} />

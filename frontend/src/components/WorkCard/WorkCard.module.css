@@ -5,6 +5,14 @@
   padding: var(--spacing-md);
   border-bottom: var(--border-width) var(--border-style) var(--color-border-light);
   align-items: flex-start;
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.card:hover {
+  background-color: var(--color-bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .coverWrapper {

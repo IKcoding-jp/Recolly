@@ -9,7 +9,8 @@
   transition:
     background-color var(--transition-fast),
     color var(--transition-fast),
-    border-color var(--transition-fast);
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .base:disabled {
@@ -68,4 +69,10 @@
 .lg {
   font-size: var(--font-size-body);
   padding: var(--spacing-sm) var(--spacing-lg);
+}
+
+/* クリック反応：押された時のフィードバック */
+.primary:active:not(:disabled),
+.secondary:active:not(:disabled) {
+  transform: scale(0.97);
 }
