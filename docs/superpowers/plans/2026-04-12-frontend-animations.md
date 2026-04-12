@@ -1524,7 +1524,6 @@ const m = useRecollyMotion()
 ```tsx
 {results.length > 0 && (
   <motion.div
-    key={`${query}-${genre}-${results.length}`}
     className={styles.results}
     variants={m.listContainer}
     initial="hidden"
@@ -1547,7 +1546,9 @@ const m = useRecollyMotion()
 )}
 ```
 
-> 注: `key` に query/genre/results.length を含めることで、検索結果の更新時に再度 stagger fade-in が走る。
+> **注: SearchPage では key 戦略は不要。** `handleSearch` と `handleGenreChange` は冒頭で `setResults([])` を呼ぶため、`{results.length > 0 && ...}` の条件で motion.div は一旦 unmount され、新結果到着で再 mount される。これにより stagger fade-in が自動的に再発火する。
+>
+> 当初 `key={`${query}-${genre}-${results.length}`}` を採用していたが、`query` が controlled input（タイプするたびに更新）のため、入力中に毎キーストロークで motion.div が再 mount され、表示中のカードが繰り返し再アニメーションする視覚バグが発生した。Code Review で発見・修正済み。
 
 - [ ] **Step 4: SearchPage のテストが通ることを確認**
 
