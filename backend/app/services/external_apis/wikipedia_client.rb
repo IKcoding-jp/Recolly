@@ -31,6 +31,22 @@ module ExternalApis
       nil
     end
 
+    # 検索APIで記事タイトルを探し、見つかった最上位記事の概要を返す
+    # 完全一致を要求する fetch_extract と違い、タイトルの軽微な表記揺れを許容する
+    # ただしシリーズもの（Season X、OVA 等）の検索で親記事にマッチしてしまうケースは
+    # TitleMatcher で弾き、誤った親作品の説明を補完に使ってしまうのを防ぐ
+    def search_and_fetch_extract(query)
+      return nil if query.blank?
+
+      titles = search(query, limit: 1)
+      return nil if titles.empty?
+
+      found_title = titles.first
+      return nil unless TitleMatcher.title_match?(query, found_title)
+
+      fetch_extract(found_title)
+    end
+
     # 日本語Wikipediaの言語間リンクから英語タイトルを取得する
     def fetch_english_title(title)
       response = connection.get('', langlink_params(title))

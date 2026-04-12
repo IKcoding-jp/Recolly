@@ -68,6 +68,16 @@
   margin: 0;
 }
 
+/* シリーズ子作品（Season 2 等）で親の日本語説明を流用した際の注釈ラベル */
+/* description の上に小さく表示し、ユーザーに「シーズン固有ではなく全体概要」と伝える */
+.parentDescriptionNote {
+  display: block;
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-xs);
+}
+
 .description {
   font-family: var(--font-body);
   font-size: var(--font-size-meta);

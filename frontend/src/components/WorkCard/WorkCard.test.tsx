@@ -62,4 +62,34 @@ describe('WorkCard', () => {
     const action = container.querySelector('[class*="action"]')
     expect(action?.textContent).toBe('記録済み')
   })
+
+  it('metadata.description_from_parent が true の時に注釈を表示する', () => {
+    const work: SearchResult = {
+      title: '進撃の巨人 Season 2',
+      media_type: 'anime',
+      description: '繁栄を築き上げた人類は...',
+      cover_image_url: null,
+      total_episodes: 12,
+      external_api_id: '2',
+      external_api_source: 'anilist',
+      metadata: { description_from_parent: true },
+    }
+    render(<WorkCard work={work} onRecord={vi.fn()} />)
+    expect(screen.getByText('※ シリーズ全体の説明')).toBeInTheDocument()
+  })
+
+  it('metadata.description_from_parent が undefined の時は注釈を表示しない', () => {
+    const work: SearchResult = {
+      title: '進撃の巨人',
+      media_type: 'anime',
+      description: '繁栄を築き上げた人類は...',
+      cover_image_url: null,
+      total_episodes: 25,
+      external_api_id: '1',
+      external_api_source: 'anilist',
+      metadata: {},
+    }
+    render(<WorkCard work={work} onRecord={vi.fn()} />)
+    expect(screen.queryByText('※ シリーズ全体の説明')).not.toBeInTheDocument()
+  })
 })

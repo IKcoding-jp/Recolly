@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { SearchResult, MediaType, RecordStatus } from '../../lib/types'
 import { worksApi } from '../../lib/worksApi'
@@ -51,6 +51,10 @@ export function SearchPage() {
   // 手動登録で作成したWorkのID（Record作成時に使用）
   const [manualWorkId, setManualWorkId] = useState<number | null>(null)
 
+  // 検索リクエストのキャンセル用 AbortController を保持する
+  // 新しい検索が開始されたら古いリクエストを中断する
+  const abortControllerRef = useRef<AbortController | null>(null)
+
   // マウント時にユーザーの記録済み作品IDリストを取得
   useEffect(() => {
     recordsApi
@@ -65,22 +69,36 @@ export function SearchPage() {
     e.preventDefault()
     if (!query.trim()) return
 
+    // 古いリクエストがあればキャンセルする
+    abortControllerRef.current?.abort()
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
+    // 画面上の古い結果を即座にクリア
+    setResults([])
     setIsSearching(true)
     setError('')
     setHasSearched(true)
 
     try {
       const mediaType = genre === 'all' ? undefined : genre
-      const response = await worksApi.search(query, mediaType)
+      const response = await worksApi.search(query, mediaType, { signal: controller.signal })
+      // このリクエストがキャンセルされていたら結果を反映しない
+      if (controller.signal.aborted) return
       setResults(response.results)
     } catch (err) {
+      // AbortError（ユーザー/システムが中断した）は無視する
+      if ((err as Error).name === 'AbortError') return
       if (err instanceof ApiError) {
         setError(err.message)
       } else {
         setError('検索に失敗しました')
       }
     } finally {
-      setIsSearching(false)
+      // キャンセルされていない場合のみローディングを解除
+      if (!controller.signal.aborted) {
+        setIsSearching(false)
+      }
     }
   }
 
@@ -160,14 +178,30 @@ export function SearchPage() {
   const handleGenreChange = (newGenre: GenreFilter) => {
     setGenre(newGenre)
     if (query.trim() && hasSearched) {
+      abortControllerRef.current?.abort()
+      const controller = new AbortController()
+      abortControllerRef.current = controller
+
+      setResults([])
       setIsSearching(true)
       setError('')
+
       const mediaType = newGenre === 'all' ? undefined : newGenre
       worksApi
-        .search(query, mediaType)
-        .then((response) => setResults(response.results))
-        .catch(() => setError('検索に失敗しました'))
-        .finally(() => setIsSearching(false))
+        .search(query, mediaType, { signal: controller.signal })
+        .then((response) => {
+          if (controller.signal.aborted) return
+          setResults(response.results)
+        })
+        .catch((err: Error) => {
+          if (err.name === 'AbortError') return
+          setError('検索に失敗しました')
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) {
+            setIsSearching(false)
+          }
+        })
     }
   }
 

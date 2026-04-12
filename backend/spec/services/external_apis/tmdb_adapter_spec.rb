@@ -333,8 +333,9 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
                    headers: { 'Content-Type' => 'application/json' })
     end
 
-    it 'TMDBの日本語概要を返す' do
-      description = adapter.fetch_japanese_description('K-ON!')
+    it 'TMDBの日本語概要を返す（クエリと結果名が一致する場合）' do
+      # 全角/半角の差は normalize で吸収される
+      description = adapter.fetch_japanese_description('けいおん!')
       expect(description).to eq('桜が丘高校の軽音部に入部した4人の少女たちの日常')
     end
 
@@ -352,8 +353,10 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
 
     it '同名の外国作品より日本語原語の作品を優先する' do
       mixed = { 'results' => [
-        { 'media_type' => 'movie', 'original_language' => 'en', 'overview' => 'American SF movie' },
-        { 'media_type' => 'tv', 'original_language' => 'ja', 'overview' => '巨人が支配する世界で人類が戦う' }
+        { 'media_type' => 'movie', 'name' => 'Attack on Titan', 'title' => 'Attack on Titan',
+          'original_language' => 'en', 'overview' => 'American SF movie' },
+        { 'media_type' => 'tv', 'name' => 'Attack on Titan',
+          'original_language' => 'ja', 'overview' => '巨人が支配する世界で人類が戦う' }
       ] }
       stub_request(:get, %r{api.themoviedb.org/3/search/multi})
         .to_return(status: 200, body: mixed.to_json, headers: { 'Content-Type' => 'application/json' })
@@ -363,11 +366,37 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
     it '日本語原語の結果がない場合は最初のmovie/tvにフォールバックする' do
       english_only = { 'results' => [
         { 'media_type' => 'person' },
-        { 'media_type' => 'movie', 'original_language' => 'en', 'overview' => 'An English movie' }
+        { 'media_type' => 'movie', 'name' => 'Some Movie', 'title' => 'Some Movie',
+          'original_language' => 'en', 'overview' => 'An English movie' }
       ] }
       stub_request(:get, %r{api.themoviedb.org/3/search/multi})
         .to_return(status: 200, body: english_only.to_json, headers: { 'Content-Type' => 'application/json' })
       expect(adapter.fetch_japanese_description('Some Movie')).to eq('An English movie')
+    end
+
+    context 'シリーズもののクエリで TMDB が親作品を返す場合' do
+      before do
+        # query='進撃の巨人 Season 2' で TMDB は親作品 '進撃の巨人' を返してしまう
+        stub_request(:get, %r{api.themoviedb.org/3/search/multi})
+          .to_return(status: 200, body: {
+            'results' => [
+              { 'media_type' => 'tv', 'name' => '進撃の巨人',
+                'original_language' => 'ja', 'overview' => '繁栄を築き上げた人類は...' }
+            ]
+          }.to_json, headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it 'Season 2 クエリで親作品の説明を返さない' do
+        expect(adapter.fetch_japanese_description('進撃の巨人 Season 2')).to be_nil
+      end
+
+      it 'OVA クエリで親作品の説明を返さない' do
+        expect(adapter.fetch_japanese_description('進撃の巨人 OVA')).to be_nil
+      end
+
+      it '完結編 サブタイトルで親作品の説明を返さない' do
+        expect(adapter.fetch_japanese_description('進撃の巨人 完結編 前編')).to be_nil
+      end
     end
   end
 

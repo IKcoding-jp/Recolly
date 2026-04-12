@@ -44,6 +44,8 @@ export interface WorkMetadata {
   popularity?: number
   title_english?: string
   title_romaji?: string
+  // シリーズ作品（Season 2等）で、親作品の日本語説明を流用したことを示すフラグ
+  description_from_parent?: boolean
   [key: string]: unknown
 }
 

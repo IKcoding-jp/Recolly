@@ -313,4 +313,138 @@ describe('SearchPage', () => {
     // プログレスバーが表示される
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
   })
+
+  it('新しい検索を開始したら、前の結果が即座に消える', async () => {
+    const user = userEvent.setup()
+    // 1回目の検索（成功）
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: '人間失格',
+              media_type: 'book',
+              description: '古い結果',
+              cover_image_url: null,
+              total_episodes: null,
+              external_api_id: '1',
+              external_api_source: 'google_books',
+              metadata: {},
+            },
+          ],
+        }),
+    })
+
+    renderSearchPage()
+    const input = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(input, '人間失格')
+    await user.click(screen.getByRole('button', { name: /検索/ }))
+
+    // 1回目の結果が表示される
+    await waitFor(() => {
+      expect(screen.getByText('人間失格')).toBeInTheDocument()
+    })
+
+    // 2回目の検索（APIは永久保留、即時クリアを確認するため）
+    let resolveSecond: ((value: unknown) => void) | null = null
+    mockFetch.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveSecond = resolve
+        }),
+    )
+
+    await user.clear(input)
+    await user.type(input, 'ワンピース')
+    await user.click(screen.getByRole('button', { name: /検索/ }))
+
+    // 2回目のレスポンスが返る前に、1回目の結果が画面から消えている
+    await waitFor(() => {
+      expect(screen.queryByText('古い結果')).not.toBeInTheDocument()
+    })
+
+    // クリーンアップ
+    resolveSecond?.({
+      ok: true,
+      json: () => Promise.resolve({ results: [] }),
+    })
+  })
+
+  it('検索中にさらに別の検索を開始すると、古いリクエストの結果は反映されない', async () => {
+    const user = userEvent.setup()
+    // 1回目の検索を意図的に遅延させる
+    let resolveFirst: ((value: unknown) => void) | null = null
+    mockFetch.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFirst = resolve
+        }),
+    )
+    // 2回目の検索は即座に返る
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: 'ワンピース新結果',
+              media_type: 'manga',
+              description: '新しい結果',
+              cover_image_url: null,
+              total_episodes: null,
+              external_api_id: '2',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+          ],
+        }),
+    })
+
+    renderSearchPage()
+    const input = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(input, '古い検索')
+    await user.click(screen.getByRole('button', { name: /検索/ }))
+
+    // 2回目の検索を直後に投げる
+    // 1回目の検索が永久保留のため検索ボタンが disabled のままになる。
+    // userEvent.click は disabled 要素では発火しないので、フォーム送信を直接 dispatch して
+    // handleSearch を呼ぶ（実アプリでも検索中の再送信は disabled で防がれるが、
+    // ここではレース条件のロジックそのものを検証したい）。
+    await user.clear(input)
+    await user.type(input, '新しい検索')
+    const form = input.closest('form')
+    if (!form) throw new Error('form not found')
+    fireEvent.submit(form)
+
+    // 2回目の結果が画面に表示される
+    await waitFor(() => {
+      expect(screen.getByText('ワンピース新結果')).toBeInTheDocument()
+    })
+
+    // 遅延していた1回目のレスポンスが遅れて返ってくる
+    resolveFirst?.({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: '遅延した古い結果',
+              media_type: 'book',
+              description: '古い',
+              cover_image_url: null,
+              total_episodes: null,
+              external_api_id: '99',
+              external_api_source: 'google_books',
+              metadata: {},
+            },
+          ],
+        }),
+    })
+
+    // 古い結果は画面に現れない（AbortControllerで中断されているため）
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(screen.queryByText('遅延した古い結果')).not.toBeInTheDocument()
+    expect(screen.getByText('ワンピース新結果')).toBeInTheDocument()
+  })
 })

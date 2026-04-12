@@ -78,5 +78,37 @@ RSpec.describe ExternalApis::GoogleBooksAdapter, type: :service do
       expect(WebMock).to have_requested(:get, /www.googleapis.com/)
         .with(query: hash_including(q: 'intitle:三体'))
     end
+
+    describe 'ISBN抽出' do
+      # テストごとに変わるのは industryIdentifiers のみなので、共通部分をヘルパー化
+      def build_book_item(identifiers: nil)
+        volume_info = { 'title' => 'テスト本' }
+        volume_info['industryIdentifiers'] = identifiers if identifiers
+        { 'id' => 'abc123', 'volumeInfo' => volume_info }
+      end
+
+      it 'ISBN-13 が最優先でmetadataに入る' do
+        stub_books_response([build_book_item(identifiers: [
+                                               { 'type' => 'ISBN_10', 'identifier' => '4101001340' },
+                                               { 'type' => 'ISBN_13', 'identifier' => '9784101001340' }
+                                             ])])
+        book = adapter.search('テスト本').first
+        expect(book.metadata[:isbn]).to eq('9784101001340')
+      end
+
+      it 'ISBN-13 がなければ ISBN-10 を使う' do
+        stub_books_response([build_book_item(identifiers: [
+                                               { 'type' => 'ISBN_10', 'identifier' => '4101001340' }
+                                             ])])
+        book = adapter.search('テスト本').first
+        expect(book.metadata[:isbn]).to eq('4101001340')
+      end
+
+      it 'ISBN情報がなければ :isbn キーは含まれない' do
+        stub_books_response([build_book_item])
+        book = adapter.search('テスト本').first
+        expect(book.metadata).not_to have_key(:isbn)
+      end
+    end
   end
 end

@@ -43,7 +43,14 @@ export function WorkCard({ work, onRecord, isRecorded = false, isLoading = false
           {MEDIA_TYPE_LABELS[work.media_type]}
         </span>
         <h3 className={styles.title}>{work.title}</h3>
-        {work.description && <p className={styles.description}>{work.description}</p>}
+        {work.description && (
+          <>
+            {work.metadata?.description_from_parent === true && (
+              <span className={styles.parentDescriptionNote}>※ シリーズ全体の説明</span>
+            )}
+            <p className={styles.description}>{work.description}</p>
+          </>
+        )}
       </div>
       <div className={styles.action}>
         {isRecorded ? (

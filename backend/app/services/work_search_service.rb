@@ -1,19 +1,27 @@
 # frozen_string_literal: true
 
-class WorkSearchService
+# 検索パイプラインは fetch → enrich_books → enrich_missing_descriptions →
+# share_series_descriptions → sort の順で処理する。各段階を private メソッドとして
+# 分割しているため行数は膨らむが、意味のある単位で命名しており責務は単一である。
+class WorkSearchService # rubocop:disable Metrics/ClassLength
   CACHE_TTL = 12.hours
+  # 実装変更時にインクリメントしてキャッシュを無効化する
+  # v4: シリーズ親説明流用の境界文字判定を追加（normalize 空白保持 + ratio 廃止）
+  CACHE_VERSION = 'v4'
   ENRICHMENT_BATCH_SIZE = 5
 
   def search(query, media_type: nil)
-    cache_key = "work_search:#{media_type || 'all'}:#{query}"
+    cache_key = "work_search:#{CACHE_VERSION}:#{media_type || 'all'}:#{query}"
 
     Rails.cache.fetch(cache_key, expires_in: CACHE_TTL) do
       adapters = select_adapters(media_type)
       results = fetch_from_adapters_in_parallel(adapters, query, media_type)
       results = results.select { |r| r.media_type == media_type } if media_type.present?
-      enrich_anilist_descriptions(results)
-      remove_english_descriptions(results)
-      sort_by_popularity(results)
+
+      enrich_books_via_openbd(results)
+      enrich_missing_descriptions(results)
+      share_series_descriptions(results)
+      sort_by_quality_and_popularity(results)
     end
   end
 
@@ -61,33 +69,71 @@ class WorkSearchService
     ]
   end
 
-  # AniListの結果にTMDB→Wikipediaの順で日本語説明を補完する
-  # AniListの説明は英語のため、日本語の説明が見つかれば置き換える
-  # 外部APIへの同時接続数を制限するため、5件ずつのバッチで並列処理する
-  def enrich_anilist_descriptions(results)
-    anilist_results = results.select { |r| r.external_api_source == 'anilist' }
-    return if anilist_results.empty?
+  # Google Booksの結果のうち画像・説明が欠損しているものを openBD で補完する
+  # ISBN が metadata にない結果はスキップする（openBDはISBNベース）
+  def enrich_books_via_openbd(results)
+    book_results = results.select { |r| openbd_enrichment_target?(r) }
+    return if book_results.empty?
 
-    anilist_results.each_slice(ENRICHMENT_BATCH_SIZE) do |batch|
+    book_results.each_slice(ENRICHMENT_BATCH_SIZE) do |batch|
       threads = batch.map do |result|
-        Thread.new { enrich_single_description(result) }
+        Thread.new { enrich_single_book(result) }
       end
       threads.each(&:join)
     end
   end
 
-  # スレッドごとに独立したアダプターインスタンスを使用する
-  # （Faradayコネクションの共有を避けるため）
-  def enrich_single_description(result)
+  # openBD 補完対象の判定（google_books由来で画像か説明が欠損しISBNを持つ）
+  def openbd_enrichment_target?(result)
+    return false unless result.external_api_source == 'google_books'
+    return false unless result.cover_image_url.blank? || result.description.blank?
+
+    result.metadata[:isbn].present?
+  end
+
+  # スレッドごとに独立したクライアントインスタンスを使用する
+  # （Faradayコネクションの共有を避けるため、AniList補完と同じ方針）
+  # 欠損している項目だけを補完する（既存データは上書きしない）
+  def enrich_single_book(result)
+    openbd = ExternalApis::OpenbdClient.new
+    data = openbd.fetch(result.metadata[:isbn])
+    return if data.nil?
+
+    result.cover_image_url ||= data[:cover_image_url]
+    result.description ||= data[:description]
+  end
+
+  # 説明が空 or 英語の全結果を対象に日本語説明を補完する
+  # 以前は AniList 結果のみが対象だったが、IGDB（ゲーム）・Google Books（本）・TMDB（映画/ドラマ）にも拡張
+  # 外部APIへの同時接続数を制限するため、5件ずつのバッチで並列処理する
+  def enrich_missing_descriptions(results)
+    needs_enrichment = results.select do |r|
+      r.description.blank? || english_text?(r.description)
+    end
+    return if needs_enrichment.empty?
+
+    needs_enrichment.each_slice(ENRICHMENT_BATCH_SIZE) do |batch|
+      threads = batch.map do |result|
+        Thread.new { try_enrich_description(result) }
+      end
+      threads.each(&:join)
+    end
+  end
+
+  # 補完の試行順:
+  # 1. TMDB日本語説明（映画・ドラマは元々これで取れる。AniList結果は title_english/title_romaji も試す）
+  # 2. Wikipedia search_and_fetch_extract（完全一致制約を回避した検索→取得の2段階）
+  # 3. 元の説明にフォールバック（英語でも nil にせずそのまま残す）
+  def try_enrich_description(result)
     tmdb = ExternalApis::TmdbAdapter.new
     wikipedia = ExternalApis::WikipediaClient.new
+
     description = fetch_japanese_description_from_tmdb(result, tmdb)
-    description ||= wikipedia.fetch_extract(result.title)
+    description ||= wikipedia.search_and_fetch_extract(result.title)
     result.description = resolve_description(description, result.description)
   end
 
-  # TMDBで日本語説明を検索（日本語タイトル優先で複数パターンを順番に試す）
-  # 日本語タイトルの方がTMDB（language: 'ja'）でのマッチ精度が高い
+  # TMDBで日本語説明を検索（メタデータにtitle_english/title_romajiがあれば順番に試す）
   def fetch_japanese_description_from_tmdb(result, tmdb)
     queries = [
       result.title,
@@ -102,19 +148,15 @@ class WorkSearchService
     nil
   end
 
-  # 全結果から英語の説明文を除去する（IGDB等の英語説明も対象）
-  def remove_english_descriptions(results)
-    results.each { |r| r.description = nil if english_text?(r.description) }
-  end
-
-  # 日本語説明が見つかればそれを使い、見つからなければ英語説明を除去する
+  # 日本語説明が見つかればそれを使う。見つからなくても元の説明を消さない（英語でも残す）
+  # 以前の remove_english_descriptions は「英語なら nil 化」という破壊的動作だったため廃止
   def resolve_description(japanese_desc, original_desc)
     return japanese_desc if japanese_desc.present?
 
-    english_text?(original_desc) ? nil : original_desc
+    original_desc
   end
 
-  # 文字列の半分以上がASCII文字なら英語と判定
+  # 文字列の半分以上がASCII文字なら英語と判定（補完対象の選定に使用）
   def english_text?(text)
     return false if text.blank?
 
@@ -122,8 +164,102 @@ class WorkSearchService
     ascii_ratio > 0.5
   end
 
-  # 各アダプターが返すmetadata[:popularity]（0.0〜1.0に正規化済み）で降順ソート
-  def sort_by_popularity(results)
-    results.sort_by { |r| -(r.metadata[:popularity] || 0) }
+  # シリーズ作品（"進撃の巨人 Season 2" 等）の説明欄が英語のままの場合に、
+  # 同じ検索結果リスト内に存在する親作品（"進撃の巨人"）の日本語説明を流用する
+  # 各シーズン固有の日本語説明データが世の中に存在しないため、シリーズ全体の概要として使う
+  # 流用した結果には metadata[:description_from_parent] = true を付与し、
+  # フロント側で「※シリーズ全体の説明」と注釈表示する
+  def share_series_descriptions(results)
+    parents = build_parent_candidates(results)
+    return if parents.empty?
+
+    results.each do |result|
+      next unless needs_parent_description?(result)
+
+      parent = find_parent_by_prefix(result, parents)
+      next unless parent
+
+      result.description = parent.description
+      result.metadata[:description_from_parent] = true
+    end
+  end
+
+  # 親候補リストを構築する
+  # 親の条件: 日本語説明を持っていること
+  # （シリーズ識別子の有無は判定しない。プレフィックスマッチで子を検出する）
+  def build_parent_candidates(results)
+    results.select do |r|
+      r.description.present? && !english_text?(r.description)
+    end
+  end
+
+  # 親説明流用が必要かどうか判定する
+  # 説明が空 or 英語の場合のみ補完対象（既に日本語説明があるなら流用しない）
+  def needs_parent_description?(result)
+    result.description.blank? || english_text?(result.description)
+  end
+
+  # 結果に対して、プレフィックスとしてマッチする親候補を探す
+  # - 親の正規化タイトルが子の正規化タイトルの先頭部分と完全一致する
+  # - 親プレフィックスの直後が「文字/数字」でないこと（境界文字判定）
+  #   → "進撃の巨人ファンクラブ" や "FATEstay" のような同単語の続きを別作品として除外する
+  # - 正規表現で series 識別子を列挙するよりも汎用的で、
+  #   "進撃の巨人 Season 2", "Re:ゼロ 2nd Season", "HUNTER×HUNTER (2011)",
+  #   "HUNTER×HUNTER: Greed Island", "シュタインズ・ゲート ゼロ" 等を包括的に検出できる
+  # 複数の親候補がマッチする場合はより詳細（長い）な親を優先する
+  def find_parent_by_prefix(result, parents)
+    child_norm = normalize_for_parent_match(result.title)
+    return nil if child_norm.blank?
+
+    matched = parents.select { |parent| valid_prefix_parent?(parent, result, child_norm) }
+    matched.max_by { |parent| normalize_for_parent_match(parent.title).length }
+  end
+
+  # 親候補が対象結果のプレフィックス親として成立するか判定する
+  # 境界文字判定: 親プレフィックスの直後の1文字が letter (\p{L}) または number (\p{N}) なら、
+  # 同じ単語の続きと見なし別作品として除外する。
+  # OK 例: "進撃の巨人 Season 2"（直後が空白）、"HUNTER×HUNTER: Greed Island"（直後が記号）
+  # NG 例: "進撃の巨人ファンクラブ"（直後が "フ" = L）、"FATEstay"（直後が "s" = L）
+  def valid_prefix_parent?(parent, result, child_norm)
+    return false if parent.equal?(result) # 自分自身は除外
+
+    parent_norm = normalize_for_parent_match(parent.title)
+    return false unless prefix_parent_structure_ok?(parent_norm, child_norm)
+
+    boundary_char = child_norm[parent_norm.length]
+    !boundary_char&.match?(/[\p{L}\p{N}]/)
+  end
+
+  # プレフィックスマッチの構造的条件（親が空でなく、子と同名でなく、子の真のプレフィックスである）
+  def prefix_parent_structure_ok?(parent_norm, child_norm)
+    return false if parent_norm.blank?
+    return false if parent_norm == child_norm
+    return false unless child_norm.start_with?(parent_norm)
+
+    child_norm.length > parent_norm.length
+  end
+
+  # 親マッチ用の表記揺れ吸収（NFKC 正規化 + 小文字化）
+  # 空白は「親プレフィックスの境界判定」で必要になるため削除せず単一の半角空白に統一する。
+  # 連続する空白や全角空白は NFKC + gsub で1個の半角空白に潰す。
+  def normalize_for_parent_match(text)
+    text.unicode_normalize(:nfkc).downcase.strip.gsub(/\s+/, ' ')
+  end
+
+  # 品質スコア（0.0〜1.0）: 画像あり=0.5, 説明あり=0.5
+  # 両方ある = 1.0、片方 = 0.5、どちらもない = 0.0
+  def quality_score(result)
+    score = 0.0
+    score += 0.5 if result.cover_image_url.present?
+    score += 0.5 if result.description.present?
+    score
+  end
+
+  # 品質スコア降順 → 人気度降順の2段ソート
+  # 情報がしっかりある結果を上位に並べることで、欠損結果を下位に押し下げる
+  def sort_by_quality_and_popularity(results)
+    results.sort_by do |r|
+      [-quality_score(r), -(r.metadata[:popularity] || 0)]
+    end
   end
 end
