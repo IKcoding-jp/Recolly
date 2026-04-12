@@ -48,7 +48,20 @@ describe('LoginPage', () => {
     // ログインAPI成功
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ user: { id: 1, username: 'test', email: 'test@example.com' } }),
+      json: () =>
+        Promise.resolve({
+          user: {
+            id: 1,
+            username: 'test',
+            email: 'test@example.com',
+            avatar_url: null,
+            bio: null,
+            created_at: '2026-04-01T00:00:00Z',
+            has_password: true,
+            providers: [],
+            email_missing: false,
+          },
+        }),
     })
 
     await user.type(await screen.findByLabelText('メールアドレス'), 'test@example.com')
