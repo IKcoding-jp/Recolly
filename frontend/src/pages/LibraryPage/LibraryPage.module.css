@@ -119,6 +119,19 @@
   margin-bottom: var(--spacing-lg);
 }
 
+/*
+ * 各レコードを包む motion.div が grid/flex の直接の子になるため、
+ * min-width: 0 を強制して、子要素（カバー画像等）の intrinsic 幅で
+ * トラックが広がり、レイアウトが崩れるのを防ぐ。
+ * (RecordCardItem の .card 側にも min-width: 0 はあるが、あれは
+ *  ラッパー越しでは効かないためここで補う)
+ */
+.cardGrid > *,
+.compactList > *,
+.list > * {
+  min-width: 0;
+}
+
 /* コンパクトリスト */
 .compactList {
   margin-bottom: var(--spacing-lg);
