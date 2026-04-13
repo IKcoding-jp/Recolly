@@ -9,6 +9,7 @@ import { NavBar } from './components/ui/NavBar/NavBar'
 import { BottomTabBar } from './components/ui/BottomTabBar/BottomTabBar'
 import { UpdatePrompt } from './components/ui/UpdatePrompt/UpdatePrompt'
 import { PageviewTracker } from './components/PageviewTracker/PageviewTracker'
+import { Footer } from './components/ui/Footer/Footer'
 import appStyles from './App.module.css'
 
 // ページコンポーネントは全て lazy-load する（code splitting）
@@ -98,11 +99,12 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   if (!user) return <div className={appStyles.loading}>読み込み中...</div>
 
   return (
-    <>
+    <div className={appStyles.layoutRoot}>
       <NavBar user={user} onLogout={() => void logout()} />
       <div className={appStyles.authenticatedContent}>{children}</div>
+      <Footer />
       <BottomTabBar />
-    </>
+    </div>
   )
 }
 
@@ -114,16 +116,17 @@ function OptionalAuthLayout({ children }: { children: React.ReactNode }) {
 
   if (user) {
     return (
-      <>
+      <div className={appStyles.layoutRoot}>
         <NavBar user={user} onLogout={() => void logout()} />
         <div className={appStyles.authenticatedContent}>{children}</div>
+        <Footer />
         <BottomTabBar />
-      </>
+      </div>
     )
   }
 
   return (
-    <>
+    <div className={appStyles.layoutRoot}>
       <nav className={appStyles.publicNav}>
         <Link to="/login" className={appStyles.logo}>
           Recolly
@@ -133,7 +136,8 @@ function OptionalAuthLayout({ children }: { children: React.ReactNode }) {
         </Link>
       </nav>
       <div className={appStyles.authenticatedContent}>{children}</div>
-    </>
+      <Footer />
+    </div>
   )
 }
 
