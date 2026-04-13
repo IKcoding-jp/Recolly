@@ -117,4 +117,26 @@ describe('ReviewSection', () => {
       expect(screen.queryByPlaceholderText('作品の感想を書く...')).not.toBeInTheDocument()
     })
   })
+
+  describe('edit モード - キャンセル', () => {
+    it('キャンセルすると編集内容が破棄され、view モードに戻る', async () => {
+      const user = userEvent.setup()
+      render(<ReviewSection reviewText="元のテキスト" onSave={mockOnSave} />)
+      await user.click(screen.getByRole('button', { name: '編集' }))
+      const textarea = screen.getByPlaceholderText('作品の感想を書く...')
+      await user.clear(textarea)
+      await user.type(textarea, '変更後')
+      await user.click(screen.getByRole('button', { name: 'キャンセル' }))
+      expect(screen.getByText('元のテキスト')).toBeInTheDocument()
+      expect(screen.queryByPlaceholderText('作品の感想を書く...')).not.toBeInTheDocument()
+    })
+
+    it('null 状態から編集→キャンセルで empty モードに戻る', async () => {
+      const user = userEvent.setup()
+      render(<ReviewSection reviewText={null} onSave={mockOnSave} />)
+      await user.click(screen.getByRole('button', { name: '感想を書く' }))
+      await user.click(screen.getByRole('button', { name: 'キャンセル' }))
+      expect(screen.getByText('まだ感想が書かれていません')).toBeInTheDocument()
+    })
+  })
 })
