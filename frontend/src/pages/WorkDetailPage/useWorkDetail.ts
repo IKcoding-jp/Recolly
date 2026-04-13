@@ -117,9 +117,13 @@ export function useWorkDetail() {
 
   const handleReviewTextSave = useCallback(
     async (text: string) => {
-      await updateRecord({ review_text: text })
+      if (!state.record) return
+      // 注意: updateRecord を経由するとエラーが握りつぶされるので、
+      // ReviewSection 側でエラー表示できるように直接呼び出して例外を伝播させる
+      const res = await recordsApi.update(state.record.id, { review_text: text })
+      setState((prev) => ({ ...prev, record: res.record }))
     },
-    [updateRecord],
+    [state.record],
   )
 
   const handleRewatchCountChange = useCallback(
