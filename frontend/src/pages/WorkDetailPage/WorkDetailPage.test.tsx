@@ -126,7 +126,8 @@ describe('WorkDetailPage', () => {
     })
     // 感想タブに切り替え
     await user.click(screen.getByRole('button', { name: '感想' }))
-    expect(screen.getByPlaceholderText('作品の感想を書く...')).toBeInTheDocument()
+    // review_text が null のため、ReviewSection は empty モードを表示する
+    expect(screen.getByText('まだ感想が書かれていません')).toBeInTheDocument()
   })
 
   it('感想タブでアニメの場合は話数ごとの感想セクションが表示される', async () => {
