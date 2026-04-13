@@ -93,6 +93,15 @@ export function ReviewSection({ reviewText, onSave }: ReviewSectionProps) {
     )
   }
 
-  // view モード（Task 3 で本実装）
-  return null
+  // view モード
+  return (
+    <div className={styles.viewContainer}>
+      <div className={styles.viewActions}>
+        <Button variant="secondary" size="sm" onClick={handleStartEdit}>
+          編集
+        </Button>
+      </div>
+      <p className={styles.viewText}>{reviewText}</p>
+    </div>
+  )
 }

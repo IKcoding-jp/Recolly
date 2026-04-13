@@ -43,3 +43,28 @@
   font-family: var(--font-body);
   font-size: var(--font-size-body);
 }
+
+/* view モード */
+.viewContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.viewActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.viewText {
+  margin: 0;
+  padding: var(--spacing-md);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-relaxed);
+  white-space: pre-wrap;
+  background: var(--color-bg-white);
+  border: var(--border-width-thin) var(--border-style) var(--color-border-light);
+  border-radius: var(--radius-sm);
+}
