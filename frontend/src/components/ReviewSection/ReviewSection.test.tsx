@@ -139,4 +139,44 @@ describe('ReviewSection', () => {
       expect(screen.getByText('まだ感想が書かれていません')).toBeInTheDocument()
     })
   })
+
+  describe('エラーハンドリング', () => {
+    it('onSave が例外を投げた場合、エラーメッセージが表示される', async () => {
+      const user = userEvent.setup()
+      mockOnSave.mockRejectedValue(new Error('network error'))
+      render(<ReviewSection reviewText="text" onSave={mockOnSave} />)
+      await user.click(screen.getByRole('button', { name: '編集' }))
+      await user.click(screen.getByRole('button', { name: '保存' }))
+      expect(
+        await screen.findByText('保存に失敗しました。もう一度お試しください。'),
+      ).toBeInTheDocument()
+    })
+
+    it('保存失敗時は編集モードに留まり、入力内容が失われない', async () => {
+      const user = userEvent.setup()
+      mockOnSave.mockRejectedValue(new Error('fail'))
+      render(<ReviewSection reviewText="" onSave={mockOnSave} />)
+      await user.click(screen.getByRole('button', { name: '感想を書く' }))
+      const textarea = screen.getByPlaceholderText('作品の感想を書く...')
+      await user.type(textarea, '失敗テスト')
+      await user.click(screen.getByRole('button', { name: '保存' }))
+      await screen.findByText('保存に失敗しました。もう一度お試しください。')
+      expect(screen.getByDisplayValue('失敗テスト')).toBeInTheDocument()
+    })
+
+    it('再試行時に前回のエラーがクリアされる', async () => {
+      const user = userEvent.setup()
+      mockOnSave.mockRejectedValueOnce(new Error('fail')).mockResolvedValueOnce(undefined)
+      render(<ReviewSection reviewText="text" onSave={mockOnSave} />)
+      await user.click(screen.getByRole('button', { name: '編集' }))
+      await user.click(screen.getByRole('button', { name: '保存' }))
+      await screen.findByText('保存に失敗しました。もう一度お試しください。')
+      await user.click(screen.getByRole('button', { name: '保存' }))
+      await waitFor(() => {
+        expect(
+          screen.queryByText('保存に失敗しました。もう一度お試しください。'),
+        ).not.toBeInTheDocument()
+      })
+    })
+  })
 })

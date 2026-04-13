@@ -68,3 +68,11 @@
   border: var(--border-width-thin) var(--border-style) var(--color-border-light);
   border-radius: var(--radius-sm);
 }
+
+/* エラーメッセージ */
+.errorMessage {
+  margin: 0;
+  color: var(--color-error);
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+}

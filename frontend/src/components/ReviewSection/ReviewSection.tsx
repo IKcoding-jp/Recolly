@@ -19,7 +19,6 @@ export function ReviewSection({ reviewText, onSave }: ReviewSectionProps) {
   const [mode, setMode] = useState<Mode>(() => computeInitialMode(reviewText))
   const [draft, setDraft] = useState<string>(reviewText ?? '')
   const [isSaving, setIsSaving] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Task 6 のエラー表示実装で JSX に描画予定
   const [saveError, setSaveError] = useState<string | null>(null)
 
   // 親から reviewText が変わった時、編集中でなければ追従する
@@ -81,6 +80,11 @@ export function ReviewSection({ reviewText, onSave }: ReviewSectionProps) {
           placeholder="作品の感想を書く..."
           rows={EDIT_ROWS}
         />
+        {saveError && (
+          <p className={styles.errorMessage} role="alert">
+            {saveError}
+          </p>
+        )}
         <div className={styles.actions}>
           <Button variant="secondary" size="sm" onClick={handleCancel} disabled={isSaving}>
             キャンセル
