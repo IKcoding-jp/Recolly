@@ -8,6 +8,8 @@ import { ProtectedRoute } from './components/ProtectedRoute/ProtectedRoute'
 import { NavBar } from './components/ui/NavBar/NavBar'
 import { BottomTabBar } from './components/ui/BottomTabBar/BottomTabBar'
 import { UpdatePrompt } from './components/ui/UpdatePrompt/UpdatePrompt'
+import { PageviewTracker } from './components/PageviewTracker/PageviewTracker'
+import { Footer } from './components/ui/Footer/Footer'
 import appStyles from './App.module.css'
 
 // ページコンポーネントは全て lazy-load する（code splitting）
@@ -67,6 +69,9 @@ const RecommendationsPage = lazy(() =>
     default: m.RecommendationsPage,
   })),
 )
+const PrivacyPage = lazy(() =>
+  import('./pages/PrivacyPage/PrivacyPage').then((m) => ({ default: m.PrivacyPage })),
+)
 
 // 認証済みならダッシュボードへ、未認証ならログインページへ
 function RootRedirect() {
@@ -94,11 +99,12 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   if (!user) return <div className={appStyles.loading}>読み込み中...</div>
 
   return (
-    <>
+    <div className={appStyles.layoutRoot}>
       <NavBar user={user} onLogout={() => void logout()} />
       <div className={appStyles.authenticatedContent}>{children}</div>
+      <Footer />
       <BottomTabBar />
-    </>
+    </div>
   )
 }
 
@@ -110,16 +116,17 @@ function OptionalAuthLayout({ children }: { children: React.ReactNode }) {
 
   if (user) {
     return (
-      <>
+      <div className={appStyles.layoutRoot}>
         <NavBar user={user} onLogout={() => void logout()} />
         <div className={appStyles.authenticatedContent}>{children}</div>
+        <Footer />
         <BottomTabBar />
-      </>
+      </div>
     )
   }
 
   return (
-    <>
+    <div className={appStyles.layoutRoot}>
       <nav className={appStyles.publicNav}>
         <Link to="/login" className={appStyles.logo}>
           Recolly
@@ -129,7 +136,8 @@ function OptionalAuthLayout({ children }: { children: React.ReactNode }) {
         </Link>
       </nav>
       <div className={appStyles.authenticatedContent}>{children}</div>
-    </>
+      <Footer />
+    </div>
   )
 }
 
@@ -142,6 +150,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <PageviewTracker />
         <AnimatePresence>
           {needRefresh && (
             <UpdatePrompt
@@ -158,6 +167,14 @@ function App() {
             <Route path="/password/new" element={<PasswordNewPage />} />
             <Route path="/password/edit" element={<PasswordEditPage />} />
             <Route path="/auth/complete" element={<OauthUsernamePage />} />
+            <Route
+              path="/privacy"
+              element={
+                <OptionalAuthLayout>
+                  <PrivacyPage />
+                </OptionalAuthLayout>
+              }
+            />
             <Route
               path="/dashboard"
               element={

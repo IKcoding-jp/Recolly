@@ -8,6 +8,8 @@ import { useRecommendations } from '../../hooks/useRecommendations'
 import { recordsApi } from '../../lib/recordsApi'
 import { getGenreLabel, getMediaTypeLabel } from '../../lib/mediaTypeUtils'
 import { useRecollyMotion } from '../../lib/motion'
+import { captureEvent } from '../../lib/analytics/posthog'
+import { ANALYTICS_EVENTS } from '../../lib/analytics/events'
 import type { MediaType, RecordStatus } from '../../lib/types'
 import type { RecommendedWork } from '../../types/recommendation'
 import { AnalysisSummaryCard } from './AnalysisSummaryCard'
@@ -49,6 +51,10 @@ export function RecommendationsPage() {
         },
         recordData,
       )
+      // ジャンル横断率計測の基点イベント
+      captureEvent(ANALYTICS_EVENTS.RECORD_CREATED, {
+        media_type: modalWork.media_type as MediaType,
+      })
       setRecordedIds((prev) => new Set(prev).add(workKey))
       setModalWork(null)
     } catch {

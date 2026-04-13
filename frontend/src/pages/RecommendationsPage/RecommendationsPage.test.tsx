@@ -4,11 +4,20 @@ import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { RecommendationsPage } from './RecommendationsPage'
 import { recommendationsApi } from '../../lib/recommendationsApi'
+import { recordsApi } from '../../lib/recordsApi'
 
 vi.mock('../../lib/recommendationsApi')
+vi.mock('../../lib/recordsApi')
 vi.mock('../../contexts/useAuth', () => ({
   useAuth: () => ({ user: { id: 1, username: 'testuser' } }),
 }))
+
+// PostHog ラッパーをモック化
+vi.mock('../../lib/analytics/posthog', () => ({
+  captureEvent: vi.fn(),
+}))
+
+import { captureEvent } from '../../lib/analytics/posthog'
 
 const mockReadyResponse = {
   recommendation: {
@@ -168,5 +177,68 @@ describe('RecommendationsPage', () => {
 
     await user.click(screen.getByText('分析を更新'))
     expect(recommendationsApi.refresh).toHaveBeenCalled()
+  })
+
+  it('レコメンドから記録を作成したら record_created を media_type 付きで発火する', async () => {
+    vi.mocked(recommendationsApi.get).mockResolvedValue(mockReadyResponse)
+    vi.mocked(recordsApi.createFromSearchResult).mockResolvedValue({
+      record: {
+        id: 99,
+        work_id: 1,
+        status: 'watching',
+        rating: null,
+        current_episode: 0,
+        rewatch_count: 0,
+        review_text: null,
+        visibility: 'private_record',
+        started_at: null,
+        completed_at: null,
+        created_at: '2026-04-13T00:00:00Z',
+        updated_at: '2026-04-13T00:00:00Z',
+        work: {
+          id: 1,
+          title: '葬送のフリーレン',
+          media_type: 'anime',
+          description: null,
+          cover_image_url: null,
+          total_episodes: null,
+          external_api_id: '154587',
+          external_api_source: 'anilist',
+          metadata: {},
+          created_at: '2026-04-13T00:00:00Z',
+          updated_at: '2026-04-13T00:00:00Z',
+        },
+        tags: [],
+      },
+    })
+
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter>
+        <RecommendationsPage />
+      </MemoryRouter>,
+    )
+
+    // mockReadyResponse の葬送のフリーレン (media_type: anime) のカードが表示される
+    await waitFor(() => {
+      expect(screen.getByText('葬送のフリーレン')).toBeInTheDocument()
+    })
+
+    // 記録モーダルを開く
+    const recordButtons = screen.getAllByRole('button', { name: '記録する' })
+    await user.click(recordButtons[0])
+
+    await waitFor(() => {
+      expect(screen.getByText('葬送のフリーレンを記録')).toBeInTheDocument()
+    })
+
+    // モーダル内の確定ボタンをクリック
+    const confirmButtons = screen.getAllByRole('button', { name: '記録する' })
+    await user.click(confirmButtons[confirmButtons.length - 1])
+
+    await waitFor(() => {
+      expect(captureEvent).toHaveBeenCalledWith('record_created', { media_type: 'anime' })
+    })
   })
 })

@@ -7,6 +7,9 @@ import { Typography } from '../../components/ui/Typography/Typography'
 import { Button } from '../../components/ui/Button/Button'
 import { Divider } from '../../components/ui/Divider/Divider'
 import { FormInput } from '../../components/ui/FormInput/FormInput'
+import { Footer } from '../../components/ui/Footer/Footer'
+import { captureEvent } from '../../lib/analytics/posthog'
+import { ANALYTICS_EVENTS } from '../../lib/analytics/events'
 import styles from '../../styles/authForm.module.css'
 
 export function OauthUsernamePage() {
@@ -24,6 +27,9 @@ export function OauthUsernamePage() {
     try {
       const response = await oauthApi.completeRegistration(username)
       setUser(response.user)
+      // OAuth 新規登録完了イベント（method: google）
+      // このページは Google OAuth 経由の新規ユーザーだけが通るため method 固定で良い
+      captureEvent(ANALYTICS_EVENTS.SIGNUP_COMPLETED, { method: 'google' })
 
       if (response.user.email_missing) {
         navigate('/auth/email-setup', { replace: true })
@@ -42,28 +48,31 @@ export function OauthUsernamePage() {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        <Typography variant="h2">ユーザー名を設定</Typography>
-        <Divider />
-        <form className={styles.form} onSubmit={handleSubmit}>
-          <FormInput
-            label="ユーザー名"
-            id="username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            minLength={2}
-            maxLength={30}
-            autoComplete="username"
-          />
-          {error && <p className={styles.error}>{error}</p>}
-          <Button variant="primary" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? '登録中...' : '登録する'}
-          </Button>
-        </form>
+    <div className={styles.layout}>
+      <div className={styles.page}>
+        <div className={styles.card}>
+          <Typography variant="h2">ユーザー名を設定</Typography>
+          <Divider />
+          <form className={styles.form} onSubmit={handleSubmit}>
+            <FormInput
+              label="ユーザー名"
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              minLength={2}
+              maxLength={30}
+              autoComplete="username"
+            />
+            {error && <p className={styles.error}>{error}</p>}
+            <Button variant="primary" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? '登録中...' : '登録する'}
+            </Button>
+          </form>
+        </div>
       </div>
+      <Footer />
     </div>
   )
 }

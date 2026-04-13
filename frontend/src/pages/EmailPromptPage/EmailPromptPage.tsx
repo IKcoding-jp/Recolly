@@ -7,6 +7,7 @@ import { Typography } from '../../components/ui/Typography/Typography'
 import { Button } from '../../components/ui/Button/Button'
 import { Divider } from '../../components/ui/Divider/Divider'
 import { FormInput } from '../../components/ui/FormInput/FormInput'
+import { Footer } from '../../components/ui/Footer/Footer'
 import styles from '../../styles/authForm.module.css'
 
 export function EmailPromptPage() {
@@ -41,31 +42,34 @@ export function EmailPromptPage() {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        <Typography variant="h2">メールアドレスを設定</Typography>
-        <Divider />
-        <form className={styles.form} onSubmit={handleSubmit}>
-          <FormInput
-            label="メールアドレス"
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
-          {error && <p className={styles.error}>{error}</p>}
-          <Button variant="primary" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? '設定中...' : '設定する'}
-          </Button>
-        </form>
-        <div className={styles.link}>
-          <button type="button" className={styles.skipButton} onClick={handleSkip}>
-            あとで設定する
-          </button>
+    <div className={styles.layout}>
+      <div className={styles.page}>
+        <div className={styles.card}>
+          <Typography variant="h2">メールアドレスを設定</Typography>
+          <Divider />
+          <form className={styles.form} onSubmit={handleSubmit}>
+            <FormInput
+              label="メールアドレス"
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+            />
+            {error && <p className={styles.error}>{error}</p>}
+            <Button variant="primary" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? '設定中...' : '設定する'}
+            </Button>
+          </form>
+          <div className={styles.link}>
+            <button type="button" className={styles.skipButton} onClick={handleSkip}>
+              あとで設定する
+            </button>
+          </div>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }

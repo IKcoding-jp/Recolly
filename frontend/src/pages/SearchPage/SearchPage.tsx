@@ -17,6 +17,8 @@ import { RecordModal } from '../../components/RecordModal/RecordModal'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import { Button } from '../../components/ui/Button/Button'
 import { getGenreLabel } from '../../lib/mediaTypeUtils'
+import { captureEvent } from '../../lib/analytics/posthog'
+import { ANALYTICS_EVENTS } from '../../lib/analytics/events'
 import { GenreDropdown } from './GenreDropdown'
 import { GENRE_FILTERS } from './genreFilters'
 import type { GenreFilter } from './genreFilters'
@@ -118,12 +120,19 @@ export function SearchPage() {
         // 手動登録作品: work_idで直接Record作成
         setLoadingId('manual')
         await recordsApi.createFromWorkId(manualWorkId, data)
+        // ジャンル横断率・ファネル分析の基点となるイベント発火
+        captureEvent(ANALYTICS_EVENTS.RECORD_CREATED, {
+          media_type: modalWork.media_type,
+        })
         setManualWorkId(null)
       } else {
         // 検索結果作品: 既存のフロー
         const workKey = `${modalWork.external_api_source}:${modalWork.external_api_id}`
         setLoadingId(workKey)
         await recordsApi.createFromSearchResult(modalWork, data)
+        captureEvent(ANALYTICS_EVENTS.RECORD_CREATED, {
+          media_type: modalWork.media_type,
+        })
         setRecordedIds((prev) => new Set(prev).add(workKey))
       }
       setModalWork(null)

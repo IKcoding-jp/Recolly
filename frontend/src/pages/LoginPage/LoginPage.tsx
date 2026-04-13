@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button/Button'
 import { Divider } from '../../components/ui/Divider/Divider'
 import { OAuthButtons } from '../../components/OAuthButtons/OAuthButtons'
 import { FormInput } from '../../components/ui/FormInput/FormInput'
+import { Footer } from '../../components/ui/Footer/Footer'
 import styles from '../../styles/authForm.module.css'
 
 export function LoginPage() {
@@ -62,97 +63,100 @@ export function LoginPage() {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        <Typography variant="h2">ログイン</Typography>
-        <Divider />
-        {successMessage && <p className={styles.success}>{successMessage}</p>}
-        <form id="email-login-form" className={styles.form} onSubmit={handleSubmit}>
-          <FormInput
-            label="メールアドレス"
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
-          <FormInput
-            label="パスワード"
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
-          {error && <p className={styles.error}>{error}</p>}
-          {isUnauthorized && (
-            <div className={styles.hintCards}>
-              <Link to="/password/new" className={styles.hintCard}>
-                <span className={styles.hintIcon}>
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M15 7a2 2 0 0 1 2 2m4 0a6 6 0 0 1-7.74 5.74L11 17H9v2H7v2H4a1 1 0 0 1-1-1v-2.59a1 1 0 0 1 .29-.7l6.97-6.97A6 6 0 0 1 21 9z" />
-                  </svg>
-                </span>
-                <span className={styles.hintText}>
-                  <span className={styles.hintTitle}>パスワードを再設定する</span>
-                  <span className={styles.hintDesc}>メールでリセットリンクを送ります</span>
-                </span>
-                <span className={styles.hintArrow}>›</span>
-              </Link>
-              <div className={styles.hintCard}>
-                <span className={styles.hintIcon}>
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                    <polyline points="10 17 15 12 10 7" />
-                    <line x1="15" y1="12" x2="3" y2="12" />
-                  </svg>
-                </span>
-                <span className={styles.hintText}>
-                  <span className={styles.hintTitle}>Google でログインしてみる</span>
-                  <span className={styles.hintDesc}>
-                    Google で登録していれば下のボタンからどうぞ
+    <div className={styles.layout}>
+      <div className={styles.page}>
+        <div className={styles.card}>
+          <Typography variant="h2">ログイン</Typography>
+          <Divider />
+          {successMessage && <p className={styles.success}>{successMessage}</p>}
+          <form id="email-login-form" className={styles.form} onSubmit={handleSubmit}>
+            <FormInput
+              label="メールアドレス"
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+            />
+            <FormInput
+              label="パスワード"
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+            />
+            {error && <p className={styles.error}>{error}</p>}
+            {isUnauthorized && (
+              <div className={styles.hintCards}>
+                <Link to="/password/new" className={styles.hintCard}>
+                  <span className={styles.hintIcon}>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M15 7a2 2 0 0 1 2 2m4 0a6 6 0 0 1-7.74 5.74L11 17H9v2H7v2H4a1 1 0 0 1-1-1v-2.59a1 1 0 0 1 .29-.7l6.97-6.97A6 6 0 0 1 21 9z" />
+                    </svg>
                   </span>
-                </span>
+                  <span className={styles.hintText}>
+                    <span className={styles.hintTitle}>パスワードを再設定する</span>
+                    <span className={styles.hintDesc}>メールでリセットリンクを送ります</span>
+                  </span>
+                  <span className={styles.hintArrow}>›</span>
+                </Link>
+                <div className={styles.hintCard}>
+                  <span className={styles.hintIcon}>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                      <polyline points="10 17 15 12 10 7" />
+                      <line x1="15" y1="12" x2="3" y2="12" />
+                    </svg>
+                  </span>
+                  <span className={styles.hintText}>
+                    <span className={styles.hintTitle}>Google でログインしてみる</span>
+                    <span className={styles.hintDesc}>
+                      Google で登録していれば下のボタンからどうぞ
+                    </span>
+                  </span>
+                </div>
               </div>
-            </div>
-          )}
-          <Button variant="primary" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'ログイン中...' : 'ログイン'}
-          </Button>
-        </form>
-        <OAuthButtons
-          onScrollToEmailForm={() => {
-            const form = document.getElementById('email-login-form')
-            if (form) {
-              form.scrollIntoView({ behavior: 'smooth' })
-              const emailInput = form.querySelector<HTMLInputElement>('input[type="email"]')
-              emailInput?.focus({ preventScroll: true })
-            }
-          }}
-        />
-        <div className={styles.link}>
-          <Link to="/password/new">パスワードをお忘れですか？</Link>
-        </div>
-        <div className={styles.link}>
-          <Link to="/signup">アカウントを作成</Link>
+            )}
+            <Button variant="primary" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'ログイン中...' : 'ログイン'}
+            </Button>
+          </form>
+          <OAuthButtons
+            onScrollToEmailForm={() => {
+              const form = document.getElementById('email-login-form')
+              if (form) {
+                form.scrollIntoView({ behavior: 'smooth' })
+                const emailInput = form.querySelector<HTMLInputElement>('input[type="email"]')
+                emailInput?.focus({ preventScroll: true })
+              }
+            }}
+          />
+          <div className={styles.link}>
+            <Link to="/password/new">パスワードをお忘れですか？</Link>
+          </div>
+          <div className={styles.link}>
+            <Link to="/signup">アカウントを作成</Link>
+          </div>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }

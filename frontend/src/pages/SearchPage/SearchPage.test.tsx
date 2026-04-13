@@ -5,15 +5,38 @@ import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from '../../contexts/AuthContext'
 import { SearchPage } from './SearchPage'
 
+// PostHog ラッパーをモック化
+vi.mock('../../lib/analytics/posthog', () => ({
+  captureEvent: vi.fn(),
+  identifyUser: vi.fn(),
+  resetAnalytics: vi.fn(),
+}))
+
+import { captureEvent } from '../../lib/analytics/posthog'
+
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
 beforeEach(() => {
   mockFetch.mockReset()
+  vi.mocked(captureEvent).mockClear()
   // 初回セッション確認: 認証済み
   mockFetch.mockResolvedValueOnce({
     ok: true,
-    json: () => Promise.resolve({ user: { id: 1, username: 'test', email: 'test@example.com' } }),
+    json: () =>
+      Promise.resolve({
+        user: {
+          id: 1,
+          username: 'test',
+          email: 'test@example.com',
+          avatar_url: null,
+          bio: null,
+          created_at: '2026-04-01T00:00:00Z',
+          has_password: true,
+          providers: [],
+          email_missing: false,
+        },
+      }),
   })
   // SearchPage マウント時の recorded_external_ids 取得
   mockFetch.mockResolvedValueOnce({
@@ -446,5 +469,64 @@ describe('SearchPage', () => {
     await new Promise((resolve) => setTimeout(resolve, 50))
     expect(screen.queryByText('遅延した古い結果')).not.toBeInTheDocument()
     expect(screen.getByText('ワンピース新結果')).toBeInTheDocument()
+  })
+
+  it('検索結果から記録を作成したら record_created を media_type 付きで発火する', async () => {
+    renderSearchPage()
+    const user = userEvent.setup()
+
+    // 検索API: アニメ作品 1 件を返す
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: 'テストアニメ',
+              media_type: 'anime',
+              description: 'アニメ説明',
+              cover_image_url: null,
+              total_episodes: 12,
+              external_api_id: '1',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+          ],
+        }),
+    })
+
+    // 検索実行
+    const searchInput = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(searchInput, 'テスト')
+    await user.click(screen.getByRole('button', { name: '検索' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('テストアニメ')).toBeInTheDocument()
+    })
+
+    // 記録モーダルを開く
+    const recordButtons = screen.getAllByRole('button', { name: '記録する' })
+    await user.click(recordButtons[0])
+
+    await waitFor(() => {
+      expect(screen.getByText('テストアニメを記録')).toBeInTheDocument()
+    })
+
+    // 記録 API: 成功を返す
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          record: { id: 1, status: 'watching', rating: null },
+        }),
+    })
+
+    // モーダル内の「記録する」をクリック
+    const confirmButtons = screen.getAllByRole('button', { name: '記録する' })
+    await user.click(confirmButtons[confirmButtons.length - 1])
+
+    await waitFor(() => {
+      expect(captureEvent).toHaveBeenCalledWith('record_created', { media_type: 'anime' })
+    })
   })
 })
