@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ReviewSection } from './ReviewSection'
@@ -69,6 +69,51 @@ describe('ReviewSection', () => {
 
     it('view モードではテキストエリアが表示されない', () => {
       render(<ReviewSection reviewText="感想" onSave={mockOnSave} />)
+      expect(screen.queryByPlaceholderText('作品の感想を書く...')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('edit モード - 保存', () => {
+    it('保存ボタンをクリックすると onSave が新しいテキストで呼ばれる', async () => {
+      const user = userEvent.setup()
+      render(<ReviewSection reviewText={null} onSave={mockOnSave} />)
+      await user.click(screen.getByRole('button', { name: '感想を書く' }))
+      const textarea = screen.getByPlaceholderText('作品の感想を書く...')
+      await user.type(textarea, '新しい感想')
+      await user.click(screen.getByRole('button', { name: '保存' }))
+      await waitFor(() => {
+        expect(mockOnSave).toHaveBeenCalledWith('新しい感想')
+      })
+    })
+
+    it('保存中は保存ボタンが「保存中...」表示で disabled になる', async () => {
+      const user = userEvent.setup()
+      let resolveSave: (() => void) | undefined
+      mockOnSave.mockImplementation(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveSave = resolve
+          }),
+      )
+      render(<ReviewSection reviewText="text" onSave={mockOnSave} />)
+      await user.click(screen.getByRole('button', { name: '編集' }))
+      await user.click(screen.getByRole('button', { name: '保存' }))
+      const savingBtn = await screen.findByRole('button', { name: '保存中...' })
+      expect(savingBtn).toBeDisabled()
+      resolveSave?.()
+    })
+
+    it('保存成功後、親が reviewText を更新すると view モードに戻る', async () => {
+      const user = userEvent.setup()
+      const { rerender } = render(<ReviewSection reviewText="" onSave={mockOnSave} />)
+      await user.click(screen.getByRole('button', { name: '感想を書く' }))
+      const textarea = screen.getByPlaceholderText('作品の感想を書く...')
+      await user.type(textarea, '保存後')
+      await user.click(screen.getByRole('button', { name: '保存' }))
+      await waitFor(() => expect(mockOnSave).toHaveBeenCalled())
+      // 親が reviewText を更新したことをシミュレート
+      rerender(<ReviewSection reviewText="保存後" onSave={mockOnSave} />)
+      expect(screen.getByText('保存後')).toBeInTheDocument()
       expect(screen.queryByPlaceholderText('作品の感想を書く...')).not.toBeInTheDocument()
     })
   })
