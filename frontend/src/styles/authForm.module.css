@@ -1,9 +1,17 @@
+/* ページ全体のレイアウトラッパー: フォーム中央寄せ + 下部 Footer 配置 */
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background-color: var(--color-bg);
+}
+
 .page {
+  flex: 1 1 auto;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  background-color: var(--color-bg);
+  padding: var(--spacing-xl) 0;
 }
 
 .card {

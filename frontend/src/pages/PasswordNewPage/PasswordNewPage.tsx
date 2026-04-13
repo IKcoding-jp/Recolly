@@ -6,6 +6,7 @@ import { Typography } from '../../components/ui/Typography/Typography'
 import { Button } from '../../components/ui/Button/Button'
 import { Divider } from '../../components/ui/Divider/Divider'
 import { FormInput } from '../../components/ui/FormInput/FormInput'
+import { Footer } from '../../components/ui/Footer/Footer'
 import styles from '../../styles/authForm.module.css'
 
 export function PasswordNewPage() {
@@ -34,37 +35,40 @@ export function PasswordNewPage() {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        <Typography variant="h2">パスワードをリセット</Typography>
-        <Divider />
-        {submitted ? (
-          <p className={styles.success}>
-            パスワードリセットの手順をメールをお送りしました。
-            <br />
-            メールをご確認ください。
-          </p>
-        ) : (
-          <form className={styles.form} onSubmit={handleSubmit}>
-            <FormInput
-              label="メールアドレス"
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-            {error && <p className={styles.error}>{error}</p>}
-            <Button variant="primary" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? '送信中...' : 'リセットメールを送信'}
-            </Button>
-          </form>
-        )}
-        <div className={styles.link}>
-          <Link to="/login">ログインに戻る</Link>
+    <div className={styles.layout}>
+      <div className={styles.page}>
+        <div className={styles.card}>
+          <Typography variant="h2">パスワードをリセット</Typography>
+          <Divider />
+          {submitted ? (
+            <p className={styles.success}>
+              パスワードリセットの手順をメールをお送りしました。
+              <br />
+              メールをご確認ください。
+            </p>
+          ) : (
+            <form className={styles.form} onSubmit={handleSubmit}>
+              <FormInput
+                label="メールアドレス"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+              {error && <p className={styles.error}>{error}</p>}
+              <Button variant="primary" type="submit" disabled={isSubmitting}>
+                {isSubmitting ? '送信中...' : 'リセットメールを送信'}
+              </Button>
+            </form>
+          )}
+          <div className={styles.link}>
+            <Link to="/login">ログインに戻る</Link>
+          </div>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }
