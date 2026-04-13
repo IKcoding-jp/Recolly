@@ -19,7 +19,7 @@ export function ReviewSection({ reviewText, onSave }: ReviewSectionProps) {
   const [mode, setMode] = useState<Mode>(() => computeInitialMode(reviewText))
   const [draft, setDraft] = useState<string>(reviewText ?? '')
   const [isSaving, setIsSaving] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Task 3 の view モード実装で使用予定
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Task 6 のエラー表示実装で JSX に描画予定
   const [saveError, setSaveError] = useState<string | null>(null)
 
   // 親から reviewText が変わった時、編集中でなければ追従する
