@@ -179,4 +179,18 @@ describe('ReviewSection', () => {
       })
     })
   })
+
+  describe('親データ同期', () => {
+    it('編集中に親が reviewText を更新しても draft は上書きされない', async () => {
+      const user = userEvent.setup()
+      const { rerender } = render(<ReviewSection reviewText="初期" onSave={mockOnSave} />)
+      await user.click(screen.getByRole('button', { name: '編集' }))
+      const textarea = screen.getByPlaceholderText('作品の感想を書く...')
+      await user.clear(textarea)
+      await user.type(textarea, '編集中のテキスト')
+      // 親が reviewText を別の値で更新（例: 別タブで保存が発生）
+      rerender(<ReviewSection reviewText="他から来た値" onSave={mockOnSave} />)
+      expect(screen.getByDisplayValue('編集中のテキスト')).toBeInTheDocument()
+    })
+  })
 })
