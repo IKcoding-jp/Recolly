@@ -118,9 +118,14 @@
 **前提文書**: `docs/product-marketing-context.md`（2026-04-13 作成）
 
 ### 計測基盤（最優先）
-- [ ] GA4 などの計測基盤を導入（`analytics-tracking` スキル）
-- [ ] 計測すべき指標の定義: 登録ユーザー数、記録件数、**ジャンル横断率**、継続率、DAU/WAU/MAU
-- [ ] イベント定義（登録、初回記録、3作品到達、ジャンル横断記録、再訪）
+- [x] プロダクト分析ツールの選定 — PostHog を採用（ADR-0041）
+- [x] 計測基盤を導入（Phase 1: `$pageview` / `$identify` / `signup_completed` / `record_created`）— PR #145, Issue #143
+- [x] 計測すべき指標の定義: 登録ユーザー数、記録件数、**ジャンル横断率**、継続率、DAU/WAU/MAU（Spec §2.3 で導出方法を定義）
+- [x] Phase 1 イベント定義（登録、初回記録、ジャンル横断記録の基点）— PR #145
+- [x] プライバシーポリシーページ `/privacy` とフッター導線 — PR #145
+- [ ] PostHog Dashboard / Insight の作成（特に「ジャンル横断率」カスタム指標） — Phase 1 実装後タスク
+- [ ] Phase 2 イベント追加（`search_performed` / `episode_progress_updated` / `record_status_changed` / `recommendation_clicked`） — 別仕様書で扱う
+- [ ] Phase 3 イベント追加（3作品到達、再訪、討論投稿、レコメンドクリック等） — 運用データを見てから判断
 
 ### ランディングページ
 - [ ] 非ログインユーザー向けLP作成（現状は `/` → LoginPage 直行のため訴求面がない）
