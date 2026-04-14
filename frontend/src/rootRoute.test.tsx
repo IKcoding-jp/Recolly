@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -45,13 +46,19 @@ describe('RootRoute', () => {
     vi.mocked(useAuth).mockReset()
   })
 
+  // RootRoute は未認証時に lazy() 化された LandingPage を返す。
+  // 現状 vi.mock が同期解決するため Suspense 無しでもテストは通るが、
+  // React/Vitest のバージョンアップで挙動が変わった際のフラキネスを防ぐため
+  // Suspense バウンダリで明示的にラップしておく。
   function renderAtRoot() {
     return render(
       <MemoryRouter initialEntries={['/']}>
-        <Routes>
-          <Route path="/" element={<RootRoute />} />
-          <Route path="/dashboard" element={<div data-testid="dashboard">dashboard</div>} />
-        </Routes>
+        <Suspense fallback={<div>suspense-fallback</div>}>
+          <Routes>
+            <Route path="/" element={<RootRoute />} />
+            <Route path="/dashboard" element={<div data-testid="dashboard">dashboard</div>} />
+          </Routes>
+        </Suspense>
       </MemoryRouter>,
     )
   }
