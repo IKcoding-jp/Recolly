@@ -72,14 +72,22 @@ const RecommendationsPage = lazy(() =>
 const PrivacyPage = lazy(() =>
   import('./pages/PrivacyPage/PrivacyPage').then((m) => ({ default: m.PrivacyPage })),
 )
+const LandingPage = lazy(() =>
+  import('./pages/LandingPage/LandingPage').then((m) => ({ default: m.LandingPage })),
+)
 
-// 認証済みならダッシュボードへ、未認証ならログインページへ
-function RootRedirect() {
+// `/` ルートを認証状態に応じて分岐する
+// - 読み込み中: 「読み込み中...」
+// - ログイン済み: /dashboard へリダイレクト
+// - 未ログイン: LandingPage を描画 (マーケ流入の受け皿)
+export function RootRoute() {
   const { isAuthenticated, isLoading } = useAuth()
 
   if (isLoading) return <div className={appStyles.loading}>読み込み中...</div>
 
-  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />
+
+  return <LandingPage />
 }
 
 // /mypageから/users/:idへのリダイレクト（後方互換性）
@@ -161,7 +169,7 @@ function App() {
         </AnimatePresence>
         <Suspense fallback={<div className={appStyles.loading}>読み込み中...</div>}>
           <Routes>
-            <Route path="/" element={<RootRedirect />} />
+            <Route path="/" element={<RootRoute />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/password/new" element={<PasswordNewPage />} />
