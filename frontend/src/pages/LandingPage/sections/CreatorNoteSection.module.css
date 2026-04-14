@@ -1,0 +1,50 @@
+.creator {
+  padding: 140px 48px;
+  background: var(--color-bg);
+}
+
+.inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+  margin-bottom: 32px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.labelNum {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+}
+
+.body {
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 2;
+  color: var(--color-text);
+}
+
+.body p + p {
+  margin-top: 20px;
+}
+
+.signature {
+  margin-top: 36px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-medium);
+}
+
+@media (max-width: 900px) {
+  .creator {
+    padding: 80px 24px;
+  }
+}
