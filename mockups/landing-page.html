@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recolly — 観たもの、読んだもの、プレイしたもの。全部ひとつの棚に。</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Zen+Kaku+Gothic+New:wght@300;400;500;700;900&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    /* ========== デザイントークン ========== */
+    :root {
+      --color-bg: #fafaf8;
+      --color-bg-paper: #f4f0e6;
+      --color-bg-white: #ffffff;
+      --color-text: #1a1a1a;
+      --color-text-muted: #6b6b6b;
+      --color-text-soft: #9a9a9a;
+      --color-border: #1a1a1a;
+      --color-border-light: #d8d4c8;
+      --color-accent: #c85a3f;
+
+      --color-anime: #3d5a80;
+      --color-movie: #5e548e;
+      --color-drama: #9f86c0;
+      --color-book: #c4956a;
+      --color-manga: #e07a5f;
+      --color-game: #6b9080;
+
+      /* 見出しも body も Zen Kaku Gothic で統一。Fraunces は数字のみ */
+      --font-accent: 'Fraunces', serif;
+      --font-body: 'Zen Kaku Gothic New', sans-serif;
+
+      --max-w: 1200px;
+      --max-w-reading: 680px;
+
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: auto;
+    }
+
+    body {
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: var(--font-body);
+      font-weight: 400;
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ========== ナビゲーション ========== */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 20px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(250, 250, 248, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.3s var(--ease);
+    }
+    .nav.scrolled {
+      border-bottom-color: var(--color-border-light);
+    }
+    .nav__brand {
+      font-family: var(--font-body);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .nav__actions {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      font-size: 14px;
+    }
+    .nav__link {
+      color: var(--color-text);
+      text-decoration: none;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    .nav__link:hover {
+      opacity: 1;
+    }
+    .nav__cta {
+      color: var(--color-bg);
+      background: var(--color-text);
+      padding: 10px 20px;
+      border-radius: 2px;
+      text-decoration: none;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      transition: background 0.25s var(--ease);
+    }
+    .nav__cta:hover {
+      background: var(--color-accent);
+    }
+
+    /* ========== セクション共通 ========== */
+    section {
+      padding: 120px 48px;
+      position: relative;
+    }
+    .container {
+      max-width: var(--max-w);
+      margin: 0 auto;
+    }
+
+    .section__label {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      color: var(--color-text-muted);
+      margin-bottom: 32px;
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+    .section__label .num {
+      font-family: var(--font-accent);
+      font-size: 14px;
+      color: var(--color-text);
+      font-weight: 500;
+    }
+
+    /* ========== ヒーロー ========== */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding-top: 160px;
+      padding-bottom: 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero__grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 80px;
+      align-items: center;
+      max-width: var(--max-w);
+      margin: 0 auto;
+      width: 100%;
+    }
+    .hero__eyebrow {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .hero__eyebrow::before {
+      content: '';
+      width: 32px;
+      height: 1px;
+      background: var(--color-text-muted);
+    }
+    .hero__title {
+      font-family: var(--font-body);
+      font-size: clamp(32px, 3.8vw, 54px);
+      font-weight: 700;
+      line-height: 1.4;
+      letter-spacing: -0.01em;
+      margin-bottom: 32px;
+    }
+    .hero__subtitle {
+      font-size: 17px;
+      line-height: 1.9;
+      color: var(--color-text-muted);
+      max-width: 520px;
+      margin-bottom: 40px;
+    }
+    .hero__cta-row {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      background: var(--color-text);
+      color: var(--color-bg);
+      padding: 18px 36px;
+      border: none;
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: transform 0.3s var(--ease);
+    }
+    .btn-primary::after {
+      content: '→';
+      margin-left: 12px;
+      display: inline-block;
+      transition: transform 0.3s var(--ease);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+    }
+    .btn-primary:hover::after {
+      transform: translateX(4px);
+    }
+    .hero__note {
+      font-size: 13px;
+      color: var(--color-text-soft);
+    }
+
+    /* ---- ヒーロー右: カード・スタッキング ---- */
+    .hero__deck {
+      position: relative;
+      height: 520px;
+    }
+    .hero__card {
+      position: absolute;
+      background: var(--color-bg-white);
+      border: 1px solid var(--color-border-light);
+      padding: 24px 28px;
+      box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.15);
+      width: 280px;
+      border-radius: 4px;
+    }
+    .hero__card h4 {
+      font-family: var(--font-body);
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .hero__card .meta {
+      font-size: 11px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      color: var(--color-text-muted);
+    }
+    .hero__card .genre {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .hero__card .bar {
+      height: 2px;
+      background: var(--color-border-light);
+      margin: 12px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero__card .bar::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--color-text);
+      width: var(--p, 60%);
+    }
+    .hero__card .rating {
+      font-family: var(--font-accent);
+      font-size: 28px;
+      font-weight: 500;
+    }
+    .hero__card .rating span {
+      font-size: 13px;
+      color: var(--color-text-muted);
+      font-weight: 400;
+      font-family: var(--font-body);
+    }
+
+    .card-1 {
+      top: 0;
+      left: 40px;
+      transform: rotate(-3deg);
+      animation: float-1 6s ease-in-out infinite;
+    }
+    .card-2 {
+      top: 120px;
+      right: 0;
+      transform: rotate(2deg);
+      animation: float-2 7s ease-in-out infinite;
+    }
+    .card-3 {
+      bottom: 20px;
+      left: 0;
+      transform: rotate(1deg);
+      animation: float-3 8s ease-in-out infinite;
+    }
+
+    @keyframes float-1 {
+      0%, 100% { transform: rotate(-3deg) translateY(0); }
+      50% { transform: rotate(-3deg) translateY(-8px); }
+    }
+    @keyframes float-2 {
+      0%, 100% { transform: rotate(2deg) translateY(0); }
+      50% { transform: rotate(2deg) translateY(-10px); }
+    }
+    @keyframes float-3 {
+      0%, 100% { transform: rotate(1deg) translateY(0); }
+      50% { transform: rotate(1deg) translateY(-6px); }
+    }
+
+    .hero__genres {
+      position: absolute;
+      bottom: 60px;
+      left: 48px;
+      display: flex;
+      gap: 24px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+    }
+    .hero__genres span {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hero__genres span::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    .hero__genres .g-anime::before { background: var(--color-anime); }
+    .hero__genres .g-movie::before { background: var(--color-movie); }
+    .hero__genres .g-drama::before { background: var(--color-drama); }
+    .hero__genres .g-book::before { background: var(--color-book); }
+    .hero__genres .g-manga::before { background: var(--color-manga); }
+    .hero__genres .g-game::before { background: var(--color-game); }
+
+    /* ========== 問題提示 ========== */
+    .problem {
+      background: var(--color-bg-paper);
+      border-top: 1px solid var(--color-border-light);
+      border-bottom: 1px solid var(--color-border-light);
+    }
+    .problem__grid {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 80px;
+      align-items: start;
+    }
+    .problem__heading {
+      font-family: var(--font-body);
+      font-size: clamp(28px, 3.4vw, 48px);
+      font-weight: 700;
+      line-height: 1.5;
+      letter-spacing: -0.01em;
+    }
+    .problem__body {
+      font-size: 16px;
+      line-height: 2;
+      color: var(--color-text);
+    }
+    .problem__body p + p {
+      margin-top: 20px;
+    }
+
+    /* ========== ソリューション ========== */
+    .solution__heading {
+      font-family: var(--font-body);
+      font-size: clamp(30px, 3.8vw, 52px);
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 72px;
+      max-width: 760px;
+      letter-spacing: -0.01em;
+    }
+    .solution__grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      background: var(--color-border-light);
+      border: 1px solid var(--color-border-light);
+    }
+    .feature {
+      background: var(--color-bg);
+      padding: 48px 44px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .feature__num {
+      font-family: var(--font-accent);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+    }
+    .feature__title {
+      font-family: var(--font-body);
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+    .feature__body {
+      font-size: 15px;
+      color: var(--color-text-muted);
+      line-height: 1.9;
+    }
+
+    /* ========== How it works ========== */
+    .how {
+      background: var(--color-bg-paper);
+      border-top: 1px solid var(--color-border-light);
+      border-bottom: 1px solid var(--color-border-light);
+    }
+    .how__heading {
+      font-family: var(--font-body);
+      font-size: clamp(30px, 3.8vw, 52px);
+      font-weight: 700;
+      margin-bottom: 72px;
+      letter-spacing: -0.01em;
+    }
+    .how__steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 56px;
+    }
+    .step {
+      position: relative;
+    }
+    .step__num {
+      font-family: var(--font-accent);
+      font-size: 56px;
+      font-weight: 500;
+      color: var(--color-text);
+      line-height: 1;
+      margin-bottom: 24px;
+    }
+    .step__title {
+      font-family: var(--font-body);
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-border);
+    }
+    .step__body {
+      font-size: 15px;
+      line-height: 1.9;
+      color: var(--color-text-muted);
+    }
+
+    /* ========== 振り返り ========== */
+    .reflect__grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 80px;
+      align-items: start;
+    }
+    .reflect__heading {
+      font-family: var(--font-body);
+      font-size: clamp(28px, 3.4vw, 48px);
+      font-weight: 700;
+      line-height: 1.5;
+      letter-spacing: -0.01em;
+    }
+    .reflect__body {
+      font-size: 16px;
+      line-height: 2;
+      color: var(--color-text);
+    }
+
+    /* ========== Creator's Note ========== */
+    .creator {
+      padding: 140px 48px;
+      background: var(--color-bg);
+    }
+    .creator__inner {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .creator__body {
+      font-family: var(--font-body);
+      font-size: 18px;
+      line-height: 2;
+      color: var(--color-text);
+    }
+    .creator__body p + p {
+      margin-top: 20px;
+    }
+    .creator__signature {
+      margin-top: 36px;
+      font-size: 14px;
+      color: var(--color-text-muted);
+      font-weight: 500;
+    }
+
+    /* ========== 永久無料の約束 ========== */
+    .promise {
+      background: var(--color-text);
+      color: var(--color-bg);
+      padding: 130px 48px;
+      position: relative;
+    }
+    .promise__inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+    }
+    .promise__label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-text-soft);
+      margin-bottom: 32px;
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+    .promise__label .num {
+      font-family: var(--font-accent);
+      font-size: 14px;
+      color: var(--color-bg);
+    }
+    .promise__heading {
+      font-family: var(--font-body);
+      font-size: clamp(28px, 3.8vw, 48px);
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 40px;
+      max-width: 780px;
+    }
+    .promise__body {
+      font-size: 16px;
+      line-height: 2;
+      color: #c8c4b8;
+      max-width: 680px;
+    }
+    .promise__body strong {
+      color: var(--color-bg);
+      font-weight: 500;
+    }
+
+    /* ========== FAQ ========== */
+    .faq__heading {
+      font-family: var(--font-body);
+      font-size: clamp(30px, 3.8vw, 48px);
+      font-weight: 700;
+      margin-bottom: 64px;
+      letter-spacing: -0.01em;
+    }
+    .faq__list {
+      max-width: 820px;
+    }
+    .faq__item {
+      border-top: 1px solid var(--color-border-light);
+      padding: 32px 0;
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    .faq__item:last-child {
+      border-bottom: 1px solid var(--color-border-light);
+    }
+    .faq__num {
+      font-family: var(--font-accent);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      padding-top: 4px;
+    }
+    .faq__q {
+      font-family: var(--font-body);
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.55;
+      margin-bottom: 14px;
+    }
+    .faq__a {
+      font-size: 15px;
+      line-height: 1.9;
+      color: var(--color-text-muted);
+      max-width: 640px;
+    }
+
+    /* ========== 最終 CTA ========== */
+    .cta-final {
+      background: var(--color-bg-paper);
+      padding: 160px 48px;
+      text-align: center;
+      border-top: 1px solid var(--color-border-light);
+    }
+    .cta-final__heading {
+      font-family: var(--font-body);
+      font-size: clamp(28px, 4vw, 52px);
+      font-weight: 700;
+      line-height: 1.45;
+      margin-bottom: 48px;
+      letter-spacing: -0.01em;
+      max-width: 820px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .cta-final__note {
+      margin-top: 28px;
+      font-size: 13px;
+      color: var(--color-text-muted);
+    }
+
+    /* ========== フッター ========== */
+    .site-footer {
+      background: var(--color-bg);
+      padding: 48px;
+      border-top: 1px solid var(--color-border-light);
+      font-size: 13px;
+      color: var(--color-text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .site-footer a {
+      color: var(--color-text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .site-footer a:hover {
+      color: var(--color-text);
+    }
+    .site-footer__nav {
+      display: flex;
+      gap: 24px;
+    }
+
+    /* ========== スクロール・リビール ========== */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition:
+        opacity 1s var(--ease),
+        transform 1s var(--ease);
+    }
+    .reveal.in {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* ========== レスポンシブ ========== */
+    @media (max-width: 900px) {
+      section { padding: 80px 24px; }
+      .nav { padding: 16px 24px; }
+      .hero { padding-top: 120px; }
+      .hero__grid { grid-template-columns: 1fr; gap: 64px; }
+      .hero__deck { height: 400px; }
+      .hero__genres { position: static; margin-top: 48px; flex-wrap: wrap; }
+      .problem__grid,
+      .reflect__grid { grid-template-columns: 1fr; gap: 40px; }
+      .solution__grid { grid-template-columns: 1fr; }
+      .how__steps { grid-template-columns: 1fr; gap: 48px; }
+      .faq__item { grid-template-columns: 40px 1fr; gap: 16px; }
+      .site-footer { flex-direction: column; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========== ナビゲーション ========== -->
+  <nav class="nav" id="nav">
+    <div class="nav__brand">Recolly</div>
+    <div class="nav__actions">
+      <a class="nav__link" href="#solution">特徴</a>
+      <a class="nav__link" href="#how">使い方</a>
+      <a class="nav__link" href="#faq">FAQ</a>
+      <a class="nav__link" href="/login">ログイン</a>
+      <a class="nav__cta" href="/signup">無料で始める</a>
+    </div>
+  </nav>
+
+  <!-- ========== ヒーロー ========== -->
+  <section class="hero">
+    <div class="hero__grid">
+      <div>
+        <div class="hero__eyebrow reveal">ジャンルをまたぐ、あなたの記録のための場所</div>
+        <h1 class="hero__title reveal">
+          観たもの、読んだもの、<br />プレイしたもの。<br />全部ひとつの棚に。
+        </h1>
+        <p class="hero__subtitle reveal">
+          アニメ、映画、ドラマ、本、漫画、ゲーム。ジャンルをまたいで作品を記録・振り返りできるアプリです。
+        </p>
+        <div class="hero__cta-row reveal">
+          <a class="btn-primary" href="/signup">無料で始める</a>
+          <span class="hero__note">永久無料・カード不要</span>
+        </div>
+      </div>
+
+      <div class="hero__deck reveal">
+        <div class="hero__card card-1">
+          <div class="meta">
+            <span><span class="genre" style="background: var(--color-anime)"></span>アニメ</span>
+            <span>#023</span>
+          </div>
+          <h4>葬送のフリーレン</h4>
+          <div class="bar" style="--p: 74%"></div>
+          <div class="rating">9.2<span> / 10</span></div>
+        </div>
+        <div class="hero__card card-2">
+          <div class="meta">
+            <span><span class="genre" style="background: var(--color-book)"></span>本</span>
+            <span>#058</span>
+          </div>
+          <h4>コンビニ人間</h4>
+          <div class="bar" style="--p: 100%"></div>
+          <div class="rating">8.6<span> / 10</span></div>
+        </div>
+        <div class="hero__card card-3">
+          <div class="meta">
+            <span><span class="genre" style="background: var(--color-game)"></span>ゲーム</span>
+            <span>#091</span>
+          </div>
+          <h4>Outer Wilds</h4>
+          <div class="bar" style="--p: 55%"></div>
+          <div class="rating">9.8<span> / 10</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero__genres reveal">
+      <span class="g-anime">アニメ</span>
+      <span class="g-movie">映画</span>
+      <span class="g-drama">ドラマ</span>
+      <span class="g-book">本</span>
+      <span class="g-manga">漫画</span>
+      <span class="g-game">ゲーム</span>
+    </div>
+  </section>
+
+  <!-- ========== 問題提示 ========== -->
+  <section class="problem" id="problem">
+    <div class="container">
+      <div class="section__label reveal"><span class="num">01</span>散らばる履歴</div>
+      <div class="problem__grid">
+        <h2 class="problem__heading reveal">
+          観たドラマも、<br />読んだ本も、<br />プレイしたゲームも、<br />全部、別の場所。
+        </h2>
+        <div class="problem__body reveal">
+          <p>
+            Netflix に視聴履歴、Kindle に読書履歴、Steam にプレイ時間。一つ一つは便利なのに、ジャンルをまたいで「自分が何を味わってきたか」を一箇所で振り返れる場所はありません。
+          </p>
+          <p>
+            好きだった作品に、メディアをまたいで戻れる場所を。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ソリューション ========== -->
+  <section class="solution" id="solution">
+    <div class="container">
+      <div class="section__label reveal"><span class="num">02</span>できること</div>
+      <h2 class="solution__heading reveal">
+        ジャンルの壁を越えて、作品を記録する。
+      </h2>
+      <div class="solution__grid">
+        <div class="feature reveal">
+          <div class="feature__num">01</div>
+          <h3 class="feature__title">6 ジャンルをまとめて記録</h3>
+          <p class="feature__body">
+            アニメ、映画、ドラマ、本、漫画、ゲーム。すべての作品を同じ使い心地で、一箇所に記録できます。
+          </p>
+        </div>
+        <div class="feature reveal">
+          <div class="feature__num">02</div>
+          <h3 class="feature__title">評価は 10 点満点で統一</h3>
+          <p class="feature__body">
+            サービスごとに評価基準が違う問題をなくします。全作品を同じ尺度で並べられるので、過去の蓄積がそのまま比較可能な資産になります。
+          </p>
+        </div>
+        <div class="feature reveal">
+          <div class="feature__num">03</div>
+          <h3 class="feature__title">いつでも振り返れるライブラリ</h3>
+          <p class="feature__body">
+            「去年観たドラマってなんだっけ」にすぐ答えられます。タグや検索で、過去の記録に戻れます。
+          </p>
+        </div>
+        <div class="feature reveal">
+          <div class="feature__num">04</div>
+          <h3 class="feature__title">シンプルで静かな UI</h3>
+          <p class="feature__body">
+            派手な通知もランキング競争もありません。自分のペースで、落ち着いて使える場所です。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== How it works ========== -->
+  <section class="how" id="how">
+    <div class="container">
+      <div class="section__label reveal"><span class="num">03</span>使い方</div>
+      <h2 class="how__heading reveal">
+        三ステップで、ライブラリが育つ。
+      </h2>
+      <div class="how__steps">
+        <div class="step reveal">
+          <div class="step__num">1.</div>
+          <h3 class="step__title">探す</h3>
+          <p class="step__body">
+            作品のタイトルで検索して、自分の棚に加えます。アニメも本もゲームも、入り口は一つ。
+          </p>
+        </div>
+        <div class="step reveal">
+          <div class="step__num">2.</div>
+          <h3 class="step__title">記録する</h3>
+          <p class="step__body">
+            観終わったら、読み終わったら、クリアしたら、評価とメモを残します。一言だけでも十分です。
+          </p>
+        </div>
+        <div class="step reveal">
+          <div class="step__num">3.</div>
+          <h3 class="step__title">振り返る</h3>
+          <p class="step__body">
+            ライブラリや検索で、過去の作品にいつでも戻れます。ジャンルをまたいで、好きだったものを見返せます。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 振り返り（長期価値） ========== -->
+  <section class="reflect">
+    <div class="container">
+      <div class="section__label reveal"><span class="num">04</span>数か月後、数年後に</div>
+      <div class="reflect__grid">
+        <h2 class="reflect__heading reveal">
+          続けていると、<br />自分の好みが<br />見えてくる。
+        </h2>
+        <div class="reflect__body reveal">
+          <p>
+            記録を続けていると、ジャンルをまたいだ自分の好みが見えてきます。「去年一番よかったのは何だっけ」「最近こういうの観てるな」——過去の蓄積が、これからの作品選びのヒントになります。
+          </p>
+          <p>
+            Recolly は、記録そのものよりも、振り返れるようになった後に価値が出るツールです。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== Creator's Note ========== -->
+  <section class="creator">
+    <div class="creator__inner">
+      <div class="section__label reveal"><span class="num">05</span>なぜ作ったか</div>
+      <div class="creator__body reveal">
+        <p>
+          作者の IK です。好きな作品を振り返りたくなったとき、Netflix の視聴履歴を開き、Kindle のライブラリを開き、Steam のプレイ時間を見る——そんなことを何度もしていました。どれも便利なサービスです。
+        </p>
+        <p>
+          でも、ジャンルをまたいで「自分が味わってきたもの」を一箇所で俯瞰する場所は、どこにもありませんでした。Recolly は、そのための場所として作りました。
+        </p>
+      </div>
+      <div class="creator__signature reveal">— IK, 作者</div>
+    </div>
+  </section>
+
+  <!-- ========== 永久無料の約束 ========== -->
+  <section class="promise">
+    <div class="promise__inner">
+      <div class="promise__label reveal"><span class="num">06</span>約束</div>
+      <h2 class="promise__heading reveal">
+        基本機能は、これから先も無料で使えます。
+      </h2>
+      <div class="promise__body reveal">
+        <p>
+          Recolly の<strong>記録・ライブラリ・検索・おすすめ</strong>は、これから先も無料で使えます。将来、詳細統計やデータエクスポートのような付加価値機能のみ有料化する可能性はありますが、あなたの日々の記録を人質にすることはありません。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FAQ ========== -->
+  <section class="faq" id="faq">
+    <div class="container">
+      <div class="section__label reveal"><span class="num">07</span>よくある質問</div>
+      <h2 class="faq__heading reveal">
+        よくある質問
+      </h2>
+      <div class="faq__list">
+        <div class="faq__item reveal">
+          <div class="faq__num">Q1</div>
+          <div>
+            <div class="faq__q">Netflix や Kindle のような視聴・読書サービスとは何が違いますか？</div>
+            <p class="faq__a">
+              Recolly は、視聴や読書そのものを提供するサービスではありません。既存の配信・電子書籍サービスで味わった作品を「まとめて記録し、振り返る」ための場所です。視聴や読書はこれまで通り既存のサービスで、記録と振り返りは Recolly で、という使い方になります。
+            </p>
+          </div>
+        </div>
+        <div class="faq__item reveal">
+          <div class="faq__num">Q2</div>
+          <div>
+            <div class="faq__q">他のサービスの記録は Recolly に移行できますか？</div>
+            <p class="faq__a">
+              現状、エクスポート／インポート機能は対応していません。今後の検討事項として、ユーザーの声を見ながら判断していきます。
+            </p>
+          </div>
+        </div>
+        <div class="faq__item reveal">
+          <div class="faq__num">Q3</div>
+          <div>
+            <div class="faq__q">スマホと PC どちらでも使えますか？</div>
+            <p class="faq__a">
+              両方で使えます。PWA に対応しているので、スマホのホーム画面に追加すればアプリのように起動できます。
+            </p>
+          </div>
+        </div>
+        <div class="faq__item reveal">
+          <div class="faq__num">Q4</div>
+          <div>
+            <div class="faq__q">記録は他の人に公開されますか？</div>
+            <p class="faq__a">
+              プロフィールの一部は公開ベースの設計になっています。将来、より細かく公開範囲を選べる非公開モードを追加する予定です。
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 最終 CTA ========== -->
+  <section class="cta-final">
+    <div class="container">
+      <h2 class="cta-final__heading reveal">
+        あなたの観たもの、読んだもの、プレイしたもの。<br />全部、ひとつの棚に。
+      </h2>
+      <a class="btn-primary reveal" href="/signup">無料で始める</a>
+      <div class="cta-final__note reveal">永久無料・カード不要</div>
+    </div>
+  </section>
+
+  <!-- ========== フッター ========== -->
+  <footer class="site-footer">
+    <div>© Recolly</div>
+    <nav class="site-footer__nav">
+      <a href="/privacy">プライバシーポリシー</a>
+      <a href="/login">ログイン</a>
+    </nav>
+  </footer>
+
+  <script>
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 20) nav.classList.add('scrolled');
+      else nav.classList.remove('scrolled');
+    });
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add('in');
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -10% 0px' }
+    );
+    document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const heroReveals = document.querySelectorAll('.hero .reveal');
+      heroReveals.forEach((el, i) => {
+        setTimeout(() => el.classList.add('in'), 150 + i * 120);
+      });
+    });
+  </script>
+</body>
+</html>
