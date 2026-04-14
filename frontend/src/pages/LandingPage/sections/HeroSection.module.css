@@ -1,0 +1,290 @@
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 160px 48px 80px;
+  position: relative;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 80px;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.eyebrow::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--color-text-muted);
+}
+
+.title {
+  font-family: var(--font-body);
+  font-size: clamp(32px, 3.8vw, 54px);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  margin-bottom: 32px;
+  color: var(--color-text);
+}
+
+.subtitle {
+  font-size: 17px;
+  line-height: 1.9;
+  color: var(--color-text-muted);
+  max-width: 520px;
+  margin-bottom: 40px;
+}
+
+.ctaRow {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btnPrimary {
+  background: var(--color-text);
+  color: var(--color-bg);
+  padding: 18px 36px;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btnPrimary::after {
+  content: '→';
+  margin-left: 12px;
+  display: inline-block;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btnPrimary:hover {
+  transform: translateY(-2px);
+}
+
+.btnPrimary:hover::after {
+  transform: translateX(4px);
+}
+
+.note {
+  font-size: 13px;
+  color: var(--color-text-soft);
+}
+
+/* 右カラム: 作品カード・スタック */
+.deck {
+  position: relative;
+  height: 520px;
+}
+
+.card {
+  position: absolute;
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-light);
+  padding: 24px 28px;
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.15);
+  width: 280px;
+  border-radius: 4px;
+}
+
+.cardTitle {
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: var(--font-weight-bold);
+  margin-bottom: 4px;
+  color: var(--color-text);
+}
+
+.cardMeta {
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  color: var(--color-text-muted);
+}
+
+.cardMediaLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cardGenreDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.cardBar {
+  height: 2px;
+  background: var(--color-border-light);
+  margin: 12px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.cardBarFill {
+  position: absolute;
+  inset: 0;
+  background: var(--color-text);
+}
+
+.cardRating {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.cardRatingMax {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-normal);
+  font-family: var(--font-body);
+}
+
+.card1 {
+  top: 0;
+  left: 40px;
+  transform: rotate(-3deg);
+  animation: float1 6s ease-in-out infinite;
+}
+
+.card2 {
+  top: 120px;
+  right: 0;
+  transform: rotate(2deg);
+  animation: float2 7s ease-in-out infinite;
+}
+
+.card3 {
+  bottom: 20px;
+  left: 0;
+  transform: rotate(1deg);
+  animation: float3 8s ease-in-out infinite;
+}
+
+@keyframes float1 {
+  0%,
+  100% {
+    transform: rotate(-3deg) translateY(0);
+  }
+  50% {
+    transform: rotate(-3deg) translateY(-8px);
+  }
+}
+
+@keyframes float2 {
+  0%,
+  100% {
+    transform: rotate(2deg) translateY(0);
+  }
+  50% {
+    transform: rotate(2deg) translateY(-10px);
+  }
+}
+
+@keyframes float3 {
+  0%,
+  100% {
+    transform: rotate(1deg) translateY(0);
+  }
+  50% {
+    transform: rotate(1deg) translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card1,
+  .card2,
+  .card3 {
+    animation: none;
+  }
+}
+
+.genres {
+  position: absolute;
+  bottom: 60px;
+  left: 48px;
+  display: flex;
+  gap: 24px;
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+}
+
+.genreItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.genreItem::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.genreAnime::before {
+  background: var(--color-anime);
+}
+.genreMovie::before {
+  background: var(--color-movie);
+}
+.genreDrama::before {
+  background: var(--color-drama);
+}
+.genreBook::before {
+  background: var(--color-book);
+}
+.genreManga::before {
+  background: var(--color-manga);
+}
+.genreGame::before {
+  background: var(--color-game);
+}
+
+@media (max-width: 900px) {
+  .hero {
+    padding: 120px 24px 80px;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 64px;
+  }
+  .deck {
+    height: 400px;
+  }
+  .genres {
+    position: static;
+    margin-top: 48px;
+    flex-wrap: wrap;
+  }
+}

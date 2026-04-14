@@ -12,6 +12,12 @@
   --color-text-muted: #6b6b6b;
   --color-border: #2c2c2c;
   --color-border-light: #e0e0e0;
+
+  /* --- ランディングページ用 --- */
+  --color-bg-paper: #f4f0e6;
+  --color-text-soft: #9a9a9a;
+  --color-accent: #c85a3f;
+
   --color-error: #c0392b;
   --color-error-bg: #fef2f2;
   --color-success: #2e7d32;
