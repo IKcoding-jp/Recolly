@@ -110,24 +110,26 @@ class NormalizeGoogleBooksCoverUrls < ActiveRecord::Migration[8.1]
     SQL
   end
 
+  # 安全に逆方向実行できないため IrreversibleMigration を投げる。
+  # 詳細は migration 本体のコメントを参照。
   def down
-    execute <<~SQL.squish
-      UPDATE works
-      SET cover_image_url = REPLACE(
-        cover_image_url,
-        'https://books.google.com/',
-        'http://books.google.com/'
-      )
-      WHERE cover_image_url LIKE 'https://books.google.com/%'
-    SQL
+    raise ActiveRecord::IrreversibleMigration, '...'
   end
 end
 ```
 
 **安全策**:
 - WHERE 句で `http://books.google.com/` に厳密に絞る → 他ドメインの URL を誤って書き換えない
-- `down` で逆の UPDATE を実装 → ロールバック可能
+- `down` は **`IrreversibleMigration` を投げる**（理由は下記）
 - `updated_at` は更新しない（最終更新時刻を汚さない）※ `execute` による直 SQL は ActiveRecord コールバックを発火しないため、`updated_at` は自動更新されない
+
+**`down` を不可逆にする理由**:
+
+`up` 実行後は、DB 内で「`up` が変換した行」と「アダプタ正規化により新規登録された行」がどちらも `https://books.google.com/...` 形式になり、SQL レベルで両者を区別する手段がない。
+
+そのため素朴な「逆 REPLACE」を `down` に書くと、アダプタ修正後にユーザーが正常登録した行までもが http:// に書き戻され、silent data corruption を引き起こす。これを物理的に防ぐため、Rails 標準の `ActiveRecord::IrreversibleMigration` を使う。
+
+万一 dev で巻き戻したい場合は、本マイグレーション本体を一時的に書き換える運用とする。
 
 ### 3.3 検索結果キャッシュの無効化
 
@@ -198,7 +200,7 @@ Recolly では migration spec を書く慣習がない。代わりに **開発DB
 | 対象 | ロールバック手段 |
 |---|---|
 | Adapter コード変更 | `git revert` でコード巻き戻し |
-| DB データマイグレーション | `bin/rails db:rollback STEP=1` で元の http:// に戻る |
+| DB データマイグレーション | **自動ロールバック不可**（§3.2 参照）。万一巻き戻す必要がある場合は、本マイグレーションを一時的に書き換えるか、別途 SQL を手動で実行する |
 | キャッシュバージョン | `CACHE_VERSION` を `'v4'` に戻す（revert に含まれる） |
 
 ## 7. 動作確認計画（Step 5 で実施）

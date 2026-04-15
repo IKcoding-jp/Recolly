@@ -18,15 +18,16 @@ class NormalizeGoogleBooksCoverUrls < ActiveRecord::Migration[8.1]
     SQL
   end
 
+  # データマイグレーションは安全に逆方向実行できない。
+  # 理由: up 実行後は「up が変換した行」と「アダプタ修正後にユーザーが新規登録した行」
+  #   がどちらも https://books.google.com/... となり SQL レベルで区別できないため、
+  #   素朴な逆 REPLACE は後者の正常データまで http:// に書き戻してしまう（silent corruption）。
+  #   どうしても巻き戻す必要がある場合は、本マイグレーション本体を一時的に書き換えて
+  #   dev DB だけで使うか、別途データ修正マイグレーションを起こすこと。
   def down
-    execute <<~SQL.squish
-      UPDATE works
-      SET cover_image_url = REPLACE(
-        cover_image_url,
-        'https://books.google.com/',
-        'http://books.google.com/'
-      )
-      WHERE cover_image_url LIKE 'https://books.google.com/%'
-    SQL
+    raise ActiveRecord::IrreversibleMigration,
+          'NormalizeGoogleBooksCoverUrls は逆方向実行できません: ' \
+          'up 実行後は「up が変換した行」と「アダプタ正規化で新規作成された行」を ' \
+          'SQL レベルで区別できず、素朴な逆 REPLACE は後者を破壊するため。詳細はクラスコメント参照。'
   end
 end
