@@ -739,7 +739,7 @@ RSpec.describe WorkSearchService, type: :service do
       Rails.cache.write('work_search:anime:テスト', [mock_result])
       # 新しい検索は新しいキー形式で保存される
       service.search('テスト', media_type: 'anime')
-      expect(Rails.cache.exist?('work_search:v4:anime:テスト')).to be true
+      expect(Rails.cache.exist?("work_search:#{WorkSearchService::CACHE_VERSION}:anime:テスト")).to be true
     end
   end
 end
