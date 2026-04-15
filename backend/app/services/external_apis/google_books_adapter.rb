@@ -30,7 +30,7 @@ module ExternalApis
         info['title'],
         'book',
         info['description'],
-        info.dig('imageLinks', 'thumbnail'),
+        normalize_cover_image_url(info.dig('imageLinks', 'thumbnail')),
         nil,
         item['id'],
         'google_books',
@@ -46,6 +46,13 @@ module ExternalApis
           popularity: normalize_popularity(info['ratingsCount'])
         }.compact
       )
+    end
+
+    # Google Books は thumbnail URL を http:// で返すことが多いが、
+    # 本番は HTTPS 配信のため Mixed Content でブロックされる。
+    # プロトコルのみ https:// に置換する（Google Books は同一パスを HTTPS でも配信している）
+    def normalize_cover_image_url(url)
+      url&.sub(%r{\Ahttp://}, 'https://')
     end
 
     # industryIdentifiersからISBNを抽出。ISBN-13を最優先、なければISBN-10

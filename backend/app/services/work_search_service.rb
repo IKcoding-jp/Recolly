@@ -7,7 +7,8 @@ class WorkSearchService # rubocop:disable Metrics/ClassLength
   CACHE_TTL = 12.hours
   # 実装変更時にインクリメントしてキャッシュを無効化する
   # v4: シリーズ親説明流用の境界文字判定を追加（normalize 空白保持 + ratio 廃止）
-  CACHE_VERSION = 'v4'
+  # v5: Google Books thumbnail URL を https:// に正規化（Mixed Content 対策 #155）
+  CACHE_VERSION = 'v5'
   ENRICHMENT_BATCH_SIZE = 5
 
   def search(query, media_type: nil)
