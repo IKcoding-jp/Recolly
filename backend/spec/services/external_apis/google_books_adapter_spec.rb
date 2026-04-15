@@ -110,5 +110,44 @@ RSpec.describe ExternalApis::GoogleBooksAdapter, type: :service do
         expect(book.metadata).not_to have_key(:isbn)
       end
     end
+
+    describe 'カバー画像URLの正規化' do
+      # Google Books API は thumbnail URL を http:// で返すことが多く、
+      # HTTPS ページで Mixed Content としてブロックされるため https:// に正規化する
+      def build_book_item(thumbnail:)
+        {
+          'id' => 'abc123',
+          'volumeInfo' => {
+            'title' => 'テスト本',
+            'imageLinks' => { 'thumbnail' => thumbnail }
+          }
+        }
+      end
+
+      it 'http:// で始まる thumbnail URL を https:// に正規化する' do
+        stub_books_response([build_book_item(
+          thumbnail: 'http://books.google.com/books/content?id=abc123&img=1'
+        )])
+        book = adapter.search('テスト本').first
+        expect(book.cover_image_url).to eq('https://books.google.com/books/content?id=abc123&img=1')
+      end
+
+      it '既に https:// の thumbnail URL はそのまま保持する（冪等性）' do
+        stub_books_response([build_book_item(
+          thumbnail: 'https://books.google.com/books/content?id=abc123'
+        )])
+        book = adapter.search('テスト本').first
+        expect(book.cover_image_url).to eq('https://books.google.com/books/content?id=abc123')
+      end
+
+      it 'thumbnail が nil の場合は nil のままエラーにしない' do
+        stub_books_response([{
+                              'id' => 'abc123',
+                              'volumeInfo' => { 'title' => 'テスト本' }
+                            }])
+        book = adapter.search('テスト本').first
+        expect(book.cover_image_url).to be_nil
+      end
+    end
   end
 end
