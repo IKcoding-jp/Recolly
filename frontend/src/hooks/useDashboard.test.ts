@@ -9,7 +9,13 @@ vi.mock('../lib/recordsApi', () => ({
   },
 }))
 
+vi.mock('../lib/analytics/posthog', () => ({
+  captureEvent: vi.fn(),
+}))
+
 import { recordsApi } from '../lib/recordsApi'
+import { captureEvent } from '../lib/analytics/posthog'
+import { ANALYTICS_EVENTS } from '../lib/analytics/events'
 
 const mockRecords = [
   {
@@ -117,5 +123,143 @@ describe('useDashboard', () => {
       expect(result.current.isLoading).toBe(false)
     })
     expect(result.current.error).toBe('記録の取得に失敗しました')
+  })
+
+  describe('analytics 発火', () => {
+    it('アニメ +1話 で episode_progress_updated が発火する', async () => {
+      vi.mocked(recordsApi.getAll).mockResolvedValue({ records: mockRecords })
+      vi.mocked(recordsApi.update).mockResolvedValue({
+        record: { ...mockRecords[0], current_episode: 13 },
+      })
+      const { result } = renderHook(() => useDashboard())
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+      await act(async () => {
+        await result.current.handleAction(mockRecords[0])
+      })
+      expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.EPISODE_PROGRESS_UPDATED, {
+        media_type: 'anime',
+        increment_type: 'episode',
+        new_value: 13,
+      })
+      expect(captureEvent).not.toHaveBeenCalledWith(
+        ANALYTICS_EVENTS.RECORD_STATUS_CHANGED,
+        expect.anything(),
+      )
+    })
+
+    it('漫画 +1巻 で increment_type=volume の episode_progress_updated が発火する', async () => {
+      const mangaRecords = [
+        {
+          ...mockRecords[0],
+          id: 2,
+          current_episode: 3,
+          work: { ...mockRecords[0].work, id: 20, media_type: 'manga', total_episodes: 10 },
+        },
+      ]
+      vi.mocked(recordsApi.getAll).mockResolvedValue({ records: mangaRecords })
+      vi.mocked(recordsApi.update).mockResolvedValue({
+        record: { ...mangaRecords[0], current_episode: 4 },
+      })
+      const { result } = renderHook(() => useDashboard())
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+      await act(async () => {
+        await result.current.handleAction(mangaRecords[0])
+      })
+      expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.EPISODE_PROGRESS_UPDATED, {
+        media_type: 'manga',
+        increment_type: 'volume',
+        new_value: 4,
+      })
+    })
+
+    it('+1話 で自動 completed になった場合は record_status_changed も発火する', async () => {
+      const lastEpisodeRecords = [
+        {
+          ...mockRecords[0],
+          current_episode: 24,
+          work: { ...mockRecords[0].work, total_episodes: 25 },
+        },
+      ]
+      vi.mocked(recordsApi.getAll).mockResolvedValue({ records: lastEpisodeRecords })
+      vi.mocked(recordsApi.update).mockResolvedValue({
+        record: { ...lastEpisodeRecords[0], current_episode: 25, status: 'completed' },
+      })
+      const { result } = renderHook(() => useDashboard())
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+      await act(async () => {
+        await result.current.handleAction(lastEpisodeRecords[0])
+      })
+      expect(captureEvent).toHaveBeenCalledWith(
+        ANALYTICS_EVENTS.EPISODE_PROGRESS_UPDATED,
+        expect.any(Object),
+      )
+      expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.RECORD_STATUS_CHANGED, {
+        media_type: 'anime',
+        from_status: 'watching',
+        to_status: 'completed',
+      })
+    })
+
+    it('話数のないメディア（book）の完了アクションで record_status_changed のみ発火する', async () => {
+      const bookRecords = [
+        {
+          ...mockRecords[0],
+          id: 3,
+          current_episode: 0,
+          work: {
+            ...mockRecords[0].work,
+            id: 30,
+            media_type: 'book',
+            total_episodes: null,
+          },
+        },
+      ]
+      vi.mocked(recordsApi.getAll).mockResolvedValue({ records: bookRecords })
+      vi.mocked(recordsApi.update).mockResolvedValue({
+        record: { ...bookRecords[0], status: 'completed' },
+      })
+      const { result } = renderHook(() => useDashboard())
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+      await act(async () => {
+        await result.current.handleAction(bookRecords[0])
+      })
+      expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.RECORD_STATUS_CHANGED, {
+        media_type: 'book',
+        from_status: 'watching',
+        to_status: 'completed',
+      })
+      expect(captureEvent).not.toHaveBeenCalledWith(
+        ANALYTICS_EVENTS.EPISODE_PROGRESS_UPDATED,
+        expect.anything(),
+      )
+    })
+
+    it('API 失敗時はイベントを発火しない', async () => {
+      vi.mocked(recordsApi.getAll).mockResolvedValue({ records: mockRecords })
+      vi.mocked(recordsApi.update).mockRejectedValue(new Error('boom'))
+      const { result } = renderHook(() => useDashboard())
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+      await act(async () => {
+        await result.current.handleAction(mockRecords[0])
+      })
+      expect(captureEvent).not.toHaveBeenCalledWith(
+        ANALYTICS_EVENTS.EPISODE_PROGRESS_UPDATED,
+        expect.anything(),
+      )
+      expect(captureEvent).not.toHaveBeenCalledWith(
+        ANALYTICS_EVENTS.RECORD_STATUS_CHANGED,
+        expect.anything(),
+      )
+    })
   })
 })
