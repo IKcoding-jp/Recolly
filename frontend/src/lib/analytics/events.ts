@@ -3,6 +3,8 @@
  * 文字列リテラルの typo を防ぐため、発火側は必ずこの定数経由で指定する。
  * Spec: docs/superpowers/specs/2026-04-17-analytics-phase2-dashboard-design.md §2.1
  */
+import type { MediaType } from '../types'
+
 export const ANALYTICS_EVENTS = {
   PAGEVIEW: '$pageview',
   SIGNUP_COMPLETED: 'signup_completed',
@@ -22,33 +24,33 @@ export type SignupCompletedProps = {
 
 /** record_created のプロパティ */
 export type RecordCreatedProps = {
-  media_type: 'anime' | 'movie' | 'drama' | 'book' | 'manga' | 'game'
+  media_type: MediaType
 }
 
 /** search_performed のプロパティ */
 export type SearchPerformedProps = {
   query_length: number
-  genre_filter: 'all' | 'anime' | 'movie' | 'drama' | 'book' | 'manga' | 'game'
+  genre_filter: 'all' | MediaType
   result_count: number
 }
 
 /** episode_progress_updated のプロパティ */
 export type EpisodeProgressUpdatedProps = {
-  media_type: 'anime' | 'movie' | 'drama' | 'book' | 'manga' | 'game'
+  media_type: MediaType
   increment_type: 'episode' | 'volume' | 'watched' | 'read' | 'cleared'
   new_value: number
 }
 
 /** record_status_changed のプロパティ */
 export type RecordStatusChangedProps = {
-  media_type: 'anime' | 'movie' | 'drama' | 'book' | 'manga' | 'game'
+  media_type: MediaType
   from_status: string
   to_status: string
 }
 
 /** recommendation_clicked のプロパティ */
 export type RecommendationClickedProps = {
-  media_type: 'anime' | 'movie' | 'drama' | 'book' | 'manga' | 'game'
+  media_type: MediaType
   position: number
   has_reason: boolean
 }
