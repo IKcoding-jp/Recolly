@@ -123,8 +123,8 @@
 - [x] 計測すべき指標の定義: 登録ユーザー数、記録件数、**ジャンル横断率**、継続率、DAU/WAU/MAU（Spec §2.3 で導出方法を定義）
 - [x] Phase 1 イベント定義（登録、初回記録、ジャンル横断記録の基点）— PR #145
 - [x] プライバシーポリシーページ `/privacy` とフッター導線 — PR #145
-- [ ] PostHog Dashboard / Insight の作成（特に「ジャンル横断率」カスタム指標） — Phase 1 実装後タスク
-- [ ] Phase 2 イベント追加（`search_performed` / `episode_progress_updated` / `record_status_changed` / `recommendation_clicked`） — 別仕様書で扱う
+- [x] PostHog Dashboard / Insight の作成（特に「ジャンル横断率」カスタム指標） — Issue #157
+- [x] Phase 2 イベント追加（`search_performed` / `episode_progress_updated` / `record_status_changed` / `recommendation_clicked`） — Issue #157
 - [ ] Phase 3 イベント追加（3作品到達、再訪、討論投稿、レコメンドクリック等） — 運用データを見てから判断
 
 ### ランディングページ
