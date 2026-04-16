@@ -13,6 +13,39 @@
 
 ---
 
+## 実装進捗（次セッションへの引き継ぎ）
+
+最終更新: 2026-04-17
+
+| Task | ステータス | コミット |
+|---|---|---|
+| Task 1: events.ts に Phase 2 型定義追加 | ✅ 完了 | `a41b040`, `cbdb71a`（MediaType共通化リファクタ） |
+| Task 2: posthog.ts に setUserProperty 追加 | ✅ 完了 | `f76fe27` |
+| Task 3: GET /api/v1/users/me/media_types API | ✅ 完了 | `3869c7c` |
+| Task 4: updateMediaTypesCount ヘルパー | ✅ 完了 | `77271f0` |
+| Task 5: search_performed 発火 | ✅ 完了 | `0c0355e`, `dcb8673`（handleGenreChange対応） |
+| Task 6〜21 | 未着手 | — |
+
+### 次セッション開始時の手順
+
+1. `git log --oneline feat/analytics-phase2-dashboard-issue-157 -10` で最新状態を確認
+2. この plan の Task 6 以降を `superpowers:subagent-driven-development` スキルで継続実行
+3. 残タスク中、特に注意する実装情報:
+   - `useDashboard.ts` の `handleAction`（line 28-65）が HomePage のクイックアクションのロジック。`episode_progress_updated` / `record_status_changed` の発火ポイント
+   - `useWorkDetail.ts` の `handleStatusChange` / `handleEpisodeChange`（デバウンス経由）が WorkDetail の発火ポイント
+   - SearchPage の現在の state 変数名: クエリ=`query`, ジャンル=`genre`, 型=`GenreFilter`
+   - RecommendationsPage は `handleOpenModal` 内で `recommendation_clicked` 発火（Task 9）
+   - `record_created` は現在 SearchPage（2箇所）と RecommendationsPage（1箇所）で発火中。Task 10 でこの 3 箇所に `updateMediaTypesCount()` を追加
+4. Docker が起動していない場合は `docker compose up -d` を IK さんに依頼してから進める
+5. `lefthook-local.yml` は絶対に作成・改変しない（subagent にも伝える）
+6. backend のテストは factory_bot 未導入なので `User.create!` 等のモデル直接生成を使う
+
+### Task 11 でまとめて拾うべき Nit
+
+- `SearchPage.test.tsx` 1件目のテストで `'search_performed'` 文字列リテラル使用 → `ANALYTICS_EVENTS.SEARCH_PERFORMED` に統一
+
+---
+
 ## File Structure
 
 ### 新規作成
