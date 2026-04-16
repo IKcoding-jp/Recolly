@@ -7,6 +7,9 @@ vi.mock('posthog-js', () => ({
     identify: vi.fn(),
     reset: vi.fn(),
     capture: vi.fn(),
+    people: {
+      set: vi.fn(),
+    },
   },
 }))
 
@@ -17,6 +20,7 @@ import {
   resetAnalytics,
   captureEvent,
   capturePageview,
+  setUserProperty,
   __resetForTest,
 } from './posthog'
 
@@ -116,6 +120,28 @@ describe('analytics/posthog', () => {
     it('未 init 状態では posthog.capture を呼ばない（例外も投げない）', () => {
       expect(() => capturePageview('/dashboard')).not.toThrow()
       expect(posthog.capture).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('setUserProperty', () => {
+    it('initialized=false の状態では何もしない', () => {
+      __resetForTest()
+      setUserProperty({ foo: 'bar' })
+      expect(posthog.people.set).not.toHaveBeenCalled()
+    })
+
+    it('initialized=true のときに posthog.people.set を呼ぶ', () => {
+      initAnalytics({ key: 'phc_test', host: 'https://us.i.posthog.com' })
+      setUserProperty({ distinct_media_types_count: 3 })
+      expect(posthog.people.set).toHaveBeenCalledWith({ distinct_media_types_count: 3 })
+    })
+
+    it('posthog.people.set が例外を投げても伝播しない', () => {
+      initAnalytics({ key: 'phc_test', host: 'https://us.i.posthog.com' })
+      vi.mocked(posthog.people.set).mockImplementation(() => {
+        throw new Error('boom')
+      })
+      expect(() => setUserProperty({ foo: 'bar' })).not.toThrow()
     })
   })
 })
