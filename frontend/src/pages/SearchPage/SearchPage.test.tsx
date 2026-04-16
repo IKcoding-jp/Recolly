@@ -13,6 +13,7 @@ vi.mock('../../lib/analytics/posthog', () => ({
 }))
 
 import { captureEvent } from '../../lib/analytics/posthog'
+import { ANALYTICS_EVENTS } from '../../lib/analytics/events'
 
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
@@ -534,6 +535,85 @@ describe('SearchPage', () => {
       expect(screen.getByText(/ネットワークに接続できませんでした/)).toBeInTheDocument()
     })
     expect(captureEvent).not.toHaveBeenCalledWith('search_performed', expect.anything())
+  })
+
+  it('ジャンル変更による再検索時にも search_performed が発火する', async () => {
+    renderSearchPage()
+    const user = userEvent.setup()
+
+    // 最初の検索（handleSearch 経由）
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: '進撃の巨人',
+              media_type: 'anime',
+              description: 'アニメ',
+              cover_image_url: null,
+              total_episodes: 25,
+              external_api_id: '1',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+            {
+              title: '進撃の巨人 劇場版',
+              media_type: 'movie',
+              description: '映画',
+              cover_image_url: null,
+              total_episodes: null,
+              external_api_id: '2',
+              external_api_source: 'tmdb',
+              metadata: {},
+            },
+          ],
+        }),
+    })
+
+    const input = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(input, '進撃')
+    await user.click(screen.getByRole('button', { name: '検索' }))
+
+    await waitFor(() => {
+      expect(captureEvent).toHaveBeenCalledWith(
+        ANALYTICS_EVENTS.SEARCH_PERFORMED,
+        expect.objectContaining({ genre_filter: 'all' }),
+      )
+    })
+
+    // ジャンル変更による再検索: captureEvent をリセットしてから確認
+    vi.mocked(captureEvent).mockClear()
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: '進撃の巨人',
+              media_type: 'anime',
+              description: 'アニメ',
+              cover_image_url: null,
+              total_episodes: 25,
+              external_api_id: '1',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+          ],
+        }),
+    })
+
+    // PC用のジャンルフィルタボタン「アニメ」をクリック（既存テストと同パターン）
+    const animeButtons = screen.getAllByText('アニメ')
+    await user.click(animeButtons[0])
+
+    await waitFor(() => {
+      expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.SEARCH_PERFORMED, {
+        query_length: 2,
+        genre_filter: 'anime',
+        result_count: 1,
+      })
+    })
   })
 
   it('検索結果から記録を作成したら record_created を media_type 付きで発火する', async () => {

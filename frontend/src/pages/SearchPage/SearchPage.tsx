@@ -211,7 +211,14 @@ export function SearchPage() {
         .search(query, mediaType, { signal: controller.signal })
         .then((response) => {
           if (controller.signal.aborted) return
-          setResults(response.results)
+          const searchResults = response.results
+          setResults(searchResults)
+          // ジャンル変更による再検索も search_performed として記録する
+          captureEvent(ANALYTICS_EVENTS.SEARCH_PERFORMED, {
+            query_length: query.length,
+            genre_filter: newGenre,
+            result_count: searchResults.length,
+          })
         })
         .catch((err: Error) => {
           if (err.name === 'AbortError') return
