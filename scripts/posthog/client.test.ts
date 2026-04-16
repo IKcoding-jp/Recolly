@@ -3,7 +3,7 @@ import { createPosthogClient } from './client'
 
 describe('PostHog API Client', () => {
   const fetchMock = vi.fn()
-  global.fetch = fetchMock as unknown as typeof fetch
+  globalThis.fetch = fetchMock as unknown as typeof fetch
 
   beforeEach(() => {
     fetchMock.mockReset()
