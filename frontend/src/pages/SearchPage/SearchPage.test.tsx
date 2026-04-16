@@ -518,7 +518,7 @@ describe('SearchPage', () => {
     await user.click(screen.getByRole('button', { name: '検索' }))
 
     await waitFor(() => {
-      expect(captureEvent).toHaveBeenCalledWith('search_performed', {
+      expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.SEARCH_PERFORMED, {
         query_length: 2,
         genre_filter: 'all',
         result_count: 2,
@@ -541,7 +541,10 @@ describe('SearchPage', () => {
       // エラーメッセージが表示されることを確認（APIが呼ばれたことの証明）
       expect(screen.getByText(/ネットワークに接続できませんでした/)).toBeInTheDocument()
     })
-    expect(captureEvent).not.toHaveBeenCalledWith('search_performed', expect.anything())
+    expect(captureEvent).not.toHaveBeenCalledWith(
+      ANALYTICS_EVENTS.SEARCH_PERFORMED,
+      expect.anything(),
+    )
   })
 
   it('ジャンル変更による再検索時にも search_performed が発火する', async () => {
