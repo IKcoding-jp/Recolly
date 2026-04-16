@@ -1,19 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { MediaType, UserRecord } from '../lib/types'
+import type { UserRecord } from '../lib/types'
 import { recordsApi } from '../lib/recordsApi'
-import { hasEpisodes } from '../lib/mediaTypeUtils'
+import { hasEpisodes, getEpisodeIncrementType } from '../lib/mediaTypeUtils'
 import { captureEvent } from '../lib/analytics/posthog'
 import { ANALYTICS_EVENTS } from '../lib/analytics/events'
-
-// manga は巻、それ以外の episode 系（anime / drama）は話としてカウント
-const EPISODE_INCREMENT_TYPE: Record<MediaType, 'episode' | 'volume'> = {
-  anime: 'episode',
-  drama: 'episode',
-  manga: 'volume',
-  book: 'episode',
-  movie: 'episode',
-  game: 'episode',
-}
 
 export function useDashboard() {
   const [records, setRecords] = useState<UserRecord[]>([])
@@ -58,7 +48,7 @@ export function useDashboard() {
         // 進捗更新イベント（+1 話 / +1 巻）
         captureEvent(ANALYTICS_EVENTS.EPISODE_PROGRESS_UPDATED, {
           media_type: mediaType,
-          increment_type: EPISODE_INCREMENT_TYPE[mediaType],
+          increment_type: getEpisodeIncrementType(mediaType),
           new_value: newEpisode,
         })
         if (updated.status === 'completed') {

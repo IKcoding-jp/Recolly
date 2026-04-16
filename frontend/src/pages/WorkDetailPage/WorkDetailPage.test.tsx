@@ -11,6 +11,10 @@ vi.mock('../../lib/recordsApi', () => ({
   },
 }))
 
+vi.mock('../../lib/analytics/posthog', () => ({
+  captureEvent: vi.fn(),
+}))
+
 vi.mock('../../lib/episodeReviewsApi', () => ({
   episodeReviewsApi: {
     getAll: vi.fn().mockResolvedValue({ episode_reviews: [] }),
@@ -30,6 +34,8 @@ vi.mock('../../lib/tagsApi', () => ({
 }))
 
 import { recordsApi } from '../../lib/recordsApi'
+import { captureEvent } from '../../lib/analytics/posthog'
+import { ANALYTICS_EVENTS } from '../../lib/analytics/events'
 
 const mockRecord = {
   id: 1,
@@ -69,6 +75,7 @@ const renderWithRouter = (workId: string) => {
 
 describe('WorkDetailPage', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     vi.mocked(recordsApi.getAll).mockResolvedValue({ records: [mockRecord] })
     vi.mocked(recordsApi.update).mockResolvedValue({ record: mockRecord })
   })
@@ -234,6 +241,71 @@ describe('WorkDetailPage', () => {
     renderWithRouter('999')
     await waitFor(() => {
       expect(screen.getByText(/記録が見つかりません/)).toBeInTheDocument()
+    })
+  })
+
+  describe('analytics 発火', () => {
+    it('ステータス変更で record_status_changed が発火する', async () => {
+      const user = userEvent.setup()
+      vi.mocked(recordsApi.update).mockResolvedValue({
+        record: { ...mockRecord, status: 'completed' as const },
+      })
+      renderWithRouter('1')
+      await waitFor(() => {
+        expect(screen.getByText('進撃の巨人')).toBeInTheDocument()
+      })
+      // anime のステータス「視聴完了」ボタンをクリック
+      await user.click(screen.getByRole('button', { name: '視聴完了' }))
+      await waitFor(() => {
+        expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.RECORD_STATUS_CHANGED, {
+          media_type: 'anime',
+          from_status: 'watching',
+          to_status: 'completed',
+        })
+      })
+    })
+
+    it('API 失敗時は record_status_changed が発火しない', async () => {
+      const user = userEvent.setup()
+      vi.mocked(recordsApi.update).mockRejectedValue(new Error('boom'))
+      renderWithRouter('1')
+      await waitFor(() => {
+        expect(screen.getByText('進撃の巨人')).toBeInTheDocument()
+      })
+      await user.click(screen.getByRole('button', { name: '視聴完了' }))
+      // 呼び出し完了を待つ
+      await waitFor(() => {
+        expect(recordsApi.update).toHaveBeenCalled()
+      })
+      expect(captureEvent).not.toHaveBeenCalledWith(
+        ANALYTICS_EVENTS.RECORD_STATUS_CHANGED,
+        expect.anything(),
+      )
+    })
+
+    it('+1話 のデバウンス後に episode_progress_updated が発火する', async () => {
+      const user = userEvent.setup()
+      vi.mocked(recordsApi.update).mockResolvedValue({
+        record: { ...mockRecord, current_episode: 33 },
+      })
+      renderWithRouter('1')
+      await waitFor(() => {
+        expect(screen.getByText('進撃の巨人')).toBeInTheDocument()
+      })
+      // ProgressControl の +1 ボタン（aria-label="+1"）
+      const incButtons = screen.getAllByRole('button', { name: '+1' })
+      await user.click(incButtons[0])
+      // デバウンス（300ms）+ API レスポンスを待つ
+      await waitFor(
+        () => {
+          expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.EPISODE_PROGRESS_UPDATED, {
+            media_type: 'anime',
+            increment_type: 'episode',
+            new_value: 33,
+          })
+        },
+        { timeout: 1500 },
+      )
     })
   })
 })
