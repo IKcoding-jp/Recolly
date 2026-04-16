@@ -19,6 +19,7 @@ import { Button } from '../../components/ui/Button/Button'
 import { getGenreLabel } from '../../lib/mediaTypeUtils'
 import { captureEvent } from '../../lib/analytics/posthog'
 import { ANALYTICS_EVENTS } from '../../lib/analytics/events'
+import { updateMediaTypesCount } from '../../lib/analytics/userProperties'
 import { GenreDropdown } from './GenreDropdown'
 import { GENRE_FILTERS } from './genreFilters'
 import type { GenreFilter } from './genreFilters'
@@ -131,6 +132,8 @@ export function SearchPage() {
         captureEvent(ANALYTICS_EVENTS.RECORD_CREATED, {
           media_type: modalWork.media_type,
         })
+        // ジャンル横断率 Insight (#3) の User Property を最新化
+        void updateMediaTypesCount()
         setManualWorkId(null)
       } else {
         // 検索結果作品: 既存のフロー
@@ -140,6 +143,7 @@ export function SearchPage() {
         captureEvent(ANALYTICS_EVENTS.RECORD_CREATED, {
           media_type: modalWork.media_type,
         })
+        void updateMediaTypesCount()
         setRecordedIds((prev) => new Set(prev).add(workKey))
       }
       setModalWork(null)

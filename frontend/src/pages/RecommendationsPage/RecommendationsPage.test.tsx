@@ -17,8 +17,13 @@ vi.mock('../../lib/analytics/posthog', () => ({
   captureEvent: vi.fn(),
 }))
 
+vi.mock('../../lib/analytics/userProperties', () => ({
+  updateMediaTypesCount: vi.fn(),
+}))
+
 import { captureEvent } from '../../lib/analytics/posthog'
 import { ANALYTICS_EVENTS } from '../../lib/analytics/events'
+import { updateMediaTypesCount } from '../../lib/analytics/userProperties'
 
 const mockReadyResponse = {
   recommendation: {
@@ -308,7 +313,12 @@ describe('RecommendationsPage', () => {
     await user.click(confirmButtons[confirmButtons.length - 1])
 
     await waitFor(() => {
-      expect(captureEvent).toHaveBeenCalledWith('record_created', { media_type: 'anime' })
+      expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.RECORD_CREATED, {
+        media_type: 'anime',
+      })
+    })
+    await waitFor(() => {
+      expect(updateMediaTypesCount).toHaveBeenCalledTimes(1)
     })
   })
 })

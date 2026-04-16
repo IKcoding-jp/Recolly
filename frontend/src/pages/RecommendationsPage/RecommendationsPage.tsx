@@ -10,6 +10,7 @@ import { getGenreLabel, getMediaTypeLabel } from '../../lib/mediaTypeUtils'
 import { useRecollyMotion } from '../../lib/motion'
 import { captureEvent } from '../../lib/analytics/posthog'
 import { ANALYTICS_EVENTS } from '../../lib/analytics/events'
+import { updateMediaTypesCount } from '../../lib/analytics/userProperties'
 import type { MediaType, RecordStatus } from '../../lib/types'
 import type { RecommendedWork } from '../../types/recommendation'
 import { AnalysisSummaryCard } from './AnalysisSummaryCard'
@@ -60,6 +61,8 @@ export function RecommendationsPage() {
       captureEvent(ANALYTICS_EVENTS.RECORD_CREATED, {
         media_type: modalWork.media_type as MediaType,
       })
+      // ジャンル横断率 Insight (#3) の User Property を最新化
+      void updateMediaTypesCount()
       setRecordedIds((prev) => new Set(prev).add(workKey))
       setModalWork(null)
     } catch {

@@ -12,8 +12,13 @@ vi.mock('../../lib/analytics/posthog', () => ({
   resetAnalytics: vi.fn(),
 }))
 
+vi.mock('../../lib/analytics/userProperties', () => ({
+  updateMediaTypesCount: vi.fn(),
+}))
+
 import { captureEvent } from '../../lib/analytics/posthog'
 import { ANALYTICS_EVENTS } from '../../lib/analytics/events'
+import { updateMediaTypesCount } from '../../lib/analytics/userProperties'
 
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
@@ -21,6 +26,8 @@ vi.stubGlobal('fetch', mockFetch)
 beforeEach(() => {
   mockFetch.mockReset()
   vi.mocked(captureEvent).mockClear()
+  vi.mocked(updateMediaTypesCount).mockClear()
+  vi.mocked(updateMediaTypesCount).mockResolvedValue(undefined)
   // 初回セッション確認: 認証済み
   mockFetch.mockResolvedValueOnce({
     ok: true,
@@ -671,7 +678,13 @@ describe('SearchPage', () => {
     await user.click(confirmButtons[confirmButtons.length - 1])
 
     await waitFor(() => {
-      expect(captureEvent).toHaveBeenCalledWith('record_created', { media_type: 'anime' })
+      expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.RECORD_CREATED, {
+        media_type: 'anime',
+      })
+    })
+    // ジャンル横断率 Insight (#3) の User Property を最新化する
+    await waitFor(() => {
+      expect(updateMediaTypesCount).toHaveBeenCalledTimes(1)
     })
   })
 })
