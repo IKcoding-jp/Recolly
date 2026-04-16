@@ -23,7 +23,12 @@ export function RecommendationsPage() {
   const [recordedIds, setRecordedIds] = useState<Set<string>>(new Set())
   const m = useRecollyMotion()
 
-  const handleOpenModal = (work: RecommendedWork) => {
+  const handleOpenModal = (work: RecommendedWork, position: number) => {
+    captureEvent(ANALYTICS_EVENTS.RECOMMENDATION_CLICKED, {
+      media_type: work.media_type as MediaType,
+      position,
+      has_reason: Boolean(work.reason),
+    })
     setModalWork(work)
   }
 
@@ -200,11 +205,11 @@ export function RecommendationsPage() {
             <motion.div variants={m.fadeInUp}>
               <SectionTitle>あなたへのおすすめ</SectionTitle>
               <div className={styles.recList}>
-                {data.recommended_works.map((work) => (
+                {data.recommended_works.map((work, index) => (
                   <RecommendedWorkCard
                     key={`${work.external_api_source}:${work.external_api_id}`}
                     work={work}
-                    onRecord={handleOpenModal}
+                    onRecord={(w) => handleOpenModal(w, index + 1)}
                     isLoading={
                       recordingId === `${work.external_api_source}:${work.external_api_id}`
                     }
@@ -224,11 +229,11 @@ export function RecommendationsPage() {
                 いつもと違うジャンルに挑戦
               </SectionTitle>
               <div className={styles.recList}>
-                {data.challenge_works.map((work) => (
+                {data.challenge_works.map((work, index) => (
                   <RecommendedWorkCard
                     key={`${work.external_api_source}:${work.external_api_id}`}
                     work={work}
-                    onRecord={handleOpenModal}
+                    onRecord={(w) => handleOpenModal(w, index + 1)}
                     isLoading={
                       recordingId === `${work.external_api_source}:${work.external_api_id}`
                     }
