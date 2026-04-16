@@ -471,6 +471,71 @@ describe('SearchPage', () => {
     expect(screen.getByText('ワンピース新結果')).toBeInTheDocument()
   })
 
+  it('検索成功時に search_performed イベントが発火する', async () => {
+    renderSearchPage()
+    const user = userEvent.setup()
+
+    // 検索API: 2件の結果を返す
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: '進撃の巨人',
+              media_type: 'anime',
+              description: 'アニメ',
+              cover_image_url: null,
+              total_episodes: 25,
+              external_api_id: '1',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+            {
+              title: '進撃の巨人 劇場版',
+              media_type: 'anime',
+              description: '映画',
+              cover_image_url: null,
+              total_episodes: null,
+              external_api_id: '2',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+          ],
+        }),
+    })
+
+    const input = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(input, '進撃')
+    await user.click(screen.getByRole('button', { name: '検索' }))
+
+    await waitFor(() => {
+      expect(captureEvent).toHaveBeenCalledWith('search_performed', {
+        query_length: 2,
+        genre_filter: 'all',
+        result_count: 2,
+      })
+    })
+  })
+
+  it('検索失敗時は search_performed を発火しない', async () => {
+    renderSearchPage()
+    const user = userEvent.setup()
+
+    // 検索APIがエラーを返す（ネットワークエラーとしてreject）
+    mockFetch.mockRejectedValueOnce(new TypeError('network error'))
+
+    const input = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(input, 'x')
+    await user.click(screen.getByRole('button', { name: '検索' }))
+
+    await waitFor(() => {
+      // エラーメッセージが表示されることを確認（APIが呼ばれたことの証明）
+      expect(screen.getByText(/ネットワークに接続できませんでした/)).toBeInTheDocument()
+    })
+    expect(captureEvent).not.toHaveBeenCalledWith('search_performed', expect.anything())
+  })
+
   it('検索結果から記録を作成したら record_created を media_type 付きで発火する', async () => {
     renderSearchPage()
     const user = userEvent.setup()

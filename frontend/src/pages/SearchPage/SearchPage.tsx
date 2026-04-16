@@ -91,7 +91,14 @@ export function SearchPage() {
       const response = await worksApi.search(query, mediaType, { signal: controller.signal })
       // このリクエストがキャンセルされていたら結果を反映しない
       if (controller.signal.aborted) return
-      setResults(response.results)
+      const searchResults = response.results
+      setResults(searchResults)
+      // クエリ本文は送らず長さのみ送る（プライバシー方針）
+      captureEvent(ANALYTICS_EVENTS.SEARCH_PERFORMED, {
+        query_length: query.length,
+        genre_filter: genre,
+        result_count: searchResults.length,
+      })
     } catch (err) {
       // AbortError（ユーザー/システムが中断した）は無視する
       if ((err as Error).name === 'AbortError') return
