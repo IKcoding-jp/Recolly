@@ -80,6 +80,13 @@ Rails.application.routes.draw do
         resources :tags, only: %i[create destroy], controller: 'record_tags'
       end
 
+      # 認証済みユーザー自身のメディアタイプ一覧（PostHog 計測に使う）
+      namespace :users do
+        namespace :me do
+          get :media_types, to: 'media_types#index'
+        end
+      end
+
       # 統計（単一リソースのためIDなし）
       resource :statistics, only: [:show], controller: 'statistics'
 
