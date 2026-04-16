@@ -15,6 +15,8 @@ type UseDebouncedRecordUpdateParams = {
   record: UserRecord | null
   setState: React.Dispatch<React.SetStateAction<WorkDetailState>>
   delayMs?: number
+  /** API 成功時に呼ばれる。更新後のレコードと送信した params を引数にとる。 */
+  onSuccess?: (updated: UserRecord, params: DebouncedFields) => void
 }
 
 const DEBOUNCE_DELAY_MS = 300
@@ -23,6 +25,7 @@ export function useDebouncedRecordUpdate({
   record,
   setState,
   delayMs = DEBOUNCE_DELAY_MS,
+  onSuccess,
 }: UseDebouncedRecordUpdateParams): (params: DebouncedFields) => void {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const snapshotRef = useRef<UserRecord | null>(null)
@@ -90,6 +93,8 @@ export function useDebouncedRecordUpdate({
               if (!prev.record) return prev
               return { ...prev, record: res.record }
             })
+            // 呼び出し側で追加処理（analytics 発火など）を差し込めるようにする
+            onSuccess?.(res.record, mergedParams)
           })
           .catch(() => {
             // 新しい操作が始まっていたら、ロールバックも不要
@@ -102,7 +107,7 @@ export function useDebouncedRecordUpdate({
           })
       }, delayMs)
     },
-    [record, setState, delayMs],
+    [record, setState, delayMs, onSuccess],
   )
 
   return debouncedUpdate

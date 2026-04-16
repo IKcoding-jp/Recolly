@@ -272,6 +272,91 @@ describe('useDebouncedRecordUpdate', () => {
     expect(recordsApi.update).toHaveBeenCalledWith(1, { rating: 8, current_episode: 5 })
   })
 
+  it('onSuccess コールバックが API 成功時に呼ばれる', async () => {
+    const setState = vi.fn()
+    const onSuccess = vi.fn()
+    const updatedRecord = { ...mockRecord, current_episode: 5 }
+    vi.mocked(recordsApi.update).mockResolvedValue({ record: updatedRecord })
+
+    const { result } = renderHook(() =>
+      useDebouncedRecordUpdate({ record: mockRecord, setState, onSuccess }),
+    )
+
+    act(() => {
+      result.current({ current_episode: 5 })
+    })
+
+    await act(async () => {
+      vi.advanceTimersByTime(300)
+    })
+
+    expect(onSuccess).toHaveBeenCalledTimes(1)
+    expect(onSuccess).toHaveBeenCalledWith(updatedRecord, { current_episode: 5 })
+  })
+
+  it('onSuccess は API 失敗時には呼ばれない', async () => {
+    vi.mocked(recordsApi.update).mockRejectedValue(new Error('boom'))
+    const setState = vi.fn()
+    const onSuccess = vi.fn()
+
+    const { result } = renderHook(() =>
+      useDebouncedRecordUpdate({ record: mockRecord, setState, onSuccess }),
+    )
+
+    act(() => {
+      result.current({ current_episode: 5 })
+    })
+
+    await act(async () => {
+      vi.advanceTimersByTime(300)
+    })
+
+    expect(onSuccess).not.toHaveBeenCalled()
+  })
+
+  it('onSuccess は古い世代のレスポンスでは呼ばれない', async () => {
+    let resolveFirst!: (value: { record: UserRecord }) => void
+    vi.mocked(recordsApi.update).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFirst = resolve
+        }),
+    )
+
+    const setState = vi.fn()
+    const onSuccess = vi.fn()
+    const { result, rerender } = renderHook(
+      ({ record }) => useDebouncedRecordUpdate({ record, setState, onSuccess }),
+      { initialProps: { record: mockRecord } },
+    )
+
+    act(() => {
+      result.current({ current_episode: 4 })
+    })
+    await act(async () => {
+      vi.advanceTimersByTime(300)
+    })
+
+    // 楽観的更新された値で rerender してから新しい操作を積む
+    rerender({ record: { ...mockRecord, current_episode: 4 } })
+    vi.mocked(recordsApi.update).mockResolvedValueOnce({
+      record: { ...mockRecord, current_episode: 5 },
+    })
+    act(() => {
+      result.current({ current_episode: 5 })
+    })
+
+    // 1 回目のレスポンスが遅れて到着 → 世代が変わっているので onSuccess は呼ばれない
+    await act(async () => {
+      resolveFirst({ record: { ...mockRecord, current_episode: 4 } })
+    })
+
+    expect(onSuccess).not.toHaveBeenCalledWith(
+      { ...mockRecord, current_episode: 4 },
+      expect.anything(),
+    )
+  })
+
   it('delayMsでデバウンス時間をカスタマイズできる', async () => {
     const setState = vi.fn()
     const { result } = renderHook(() =>
