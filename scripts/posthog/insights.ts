@@ -43,17 +43,14 @@ export const INSIGHT_DEFINITIONS: InsightPayload[] = [
     query: {
       kind: 'TrendsQuery',
       series: [{ event: '$pageview', math: 'dau', name: 'cross-genre users' }],
-      properties: {
-        type: 'AND',
-        values: [
-          {
-            type: 'person',
-            key: 'distinct_media_types_count',
-            operator: 'gte',
-            value: 2,
-          },
-        ],
-      },
+      properties: [
+        {
+          type: 'person',
+          key: 'distinct_media_types_count',
+          operator: 'gte',
+          value: 2,
+        },
+      ],
     },
   },
   {
@@ -62,16 +59,13 @@ export const INSIGHT_DEFINITIONS: InsightPayload[] = [
     query: {
       kind: 'TrendsQuery',
       series: [{ event: '$pageview', math: 'dau', name: 'identified users' }],
-      properties: {
-        type: 'AND',
-        values: [
-          {
-            type: 'person',
-            key: 'distinct_media_types_count',
-            operator: 'is_set',
-          },
-        ],
-      },
+      properties: [
+        {
+          type: 'person',
+          key: 'distinct_media_types_count',
+          operator: 'is_set',
+        },
+      ],
     },
   },
   {
@@ -80,8 +74,8 @@ export const INSIGHT_DEFINITIONS: InsightPayload[] = [
     query: {
       kind: 'FunnelsQuery',
       series: [
-        { event: 'signup_completed', order: 0 },
-        { event: 'record_created', order: 1 },
+        { kind: 'EventsNode', event: 'signup_completed' },
+        { kind: 'EventsNode', event: 'record_created' },
       ],
       funnelsFilter: { funnelWindowInterval: 14, funnelWindowIntervalUnit: 'day' },
     },
@@ -92,8 +86,8 @@ export const INSIGHT_DEFINITIONS: InsightPayload[] = [
     query: {
       kind: 'FunnelsQuery',
       series: [
-        { event: 'search_performed', order: 0 },
-        { event: 'record_created', order: 1 },
+        { kind: 'EventsNode', event: 'search_performed' },
+        { kind: 'EventsNode', event: 'record_created' },
       ],
       funnelsFilter: { funnelWindowInterval: 30, funnelWindowIntervalUnit: 'minute' },
     },

@@ -1,6 +1,11 @@
-import 'dotenv/config'
+import { config as loadEnv } from 'dotenv'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
 import { createPosthogClient, type InsightPayload } from './client'
 import { INSIGHT_DEFINITIONS, DASHBOARD_NAME, DASHBOARD_DESCRIPTION } from './insights'
+
+// 同ディレクトリの .env.local を読む（.env より優先したい運用）
+loadEnv({ path: join(dirname(fileURLToPath(import.meta.url)), '.env.local') })
 
 type PosthogClient = ReturnType<typeof createPosthogClient>
 
@@ -53,7 +58,9 @@ export async function syncDashboard(params: SyncDashboardParams): Promise<void> 
 }
 
 // CLI エントリポイント（tsx sync-dashboard.ts で直接実行時のみ走る）
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Windows では import.meta.url (forward slash) と process.argv[1] (backslash) の
+// 表現が違うので fileURLToPath で正規化する
+if (fileURLToPath(import.meta.url) === process.argv[1]) {
   const apiKey = process.env.POSTHOG_PERSONAL_API_KEY
   const projectId = process.env.POSTHOG_PROJECT_ID
   const host = process.env.POSTHOG_HOST
