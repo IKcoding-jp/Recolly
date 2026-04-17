@@ -17,7 +17,13 @@ vi.mock('../../lib/analytics/posthog', () => ({
   captureEvent: vi.fn(),
 }))
 
+vi.mock('../../lib/analytics/userProperties', () => ({
+  updateMediaTypesCount: vi.fn(),
+}))
+
 import { captureEvent } from '../../lib/analytics/posthog'
+import { ANALYTICS_EVENTS } from '../../lib/analytics/events'
+import { updateMediaTypesCount } from '../../lib/analytics/userProperties'
 
 const mockReadyResponse = {
   recommendation: {
@@ -179,6 +185,75 @@ describe('RecommendationsPage', () => {
     expect(recommendationsApi.refresh).toHaveBeenCalled()
   })
 
+  it('おすすめ作品の「記録する」クリックで recommendation_clicked が発火する', async () => {
+    vi.mocked(recommendationsApi.get).mockResolvedValue(mockReadyResponse)
+
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter>
+        <RecommendationsPage />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('葬送のフリーレン')).toBeInTheDocument()
+    })
+
+    // recommended_works[0] = 葬送のフリーレン (anime, reason あり)
+    const recordButtons = screen.getAllByRole('button', { name: '記録する' })
+    await user.click(recordButtons[0])
+
+    expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.RECOMMENDATION_CLICKED, {
+      media_type: 'anime',
+      position: 1,
+      has_reason: true,
+    })
+  })
+
+  it('チャレンジ作品クリックで position が 1 始まり・has_reason が理由有無に対応する', async () => {
+    vi.mocked(recommendationsApi.get).mockResolvedValue({
+      ...mockReadyResponse,
+      recommendation: {
+        ...mockReadyResponse.recommendation,
+        recommended_works: [],
+        challenge_works: [
+          {
+            title: '理由なし本',
+            media_type: 'book',
+            description: null,
+            cover_url: null,
+            reason: null,
+            external_api_id: '999',
+            external_api_source: 'google_books',
+            metadata: {},
+          },
+        ],
+      },
+    })
+
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter>
+        <RecommendationsPage />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('理由なし本')).toBeInTheDocument()
+    })
+
+    const recordButtons = screen.getAllByRole('button', { name: '記録する' })
+    await user.click(recordButtons[0])
+
+    expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.RECOMMENDATION_CLICKED, {
+      media_type: 'book',
+      position: 1,
+      has_reason: false,
+    })
+  })
+
   it('レコメンドから記録を作成したら record_created を media_type 付きで発火する', async () => {
     vi.mocked(recommendationsApi.get).mockResolvedValue(mockReadyResponse)
     vi.mocked(recordsApi.createFromSearchResult).mockResolvedValue({
@@ -238,7 +313,12 @@ describe('RecommendationsPage', () => {
     await user.click(confirmButtons[confirmButtons.length - 1])
 
     await waitFor(() => {
-      expect(captureEvent).toHaveBeenCalledWith('record_created', { media_type: 'anime' })
+      expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.RECORD_CREATED, {
+        media_type: 'anime',
+      })
+    })
+    await waitFor(() => {
+      expect(updateMediaTypesCount).toHaveBeenCalledTimes(1)
     })
   })
 })

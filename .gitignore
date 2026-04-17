@@ -71,3 +71,6 @@ infra/.terraform/
 infra/*.tfstate
 infra/*.tfstate.backup
 infra/*.tfvars
+
+# PostHog scripts（Personal API Key は CI には入れない方針）
+scripts/posthog/.env.local

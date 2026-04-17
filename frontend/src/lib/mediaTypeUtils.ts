@@ -52,6 +52,22 @@ export function hasEpisodes(mediaType: MediaType): boolean {
   return EPISODE_MEDIA_TYPES.has(mediaType)
 }
 
+// analytics の episode_progress_updated の increment_type を媒体に合わせて決める。
+// manga は「巻」単位なので volume、それ以外の episode 系は episode。
+const EPISODE_INCREMENT_TYPE: Record<MediaType, 'episode' | 'volume'> = {
+  anime: 'episode',
+  drama: 'episode',
+  manga: 'volume',
+  book: 'episode',
+  movie: 'episode',
+  game: 'episode',
+}
+
+/** 進捗インクリメント時の analytics increment_type を返す */
+export function getEpisodeIncrementType(mediaType: MediaType): 'episode' | 'volume' {
+  return EPISODE_INCREMENT_TYPE[mediaType]
+}
+
 // ジャンル別ステータスラベル定義
 const STATUS_LABELS: Record<
   RecordStatus,

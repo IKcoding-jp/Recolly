@@ -1,0 +1,21 @@
+{
+  "name": "recolly-posthog-scripts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PostHog Dashboard/Insight を作成・更新するスクリプト (spec: 2026-04-17-analytics-phase2-dashboard-design.md)",
+  "scripts": {
+    "sync": "tsx sync-dashboard.ts",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.17",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "zod": "^3.23.8"
+  }
+}

@@ -19,6 +19,7 @@ import { Button } from '../../components/ui/Button/Button'
 import { getGenreLabel } from '../../lib/mediaTypeUtils'
 import { captureEvent } from '../../lib/analytics/posthog'
 import { ANALYTICS_EVENTS } from '../../lib/analytics/events'
+import { updateMediaTypesCount } from '../../lib/analytics/userProperties'
 import { GenreDropdown } from './GenreDropdown'
 import { GENRE_FILTERS } from './genreFilters'
 import type { GenreFilter } from './genreFilters'
@@ -91,7 +92,14 @@ export function SearchPage() {
       const response = await worksApi.search(query, mediaType, { signal: controller.signal })
       // このリクエストがキャンセルされていたら結果を反映しない
       if (controller.signal.aborted) return
-      setResults(response.results)
+      const searchResults = response.results
+      setResults(searchResults)
+      // クエリ本文は送らず長さのみ送る（プライバシー方針）
+      captureEvent(ANALYTICS_EVENTS.SEARCH_PERFORMED, {
+        query_length: query.length,
+        genre_filter: genre,
+        result_count: searchResults.length,
+      })
     } catch (err) {
       // AbortError（ユーザー/システムが中断した）は無視する
       if ((err as Error).name === 'AbortError') return
@@ -124,6 +132,8 @@ export function SearchPage() {
         captureEvent(ANALYTICS_EVENTS.RECORD_CREATED, {
           media_type: modalWork.media_type,
         })
+        // ジャンル横断率 Insight (#3) の User Property を最新化
+        void updateMediaTypesCount()
         setManualWorkId(null)
       } else {
         // 検索結果作品: 既存のフロー
@@ -133,6 +143,7 @@ export function SearchPage() {
         captureEvent(ANALYTICS_EVENTS.RECORD_CREATED, {
           media_type: modalWork.media_type,
         })
+        void updateMediaTypesCount()
         setRecordedIds((prev) => new Set(prev).add(workKey))
       }
       setModalWork(null)
@@ -204,7 +215,14 @@ export function SearchPage() {
         .search(query, mediaType, { signal: controller.signal })
         .then((response) => {
           if (controller.signal.aborted) return
-          setResults(response.results)
+          const searchResults = response.results
+          setResults(searchResults)
+          // ジャンル変更による再検索も search_performed として記録する
+          captureEvent(ANALYTICS_EVENTS.SEARCH_PERFORMED, {
+            query_length: query.length,
+            genre_filter: newGenre,
+            result_count: searchResults.length,
+          })
         })
         .catch((err: Error) => {
           if (err.name === 'AbortError') return

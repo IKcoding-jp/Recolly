@@ -4,6 +4,9 @@ import type { UserRecord, RecordStatus } from '../../lib/types'
 import { recordsApi } from '../../lib/recordsApi'
 import { worksApi } from '../../lib/worksApi'
 import { useDebouncedRecordUpdate } from '../../hooks/useDebouncedRecordUpdate'
+import { captureEvent } from '../../lib/analytics/posthog'
+import { ANALYTICS_EVENTS } from '../../lib/analytics/events'
+import { getEpisodeIncrementType } from '../../lib/mediaTypeUtils'
 
 export type WorkDetailState = {
   record: UserRecord | null
@@ -76,13 +79,14 @@ export function useWorkDetail() {
       current_episode?: number
       review_text?: string | null
       rewatch_count?: number
-    }) => {
-      if (!state.record) return
+    }): Promise<UserRecord | null> => {
+      if (!state.record) return null
       try {
         const res = await recordsApi.update(state.record.id, params)
         setState((prev) => ({ ...prev, record: res.record }))
+        return res.record
       } catch {
-        // エラー時は状態を変更しない
+        return null
       }
     },
     [state.record],
@@ -90,15 +94,36 @@ export function useWorkDetail() {
 
   const handleStatusChange = useCallback(
     (status: RecordStatus) => {
-      void updateRecord({ status })
+      if (!state.record) return
+      const fromStatus = state.record.status
+      const mediaType = state.record.work.media_type
+      void updateRecord({ status }).then((updated) => {
+        if (updated) {
+          captureEvent(ANALYTICS_EVENTS.RECORD_STATUS_CHANGED, {
+            media_type: mediaType,
+            from_status: fromStatus,
+            to_status: status,
+          })
+        }
+      })
     },
-    [updateRecord],
+    [state.record, updateRecord],
   )
 
   // デバウンス付きハンドラー用（スライダー・エピソード・再視聴回数）
   const debouncedUpdate = useDebouncedRecordUpdate({
     record: state.record,
     setState,
+    onSuccess: (updated, params) => {
+      // current_episode の更新のみ analytics 対象（rating や rewatch_count は対象外）
+      if (params.current_episode !== undefined) {
+        captureEvent(ANALYTICS_EVENTS.EPISODE_PROGRESS_UPDATED, {
+          media_type: updated.work.media_type,
+          increment_type: getEpisodeIncrementType(updated.work.media_type),
+          new_value: params.current_episode,
+        })
+      }
+    },
   })
 
   const handleRatingChange = useCallback(

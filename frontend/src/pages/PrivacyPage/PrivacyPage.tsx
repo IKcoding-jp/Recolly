@@ -9,6 +9,7 @@ import styles from './PrivacyPage.module.css'
  * オプトアウト方法をこのページに明記する。日本 APPI 対応の一環。
  *
  * Spec: docs/superpowers/specs/2026-04-13-analytics-tracking-design.md 4 節
+ *       docs/superpowers/specs/2026-04-17-analytics-phase2-dashboard-design.md §5
  * ADR: docs/adr/0041-プロダクト分析ツールにposthogを採用.md
  */
 export function PrivacyPage() {
@@ -27,6 +28,16 @@ export function PrivacyPage() {
           <ul className={styles.list}>
             <li>ページの閲覧履歴（どの画面を開いたか）</li>
             <li>操作イベント（新規登録、記録作成など）</li>
+            <li>
+              検索・進捗更新・ステータス変更・レコメンドクリックの
+              <strong>メタ情報のみ</strong>
+              （クエリ文字列の長さ・ジャンル・ヒット件数・進捗の数値・遷移前後のステータス名・レコメンド位置・理由の有無）
+            </li>
+            <li>
+              記録したジャンルの<strong>種類数</strong>
+              （例:
+              アニメ・本・映画の3ジャンルを記録しているなら「3」という数値のみ。個別の作品情報は含みません）
+            </li>
             <li>ログイン状態（ログイン中のユーザー内部 ID）</li>
             <li>アクセスしたブラウザ・デバイス情報</li>
           </ul>
@@ -50,6 +61,8 @@ export function PrivacyPage() {
             <li>作品の感想本文</li>
             <li>掲示板のコメント本文</li>
             <li>プロフィールの自己紹介文</li>
+            <li>検索クエリの本文（長さのみ送信、検索語そのものは送信しません）</li>
+            <li>おすすめ理由の本文（理由が表示されていたかの有無のみ送信）</li>
           </ul>
         </section>
 

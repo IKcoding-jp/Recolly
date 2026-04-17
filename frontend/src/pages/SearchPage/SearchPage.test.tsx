@@ -12,7 +12,13 @@ vi.mock('../../lib/analytics/posthog', () => ({
   resetAnalytics: vi.fn(),
 }))
 
+vi.mock('../../lib/analytics/userProperties', () => ({
+  updateMediaTypesCount: vi.fn(),
+}))
+
 import { captureEvent } from '../../lib/analytics/posthog'
+import { ANALYTICS_EVENTS } from '../../lib/analytics/events'
+import { updateMediaTypesCount } from '../../lib/analytics/userProperties'
 
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
@@ -20,6 +26,8 @@ vi.stubGlobal('fetch', mockFetch)
 beforeEach(() => {
   mockFetch.mockReset()
   vi.mocked(captureEvent).mockClear()
+  vi.mocked(updateMediaTypesCount).mockClear()
+  vi.mocked(updateMediaTypesCount).mockResolvedValue(undefined)
   // 初回セッション確認: 認証済み
   mockFetch.mockResolvedValueOnce({
     ok: true,
@@ -471,6 +479,153 @@ describe('SearchPage', () => {
     expect(screen.getByText('ワンピース新結果')).toBeInTheDocument()
   })
 
+  it('検索成功時に search_performed イベントが発火する', async () => {
+    renderSearchPage()
+    const user = userEvent.setup()
+
+    // 検索API: 2件の結果を返す
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: '進撃の巨人',
+              media_type: 'anime',
+              description: 'アニメ',
+              cover_image_url: null,
+              total_episodes: 25,
+              external_api_id: '1',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+            {
+              title: '進撃の巨人 劇場版',
+              media_type: 'anime',
+              description: '映画',
+              cover_image_url: null,
+              total_episodes: null,
+              external_api_id: '2',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+          ],
+        }),
+    })
+
+    const input = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(input, '進撃')
+    await user.click(screen.getByRole('button', { name: '検索' }))
+
+    await waitFor(() => {
+      expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.SEARCH_PERFORMED, {
+        query_length: 2,
+        genre_filter: 'all',
+        result_count: 2,
+      })
+    })
+  })
+
+  it('検索失敗時は search_performed を発火しない', async () => {
+    renderSearchPage()
+    const user = userEvent.setup()
+
+    // 検索APIがエラーを返す（ネットワークエラーとしてreject）
+    mockFetch.mockRejectedValueOnce(new TypeError('network error'))
+
+    const input = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(input, 'x')
+    await user.click(screen.getByRole('button', { name: '検索' }))
+
+    await waitFor(() => {
+      // エラーメッセージが表示されることを確認（APIが呼ばれたことの証明）
+      expect(screen.getByText(/ネットワークに接続できませんでした/)).toBeInTheDocument()
+    })
+    expect(captureEvent).not.toHaveBeenCalledWith(
+      ANALYTICS_EVENTS.SEARCH_PERFORMED,
+      expect.anything(),
+    )
+  })
+
+  it('ジャンル変更による再検索時にも search_performed が発火する', async () => {
+    renderSearchPage()
+    const user = userEvent.setup()
+
+    // 最初の検索（handleSearch 経由）
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: '進撃の巨人',
+              media_type: 'anime',
+              description: 'アニメ',
+              cover_image_url: null,
+              total_episodes: 25,
+              external_api_id: '1',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+            {
+              title: '進撃の巨人 劇場版',
+              media_type: 'movie',
+              description: '映画',
+              cover_image_url: null,
+              total_episodes: null,
+              external_api_id: '2',
+              external_api_source: 'tmdb',
+              metadata: {},
+            },
+          ],
+        }),
+    })
+
+    const input = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(input, '進撃')
+    await user.click(screen.getByRole('button', { name: '検索' }))
+
+    await waitFor(() => {
+      expect(captureEvent).toHaveBeenCalledWith(
+        ANALYTICS_EVENTS.SEARCH_PERFORMED,
+        expect.objectContaining({ genre_filter: 'all' }),
+      )
+    })
+
+    // ジャンル変更による再検索: captureEvent をリセットしてから確認
+    vi.mocked(captureEvent).mockClear()
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: '進撃の巨人',
+              media_type: 'anime',
+              description: 'アニメ',
+              cover_image_url: null,
+              total_episodes: 25,
+              external_api_id: '1',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+          ],
+        }),
+    })
+
+    // PC用のジャンルフィルタボタン「アニメ」をクリック（既存テストと同パターン）
+    const animeButtons = screen.getAllByText('アニメ')
+    await user.click(animeButtons[0])
+
+    await waitFor(() => {
+      expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.SEARCH_PERFORMED, {
+        query_length: 2,
+        genre_filter: 'anime',
+        result_count: 1,
+      })
+    })
+  })
+
   it('検索結果から記録を作成したら record_created を media_type 付きで発火する', async () => {
     renderSearchPage()
     const user = userEvent.setup()
@@ -526,7 +681,13 @@ describe('SearchPage', () => {
     await user.click(confirmButtons[confirmButtons.length - 1])
 
     await waitFor(() => {
-      expect(captureEvent).toHaveBeenCalledWith('record_created', { media_type: 'anime' })
+      expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.RECORD_CREATED, {
+        media_type: 'anime',
+      })
+    })
+    // ジャンル横断率 Insight (#3) の User Property を最新化する
+    await waitFor(() => {
+      expect(updateMediaTypesCount).toHaveBeenCalledTimes(1)
     })
   })
 })

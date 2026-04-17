@@ -85,6 +85,15 @@ export function capturePageview(currentUrl: string): void {
   }
 }
 
+export function setUserProperty(properties: Record<string, unknown>): void {
+  if (!initialized) return
+  try {
+    posthog.people.set(properties)
+  } catch (error) {
+    console.warn('[analytics] setUserProperty failed:', error)
+  }
+}
+
 /** テスト用: 内部状態をリセットする（プロダクションコードからは呼ばない） */
 export function __resetForTest(): void {
   initialized = false
