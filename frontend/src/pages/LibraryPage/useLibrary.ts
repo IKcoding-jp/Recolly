@@ -66,6 +66,15 @@ export function useLibrary(perPage: number = DEFAULT_PER_PAGE) {
   const selectedTags = searchParams.getAll('tag[]')
   // useEffectの依存配列に配列を直接入れると毎回再実行されるため文字列化して比較
   const selectedTagsKey = selectedTags.join(',')
+  const q = searchParams.get('q') ?? ''
+
+  // 入力中の draft 値。URL 反映は 300ms デバウンス
+  const [draftQ, setDraftQ] = useState(q)
+
+  // URL 側の q が変わったら draft を同期（戻る/進む・外部リセットに対応）
+  useEffect(() => {
+    setDraftQ(q)
+  }, [q])
 
   // API呼び出し（rawStatusがnullの場合はリダイレクト中なのでスキップ）
   useEffect(() => {
@@ -83,6 +92,7 @@ export function useLibrary(perPage: number = DEFAULT_PER_PAGE) {
           page,
           perPage,
           tags: selectedTagsKey ? selectedTagsKey.split(',') : undefined,
+          q: q || undefined,
         })
         if (!cancelled) {
           setState({
@@ -103,7 +113,7 @@ export function useLibrary(perPage: number = DEFAULT_PER_PAGE) {
     return () => {
       cancelled = true
     }
-  }, [status, mediaType, sort, page, perPage, rawStatus, selectedTagsKey])
+  }, [status, mediaType, sort, page, perPage, rawStatus, selectedTagsKey, q])
 
   const updateParams = useCallback(
     (updates: Record<string, string | null>) => {
@@ -168,6 +178,18 @@ export function useLibrary(perPage: number = DEFAULT_PER_PAGE) {
     [setSearchParams],
   )
 
+  // draftQ の変更を 300ms 後に URL へ反映。既に URL と一致していれば何もしない
+  // （無限ループと不要なページリセット防止）
+  useEffect(() => {
+    const trimmed = draftQ.trim()
+    if (trimmed === q) return
+
+    const timer = setTimeout(() => {
+      updateParams({ q: trimmed || null })
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [draftQ, q, updateParams])
+
   return {
     records: state.records,
     totalPages: state.meta?.total_pages ?? 1,
@@ -180,10 +202,13 @@ export function useLibrary(perPage: number = DEFAULT_PER_PAGE) {
     page,
     allTags,
     selectedTags,
+    q,
+    draftQ,
     setStatus,
     setMediaType,
     setSort,
     setPage,
     setTags,
+    setDraftQ,
   }
 }

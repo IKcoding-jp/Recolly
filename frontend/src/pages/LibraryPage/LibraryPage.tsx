@@ -12,6 +12,7 @@ import { RecordCompactItem } from '../../components/RecordCompactItem/RecordComp
 import { Pagination } from '../../components/ui/Pagination/Pagination'
 import { Button } from '../../components/ui/Button/Button'
 import { LayoutSwitcher } from '../../components/ui/LayoutSwitcher/LayoutSwitcher'
+import { SearchInput } from '../../components/ui/SearchInput/SearchInput'
 import { useLayoutPreference } from '../../hooks/useLayoutPreference'
 import { useLibrary } from './useLibrary'
 import { motion } from 'motion/react'
@@ -35,11 +36,13 @@ export function LibraryPage() {
     page,
     allTags,
     selectedTags,
+    draftQ,
     setStatus,
     setMediaType,
     setSort,
     setPage,
     setTags,
+    setDraftQ,
   } = useLibrary(perPage)
 
   const m = useRecollyMotion()
@@ -52,6 +55,9 @@ export function LibraryPage() {
   }
 
   const isUnfilteredEmpty = status === null && mediaType === null
+  // 初回の記録 0 件ユーザーには空状態ガイダンスだけ見せる。
+  // 検索・フィルタが効いている or 1 件以上ある場合は検索バーを表示する。
+  const hideSearchBar = isUnfilteredEmpty && !isLoading && !error && records.length === 0 && !draftQ
 
   const handleGoToSearch = () => {
     navigate('/search')
@@ -76,6 +82,17 @@ export function LibraryPage() {
   return (
     <div className={`${styles.page} ${layout === 'card' ? styles.pageWide : ''}`}>
       <SectionTitle>マイライブラリ</SectionTitle>
+
+      {!hideSearchBar && (
+        <div className={styles.searchBar}>
+          <SearchInput
+            value={draftQ}
+            onChange={setDraftQ}
+            placeholder="タイトルで検索..."
+            aria-label="ライブラリ内検索"
+          />
+        </div>
+      )}
 
       <div className={styles.filters}>
         <FormSelect

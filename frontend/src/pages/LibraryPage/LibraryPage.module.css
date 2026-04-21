@@ -4,6 +4,10 @@
   padding: var(--spacing-xl) var(--spacing-md);
 }
 
+.searchBar {
+  margin-bottom: var(--spacing-md);
+}
+
 .filters {
   display: flex;
   gap: var(--spacing-sm);
