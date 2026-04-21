@@ -120,4 +120,54 @@ describe('LibraryPage', () => {
       )
     })
   })
+
+  describe('検索機能', () => {
+    it('記録があるとき検索バーが表示される', async () => {
+      renderPage()
+      expect(await screen.findByRole('textbox', { name: 'ライブラリ内検索' })).toBeInTheDocument()
+    })
+
+    it('記録が0件かつフィルタなしのとき検索バーは表示されない', async () => {
+      vi.mocked(recordsApi.getAll).mockResolvedValue({
+        records: [],
+        meta: { current_page: 1, total_pages: 0, total_count: 0, per_page: 20 },
+      })
+      renderPage(['/library?status=all'])
+      await waitFor(() => {
+        expect(screen.getByText('作品を探して記録しましょう')).toBeInTheDocument()
+      })
+      expect(screen.queryByRole('textbox', { name: 'ライブラリ内検索' })).not.toBeInTheDocument()
+    })
+
+    it('検索入力から 300ms 後に q パラメータ付きで API が呼ばれる', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      try {
+        const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime.bind(vi) })
+        renderPage()
+        const input = await screen.findByRole('textbox', { name: 'ライブラリ内検索' })
+
+        await user.type(input, '進撃')
+        vi.advanceTimersByTime(300)
+
+        await waitFor(() => {
+          expect(recordsApi.getAll).toHaveBeenCalledWith(expect.objectContaining({ q: '進撃' }))
+        })
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('クリアボタンで検索が解除される', async () => {
+      const user = userEvent.setup()
+      renderPage(['/library?status=all&q=進撃'])
+      const input = await screen.findByRole('textbox', { name: 'ライブラリ内検索' })
+      expect(input).toHaveValue('進撃')
+
+      await user.click(screen.getByRole('button', { name: 'クリア' }))
+
+      await waitFor(() => {
+        expect(input).toHaveValue('')
+      })
+    })
+  })
 })

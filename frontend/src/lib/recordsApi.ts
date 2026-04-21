@@ -26,6 +26,7 @@ type RecordFilterParams = {
   page?: number
   perPage?: number
   tags?: string[]
+  q?: string
 }
 
 export const recordsApi = {
@@ -40,6 +41,7 @@ export const recordsApi = {
     if (filters?.tags) {
       filters.tags.forEach((tag) => params.append('tag[]', tag))
     }
+    if (filters?.q) params.set('q', filters.q)
     const query = params.toString()
     return request<RecordsListResponse>(`/records${query ? `?${query}` : ''}`)
   },
