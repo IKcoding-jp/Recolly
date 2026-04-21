@@ -10,6 +10,7 @@ module RecordFilterable
     records = filter_by_status(records)
     records = filter_by_media_type(records)
     records = filter_by_work_id(records)
+    records = filter_by_keyword(records)
     filter_by_tags(records)
   end
 
@@ -29,6 +30,20 @@ module RecordFilterable
     return records if params[:work_id].blank?
 
     records.where(work_id: params[:work_id])
+  end
+
+  # タイトル部分一致検索（ILIKE）。
+  # LIKE メタ文字（%, _）は sanitize_sql_like でエスケープしリテラル扱いにする。
+  def filter_by_keyword(records)
+    return records if params[:q].blank?
+
+    keyword = params[:q].to_s.strip
+    return records if keyword.empty?
+
+    records.joins(:work).where(
+      'works.title ILIKE ?',
+      "%#{Work.sanitize_sql_like(keyword)}%"
+    )
   end
 
   def filter_by_tags(records)
