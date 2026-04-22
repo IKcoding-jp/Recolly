@@ -79,6 +79,38 @@ RSpec.describe ExternalApis::GoogleBooksAdapter, type: :service do
         .with(query: hash_including(q: 'intitle:三体'))
     end
 
+    # langRestrict=ja は特定の日本語クエリで Google Books API が断続的に 503 を返すため送らない。
+    # 代わりにレスポンスの volumeInfo.language で日本語書籍のみをクライアント側フィルタする。
+    describe '言語フィルタ（langRestrict=ja を使わずコード側で絞り込む）' do
+      def build_item(id:, title:, language: nil)
+        volume_info = { 'title' => title }
+        volume_info['language'] = language if language
+        { 'id' => id, 'volumeInfo' => volume_info }
+      end
+
+      it 'langRestrict クエリパラメータを送らない' do
+        adapter.search('成瀬は天下を取りにいく')
+        expect(WebMock).to(have_requested(:get, /www.googleapis.com/)
+          .with { |req| req.uri.query.to_s.exclude?('langRestrict') })
+      end
+
+      it 'volumeInfo.language が ja の結果は返す' do
+        stub_books_response([build_item(id: 'n1', title: '成瀬は天下を取りにいく', language: 'ja')])
+        expect(adapter.search('成瀬は天下を取りにいく').map(&:title))
+          .to include('成瀬は天下を取りにいく')
+      end
+
+      it 'volumeInfo.language が ja 以外の結果は除外する' do
+        stub_books_response([
+                              build_item(id: 'cn1', title: '奪取天下的少女', language: 'zh-CN'),
+                              build_item(id: 'n1', title: '成瀬は天下を取りにいく', language: 'ja')
+                            ])
+        titles = adapter.search('成瀬は天下を取りにいく').map(&:title)
+        expect(titles).to include('成瀬は天下を取りにいく')
+        expect(titles).not_to include('奪取天下的少女')
+      end
+    end
+
     describe 'ISBN抽出' do
       # テストごとに変わるのは industryIdentifiers のみなので、共通部分をヘルパー化
       def build_book_item(identifiers: nil)
