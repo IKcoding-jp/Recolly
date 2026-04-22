@@ -741,5 +741,22 @@ RSpec.describe WorkSearchService, type: :service do
       service.search('テスト', media_type: 'anime')
       expect(Rails.cache.exist?("work_search:#{WorkSearchService::CACHE_VERSION}:anime:テスト")).to be true
     end
+
+    # 外部 API が一時的に 5xx を返し全アダプタが空配列を返すと、空キャッシュが
+    # 12 時間残り同じ検索が常にヒットしない事故を防ぐ。
+    it '空の結果はキャッシュせず次回呼び出しで再試行する' do
+      allow(anilist_double).to receive(:safe_search).and_return([])
+      service.search('一時失敗クエリ', media_type: 'anime')
+      service.search('一時失敗クエリ', media_type: 'anime')
+      expect(anilist_double).to have_received(:safe_search).twice
+      cache_key = "work_search:#{WorkSearchService::CACHE_VERSION}:anime:一時失敗クエリ"
+      expect(Rails.cache.exist?(cache_key)).to be false
+    end
+
+    it '結果が1件以上あればキャッシュし2回目はアダプタを呼ばない' do
+      service.search('ヒットあり', media_type: 'anime')
+      service.search('ヒットあり', media_type: 'anime')
+      expect(anilist_double).to have_received(:safe_search).exactly(:once)
+    end
   end
 end

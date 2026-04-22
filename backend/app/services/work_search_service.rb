@@ -8,25 +8,36 @@ class WorkSearchService # rubocop:disable Metrics/ClassLength
   # 実装変更時にインクリメントしてキャッシュを無効化する
   # v4: シリーズ親説明流用の境界文字判定を追加（normalize 空白保持 + ratio 廃止）
   # v5: Google Books thumbnail URL を https:// に正規化（Mixed Content 対策 #155）
-  CACHE_VERSION = 'v5'
+  # v6: Google Books の langRestrict=ja を廃止しコード側で言語フィルタ
+  #     （langRestrict=ja 起因の 503 で空キャッシュされた結果を無効化する）
+  CACHE_VERSION = 'v6'
   ENRICHMENT_BATCH_SIZE = 5
 
   def search(query, media_type: nil)
     cache_key = "work_search:#{CACHE_VERSION}:#{media_type || 'all'}:#{query}"
+    cached = Rails.cache.read(cache_key)
+    return cached unless cached.nil?
 
-    Rails.cache.fetch(cache_key, expires_in: CACHE_TTL) do
-      adapters = select_adapters(media_type)
-      results = fetch_from_adapters_in_parallel(adapters, query, media_type)
-      results = results.select { |r| r.media_type == media_type } if media_type.present?
-
-      enrich_books_via_openbd(results)
-      enrich_missing_descriptions(results)
-      share_series_descriptions(results)
-      sort_by_quality_and_popularity(results)
-    end
+    sorted = fetch_and_process(query, media_type)
+    # 外部 API の一時障害（例: Google Books の 5xx）で全アダプタが空配列を返したとき、
+    # 空配列を 12 時間キャッシュすると同じ検索が長時間ヒットしない事故になる。
+    # ヒットが 1 件以上ある場合のみキャッシュし、空のときは次回再試行させる。
+    Rails.cache.write(cache_key, sorted, expires_in: CACHE_TTL) if sorted.any?
+    sorted
   end
 
   private
+
+  def fetch_and_process(query, media_type)
+    adapters = select_adapters(media_type)
+    results = fetch_from_adapters_in_parallel(adapters, query, media_type)
+    results = results.select { |r| r.media_type == media_type } if media_type.present?
+
+    enrich_books_via_openbd(results)
+    enrich_missing_descriptions(results)
+    share_series_descriptions(results)
+    sort_by_quality_and_popularity(results)
+  end
 
   # クラス定数ではなくメソッドで返す（Zeitwerkのオートロード順序問題を回避）
   # movieにAniListを含める（アニメ映画はTMDBで除外されるためAniList経由で取得）
