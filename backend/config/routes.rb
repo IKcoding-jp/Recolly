@@ -95,6 +95,9 @@ Rails.application.routes.draw do
         post :refresh, on: :collection
       end
 
+      # メディア別好みプロファイル
+      resources :media_preference_profiles, only: [:index]
+
       get "health", to: "health#show"
     end
   end
