@@ -103,7 +103,7 @@ describe('SearchPage', () => {
 
     const searchInput = await screen.findByPlaceholderText('作品を検索...')
     await user.type(searchInput, 'テスト')
-    await user.click(screen.getByRole('button', { name: '検索' }))
+    await user.keyboard('{Enter}')
 
     await waitFor(() => {
       expect(screen.getByText('テスト作品')).toBeInTheDocument()
@@ -121,7 +121,7 @@ describe('SearchPage', () => {
 
     const searchInput = await screen.findByPlaceholderText('作品を検索...')
     await user.type(searchInput, '存在しない')
-    await user.click(screen.getByRole('button', { name: '検索' }))
+    await user.keyboard('{Enter}')
 
     await waitFor(() => {
       expect(screen.getByText('作品が見つかりませんでした')).toBeInTheDocument()
@@ -158,7 +158,7 @@ describe('SearchPage', () => {
 
     const searchInput = await screen.findByPlaceholderText('作品を検索...')
     await user.type(searchInput, '進撃の巨人')
-    await user.click(screen.getByRole('button', { name: '検索' }))
+    await user.keyboard('{Enter}')
 
     await waitFor(() => {
       expect(screen.getByText('進撃の巨人')).toBeInTheDocument()
@@ -206,7 +206,7 @@ describe('SearchPage', () => {
 
     const searchInput = await screen.findByPlaceholderText('作品を検索...')
     await user.type(searchInput, 'テスト作品')
-    await user.click(screen.getByRole('button', { name: '検索' }))
+    await user.keyboard('{Enter}')
 
     await waitFor(() => {
       expect(screen.getByText('テストアニメ')).toBeInTheDocument()
@@ -253,7 +253,7 @@ describe('SearchPage', () => {
     // 検索実行
     const searchInput = await screen.findByPlaceholderText('作品を検索...')
     await user.type(searchInput, 'テスト')
-    await user.click(screen.getByRole('button', { name: '検索' }))
+    await user.keyboard('{Enter}')
 
     // 作品Aが表示されるのを待つ
     await waitFor(() => {
@@ -333,7 +333,7 @@ describe('SearchPage', () => {
 
     const searchInput = await screen.findByPlaceholderText('作品を検索...')
     await user.type(searchInput, 'テスト')
-    await user.click(screen.getByRole('button', { name: '検索' }))
+    await user.keyboard('{Enter}')
 
     // スケルトンカードが表示される
     await waitFor(() => {
@@ -370,7 +370,7 @@ describe('SearchPage', () => {
     renderSearchPage()
     const input = await screen.findByPlaceholderText('作品を検索...')
     await user.type(input, '人間失格')
-    await user.click(screen.getByRole('button', { name: /検索/ }))
+    await user.keyboard('{Enter}')
 
     // 1回目の結果が表示される
     await waitFor(() => {
@@ -388,7 +388,7 @@ describe('SearchPage', () => {
 
     await user.clear(input)
     await user.type(input, 'ワンピース')
-    await user.click(screen.getByRole('button', { name: /検索/ }))
+    await user.keyboard('{Enter}')
 
     // 2回目のレスポンスが返る前に、1回目の結果が画面から消えている
     await waitFor(() => {
@@ -435,13 +435,11 @@ describe('SearchPage', () => {
     renderSearchPage()
     const input = await screen.findByPlaceholderText('作品を検索...')
     await user.type(input, '古い検索')
-    await user.click(screen.getByRole('button', { name: /検索/ }))
+    await user.keyboard('{Enter}')
 
     // 2回目の検索を直後に投げる
-    // 1回目の検索が永久保留のため検索ボタンが disabled のままになる。
-    // userEvent.click は disabled 要素では発火しないので、フォーム送信を直接 dispatch して
-    // handleSearch を呼ぶ（実アプリでも検索中の再送信は disabled で防がれるが、
-    // ここではレース条件のロジックそのものを検証したい）。
+    // Enter キーでは handleSearch 内の isSearching チェックが走らないため、
+    // フォーム送信を直接 dispatch してレース条件のロジックを検証する。
     await user.clear(input)
     await user.type(input, '新しい検索')
     const form = input.closest('form')
@@ -515,7 +513,7 @@ describe('SearchPage', () => {
 
     const input = await screen.findByPlaceholderText('作品を検索...')
     await user.type(input, '進撃')
-    await user.click(screen.getByRole('button', { name: '検索' }))
+    await user.keyboard('{Enter}')
 
     await waitFor(() => {
       expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.SEARCH_PERFORMED, {
@@ -535,7 +533,7 @@ describe('SearchPage', () => {
 
     const input = await screen.findByPlaceholderText('作品を検索...')
     await user.type(input, 'x')
-    await user.click(screen.getByRole('button', { name: '検索' }))
+    await user.keyboard('{Enter}')
 
     await waitFor(() => {
       // エラーメッセージが表示されることを確認（APIが呼ばれたことの証明）
@@ -583,7 +581,7 @@ describe('SearchPage', () => {
 
     const input = await screen.findByPlaceholderText('作品を検索...')
     await user.type(input, '進撃')
-    await user.click(screen.getByRole('button', { name: '検索' }))
+    await user.keyboard('{Enter}')
 
     await waitFor(() => {
       expect(captureEvent).toHaveBeenCalledWith(
@@ -653,7 +651,7 @@ describe('SearchPage', () => {
     // 検索実行
     const searchInput = await screen.findByPlaceholderText('作品を検索...')
     await user.type(searchInput, 'テスト')
-    await user.click(screen.getByRole('button', { name: '検索' }))
+    await user.keyboard('{Enter}')
 
     await waitFor(() => {
       expect(screen.getByText('テストアニメ')).toBeInTheDocument()
