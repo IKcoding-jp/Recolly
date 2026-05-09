@@ -1,4 +1,3 @@
-import type { KeyboardEvent } from 'react'
 import styles from './SearchInput.module.css'
 
 type SearchInputProps = {
@@ -16,11 +15,6 @@ export function SearchInput({
   size = 'md',
   'aria-label': ariaLabel,
 }: SearchInputProps) {
-  // Enter はフォーム送信を防ぎ、デバウンスに任せる
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') e.preventDefault()
-  }
-
   const wrapperClass = [styles.wrapper, size === 'sm' ? styles.sizeSm : '']
     .filter(Boolean)
     .join(' ')
@@ -47,7 +41,6 @@ export function SearchInput({
         className={styles.input}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onKeyDown={handleKeyDown}
         placeholder={placeholder}
         aria-label={ariaLabel}
         maxLength={200}

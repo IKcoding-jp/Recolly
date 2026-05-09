@@ -10,27 +10,7 @@
 }
 
 .searchForm {
-  display: flex;
-  gap: var(--spacing-sm);
   margin-top: var(--spacing-lg);
-}
-
-/* FormInputのラッパー: 検索フォーム内で横幅を確保し、ラベルは視覚的に隠す */
-.searchInputWrapper {
-  flex: 1;
-}
-
-/* FormInputのラベルをスクリーンリーダー専用にする（視覚的に非表示） */
-.searchInputWrapper label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 .filters {
