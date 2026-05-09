@@ -1,0 +1,6 @@
+.layout {
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: var(--spacing-xl) var(--spacing-lg);
+  padding-bottom: calc(var(--bottom-tab-height) + var(--spacing-xl));
+}
