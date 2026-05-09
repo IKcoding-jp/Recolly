@@ -22,6 +22,14 @@ RSpec.describe MediaPreferenceAnalyzer do
     end
 
     context '記録が3件以上の場合' do
+      around do |example|
+        original = ENV.fetch('ANTHROPIC_API_KEY', nil)
+        ENV['ANTHROPIC_API_KEY'] = 'test-api-key'
+        example.run
+      ensure
+        ENV['ANTHROPIC_API_KEY'] = original
+      end
+
       let(:mock_response_json) do
         {
           'summary' => 'アニメの好み傾向テキスト',

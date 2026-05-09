@@ -26,13 +26,20 @@ export interface MediaPreferenceProfileInsufficient {
   required_count: number
 }
 
-export interface MediaPreferenceProfileEmpty {
+export interface MediaPreferenceProfileNoRecords {
   media_type: string
-  status: 'no_records' | 'generating'
+  status: 'no_records'
+  record_count: number
+}
+
+export interface MediaPreferenceProfileGenerating {
+  media_type: string
+  status: 'generating'
   record_count: number
 }
 
 export type MediaPreferenceProfile =
   | MediaPreferenceProfileReady
   | MediaPreferenceProfileInsufficient
-  | MediaPreferenceProfileEmpty
+  | MediaPreferenceProfileNoRecords
+  | MediaPreferenceProfileGenerating
