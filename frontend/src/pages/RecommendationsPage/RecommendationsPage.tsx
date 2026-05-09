@@ -5,6 +5,7 @@ import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import { Button } from '../../components/ui/Button/Button'
 import { RecordModal } from '../../components/RecordModal/RecordModal'
 import { useRecommendations } from '../../hooks/useRecommendations'
+import { useMediaProfiles } from '../../hooks/useMediaProfiles'
 import { recordsApi } from '../../lib/recordsApi'
 import { getGenreLabel, getMediaTypeLabel } from '../../lib/mediaTypeUtils'
 import { useRecollyMotion } from '../../lib/motion'
@@ -15,10 +16,15 @@ import type { MediaType, RecordStatus } from '../../lib/types'
 import type { RecommendedWork } from '../../types/recommendation'
 import { AnalysisSummaryCard } from './AnalysisSummaryCard'
 import { RecommendedWorkCard } from './RecommendedWorkCard'
+import { MediaTabBar } from './MediaTabBar'
+import type { TabId } from './MediaTabBar'
+import { MediaTabContent } from './MediaTabContent'
 import styles from './RecommendationsPage.module.css'
 
 export function RecommendationsPage() {
   const { data, status, isLoading, isRefreshing, error, refresh } = useRecommendations()
+  const { profiles, getProfileByMediaType } = useMediaProfiles()
+  const [activeTab, setActiveTab] = useState<TabId>('overall')
   const [modalWork, setModalWork] = useState<RecommendedWork | null>(null)
   const [recordingId, setRecordingId] = useState<string | null>(null)
   const [recordedIds, setRecordedIds] = useState<Set<string>>(new Set())
@@ -170,6 +176,8 @@ export function RecommendationsPage() {
   }
 
   if (status === 'ready' && data) {
+    const activeProfile = activeTab !== 'overall' ? getProfileByMediaType(activeTab) : null
+
     return (
       <div className={styles.container}>
         <motion.div variants={m.listContainer} initial="hidden" animate="visible">
@@ -196,58 +204,73 @@ export function RecommendationsPage() {
             </Button>
           </motion.div>
 
-          {/* 好み分析サマリー */}
-          {data.analysis && (
-            <motion.div variants={m.fadeInUp}>
-              <AnalysisSummaryCard analysis={data.analysis} />
-            </motion.div>
-          )}
+          {/* タブバー */}
+          <motion.div variants={m.fadeInUp}>
+            <MediaTabBar profiles={profiles} activeTab={activeTab} onTabChange={setActiveTab} />
+          </motion.div>
 
-          {/* あなたへのおすすめ */}
-          {data.recommended_works.length > 0 && (
+          {/* タブコンテンツ */}
+          {activeTab === 'overall' ? (
             <motion.div variants={m.fadeInUp}>
-              <SectionTitle>あなたへのおすすめ</SectionTitle>
-              <div className={styles.recList}>
-                {data.recommended_works.map((work, index) => (
-                  <RecommendedWorkCard
-                    key={`${work.external_api_source}:${work.external_api_id}`}
-                    work={work}
-                    onRecord={(w) => handleOpenModal(w, index + 1)}
-                    isLoading={
-                      recordingId === `${work.external_api_source}:${work.external_api_id}`
-                    }
-                    isRecorded={recordedIds.has(
-                      `${work.external_api_source}:${work.external_api_id}`,
-                    )}
-                  />
-                ))}
-              </div>
-            </motion.div>
-          )}
+              {/* 好み分析サマリー */}
+              {data.analysis && <AnalysisSummaryCard analysis={data.analysis} />}
 
-          {/* いつもと違うジャンルに挑戦 */}
-          {data.challenge_works.length > 0 && (
-            <motion.div variants={m.fadeInUp}>
-              <SectionTitle className={styles.challengeTitle}>
-                いつもと違うジャンルに挑戦
-              </SectionTitle>
-              <div className={styles.recList}>
-                {data.challenge_works.map((work, index) => (
-                  <RecommendedWorkCard
-                    key={`${work.external_api_source}:${work.external_api_id}`}
-                    work={work}
-                    onRecord={(w) => handleOpenModal(w, index + 1)}
-                    isLoading={
-                      recordingId === `${work.external_api_source}:${work.external_api_id}`
-                    }
-                    isRecorded={recordedIds.has(
-                      `${work.external_api_source}:${work.external_api_id}`,
-                    )}
-                  />
-                ))}
-              </div>
+              {/* あなたへのおすすめ */}
+              {data.recommended_works.length > 0 && (
+                <>
+                  <SectionTitle>あなたへのおすすめ</SectionTitle>
+                  <div className={styles.recList}>
+                    {data.recommended_works.map((work, index) => (
+                      <RecommendedWorkCard
+                        key={`${work.external_api_source}:${work.external_api_id}`}
+                        work={work}
+                        onRecord={(w) => handleOpenModal(w, index + 1)}
+                        isLoading={
+                          recordingId === `${work.external_api_source}:${work.external_api_id}`
+                        }
+                        isRecorded={recordedIds.has(
+                          `${work.external_api_source}:${work.external_api_id}`,
+                        )}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* いつもと違うジャンルに挑戦 */}
+              {data.challenge_works.length > 0 && (
+                <>
+                  <SectionTitle className={styles.challengeTitle}>
+                    いつもと違うジャンルに挑戦
+                  </SectionTitle>
+                  <div className={styles.recList}>
+                    {data.challenge_works.map((work, index) => (
+                      <RecommendedWorkCard
+                        key={`${work.external_api_source}:${work.external_api_id}`}
+                        work={work}
+                        onRecord={(w) => handleOpenModal(w, index + 1)}
+                        isLoading={
+                          recordingId === `${work.external_api_source}:${work.external_api_id}`
+                        }
+                        isRecorded={recordedIds.has(
+                          `${work.external_api_source}:${work.external_api_id}`,
+                        )}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </motion.div>
-          )}
+          ) : activeProfile ? (
+            <motion.div variants={m.fadeInUp}>
+              <MediaTabContent
+                profile={activeProfile}
+                onRecord={handleOpenModal}
+                recordedIds={recordedIds}
+                recordingId={recordingId}
+              />
+            </motion.div>
+          ) : null}
         </motion.div>
 
         {/* 記録モーダル */}
