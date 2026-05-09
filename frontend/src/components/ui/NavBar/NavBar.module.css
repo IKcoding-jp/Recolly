@@ -10,7 +10,7 @@
 .logo {
   font-family: var(--font-heading);
   font-weight: var(--font-weight-bold);
-  font-size: 1.375rem;
+  font-size: var(--font-size-logo);
   color: var(--color-text);
   text-decoration: none;
 }
@@ -30,7 +30,7 @@
 .link {
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-bold);
-  letter-spacing: 1.5px;
+  letter-spacing: var(--letter-spacing-nav);
   text-transform: uppercase;
   color: var(--color-text);
   text-decoration: none;
@@ -45,7 +45,7 @@
 .disabled {
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-bold);
-  letter-spacing: 1.5px;
+  letter-spacing: var(--letter-spacing-nav);
   text-transform: uppercase;
   color: var(--color-text-muted);
   cursor: default;
