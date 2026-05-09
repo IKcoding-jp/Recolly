@@ -20,8 +20,8 @@
 
 .coverWrapper {
   flex-shrink: 0;
-  width: 50px;
-  height: 70px;
+  width: var(--size-work-thumbnail-w);
+  height: var(--size-work-thumbnail-h);
 }
 
 .cover {
