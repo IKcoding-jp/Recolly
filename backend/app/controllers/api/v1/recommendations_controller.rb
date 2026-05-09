@@ -17,6 +17,7 @@ module Api
 
       def refresh
         RecommendationRefreshJob.perform_later(current_user.id)
+        MediaProfileRefreshJob.perform_later(current_user.id)
         render json: { message: '分析を開始しました', status: 'processing' }, status: :accepted
       end
 
@@ -27,6 +28,7 @@ module Api
 
         if recommendation.nil?
           RecommendationRefreshJob.perform_later(current_user.id)
+          MediaProfileRefreshJob.perform_later(current_user.id)
           return render json: { recommendation: nil, status: 'generating' }
         end
 

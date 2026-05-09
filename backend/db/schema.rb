@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_15_131407) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_09_044939) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -74,6 +74,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_15_131407) do
     t.datetime "updated_at", null: false
     t.index ["imageable_type", "imageable_id"], name: "index_images_on_imageable"
     t.index ["s3_key"], name: "index_images_on_s3_key", unique: true
+  end
+
+  create_table "media_preference_profiles", force: :cascade do |t|
+    t.text "analysis_summary"
+    t.datetime "analyzed_at"
+    t.datetime "created_at", null: false
+    t.jsonb "cross_media_works", default: []
+    t.integer "media_type", null: false
+    t.jsonb "preference_scores", default: []
+    t.integer "record_count", default: 0
+    t.jsonb "same_media_works", default: []
+    t.jsonb "top_tags", default: []
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id", "media_type"], name: "index_media_preference_profiles_on_user_id_and_media_type", unique: true
+    t.index ["user_id"], name: "index_media_preference_profiles_on_user_id"
   end
 
   create_table "recommendations", force: :cascade do |t|
@@ -177,6 +193,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_15_131407) do
   add_foreign_key "episode_reviews", "records"
   add_foreign_key "favorite_works", "users"
   add_foreign_key "favorite_works", "works"
+  add_foreign_key "media_preference_profiles", "users"
   add_foreign_key "recommendations", "users"
   add_foreign_key "record_tags", "records"
   add_foreign_key "record_tags", "tags"

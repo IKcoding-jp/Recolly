@@ -8,6 +8,45 @@ import { recordsApi } from '../../lib/recordsApi'
 
 vi.mock('../../lib/recommendationsApi')
 vi.mock('../../lib/recordsApi')
+vi.mock('../../hooks/useMediaProfiles', () => ({
+  useMediaProfiles: () => ({
+    profiles: [
+      {
+        media_type: 'anime',
+        status: 'ready',
+        analysis_summary: 'アニメ分析',
+        preference_scores: [],
+        top_tags: [],
+        same_media_works: [],
+        cross_media_works: [],
+        record_count: 24,
+        analyzed_at: '',
+      },
+      { media_type: 'movie', status: 'no_records', record_count: 0 },
+      { media_type: 'drama', status: 'no_records', record_count: 0 },
+      { media_type: 'book', status: 'no_records', record_count: 0 },
+      { media_type: 'manga', status: 'no_records', record_count: 0 },
+      { media_type: 'game', status: 'no_records', record_count: 0 },
+    ],
+    isLoading: false,
+    error: null,
+    getProfileByMediaType: (mt: string) =>
+      mt === 'anime'
+        ? {
+            media_type: 'anime',
+            status: 'ready',
+            analysis_summary: 'アニメ分析',
+            preference_scores: [],
+            top_tags: [],
+            same_media_works: [],
+            cross_media_works: [],
+            record_count: 24,
+            analyzed_at: '',
+          }
+        : { media_type: mt, status: 'no_records', record_count: 0 },
+    refetch: vi.fn(),
+  }),
+}))
 vi.mock('../../contexts/useAuth', () => ({
   useAuth: () => ({ user: { id: 1, username: 'testuser' } }),
 }))
@@ -320,5 +359,38 @@ describe('RecommendationsPage', () => {
     await waitFor(() => {
       expect(updateMediaTypesCount).toHaveBeenCalledTimes(1)
     })
+  })
+
+  it('タブバーが表示される（readyステータス時）', async () => {
+    vi.mocked(recommendationsApi.get).mockResolvedValue(mockReadyResponse)
+
+    render(
+      <MemoryRouter>
+        <RecommendationsPage />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /全体/ })).toBeInTheDocument()
+    })
+    expect(screen.getByRole('tab', { name: /アニメ/ })).toBeInTheDocument()
+  })
+
+  it('アニメタブをクリックするとアニメ分析が表示される', async () => {
+    vi.mocked(recommendationsApi.get).mockResolvedValue(mockReadyResponse)
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter>
+        <RecommendationsPage />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /アニメ/ })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('tab', { name: /アニメ/ }))
+    expect(screen.getByText('アニメ分析')).toBeInTheDocument()
   })
 })

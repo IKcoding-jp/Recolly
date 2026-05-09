@@ -640,3 +640,191 @@
     flex-wrap: wrap;
   }
 }
+
+/* メディア別サマリーカードのボーダーカラー */
+.mediaBorderanime::before {
+  background: var(--color-anime);
+}
+.mediaBordermovie::before {
+  background: var(--color-movie);
+}
+.mediaBorderdrama::before {
+  background: var(--color-drama);
+}
+.mediaBorderbook::before {
+  background: var(--color-book);
+}
+.mediaBordermanga::before {
+  background: var(--color-manga);
+}
+.mediaBordergame::before {
+  background: var(--color-game);
+}
+
+/* メディア別スコアバー */
+.prefBaranime {
+  background: var(--color-anime);
+}
+.prefBarmovie {
+  background: var(--color-movie);
+}
+.prefBardrama {
+  background: var(--color-drama);
+}
+.prefBarbook {
+  background: var(--color-book);
+}
+.prefBarmanga {
+  background: var(--color-manga);
+}
+.prefBargame {
+  background: var(--color-game);
+}
+
+/* タブバー */
+.tabBar {
+  display: flex;
+  border-bottom: 2px solid var(--color-border-light);
+  margin-bottom: var(--spacing-xl);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  gap: 0;
+}
+
+.tabBar::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-label);
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: color var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--color-text);
+}
+
+.tabActive {
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+}
+
+.tabActiveOverall {
+  border-bottom-color: var(--color-text);
+}
+
+.tabActiveAnime {
+  border-bottom-color: var(--color-anime);
+  color: var(--color-anime);
+}
+
+.tabActiveMovie {
+  border-bottom-color: var(--color-movie);
+  color: var(--color-movie);
+}
+
+.tabActiveDrama {
+  border-bottom-color: var(--color-drama);
+  color: var(--color-drama);
+}
+
+.tabActiveBook {
+  border-bottom-color: var(--color-book);
+  color: var(--color-book);
+}
+
+.tabActiveManga {
+  border-bottom-color: var(--color-manga);
+  color: var(--color-manga);
+}
+
+.tabActiveGame {
+  border-bottom-color: var(--color-game);
+  color: var(--color-game);
+}
+
+.tabBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: var(--color-border-light);
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.tabBadgeActive {
+  color: var(--color-bg-white);
+}
+
+.tabBadgeAnime {
+  background: var(--color-anime);
+}
+
+.tabBadgeMovie {
+  background: var(--color-movie);
+}
+
+.tabBadgeDrama {
+  background: var(--color-drama);
+}
+
+.tabBadgeBook {
+  background: var(--color-book);
+}
+
+.tabBadgeManga {
+  background: var(--color-manga);
+}
+
+.tabBadgeGame {
+  background: var(--color-game);
+}
+
+/* タブコンテンツ: 記録不足・記録なし状態 */
+.mediaEmptyState {
+  text-align: center;
+  padding: var(--spacing-2xl) var(--spacing-xl);
+  background: var(--color-bg-white);
+  border: 1px dashed var(--color-border-light);
+  border-radius: var(--radius-md);
+}
+
+.mediaEmptyDesc {
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-lg);
+}
+
+.mediaProgressCard {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  text-align: center;
+}
+
+.mediaSectionTitle {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-h4);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-sm);
+  margin-top: var(--spacing-xl);
+}

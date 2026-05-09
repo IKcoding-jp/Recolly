@@ -105,6 +105,12 @@ RSpec.describe 'Api::V1::Recommendations', type: :request do
         json = response.parsed_body
         expect(json['status']).to eq('processing')
       end
+
+      it 'MediaProfileRefreshJobもエンキューすること' do
+        expect do
+          post '/api/v1/recommendations/refresh', as: :json
+        end.to have_enqueued_job(MediaProfileRefreshJob).with(user.id)
+      end
     end
   end
 end

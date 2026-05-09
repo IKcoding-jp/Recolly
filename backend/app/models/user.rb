@@ -14,6 +14,7 @@ class User < ApplicationRecord
   # provider.destroy! を呼ぶので、callback は問題なく発動する。
   has_many :user_providers, dependent: :delete_all
   has_many :records, dependent: :destroy
+  has_many :media_preference_profiles, dependent: :destroy
   has_many :tags, dependent: :destroy
   has_many :discussions, dependent: :destroy
   has_many :comments, dependent: :destroy

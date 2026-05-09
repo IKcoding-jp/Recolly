@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>per-media プロファイル — モックアップ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;1,400&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-bg: #fafaf8;
+  --color-bg-white: #ffffff;
+  --color-text: #2c2c2c;
+  --color-text-muted: #6b6b6b;
+  --color-border: #2c2c2c;
+  --color-border-light: #e0e0e0;
+  --color-error: #c0392b;
+  --color-success: #2e7d32;
+  --color-anime: #3d5a80;
+  --color-movie: #5e548e;
+  --color-drama: #9f86c0;
+  --color-book: #c4956a;
+  --color-manga: #e07a5f;
+  --color-game: #6b9080;
+  --font-heading: 'Fraunces', serif;
+  --font-body: 'Zen Kaku Gothic New', sans-serif;
+  --font-size-h2: 2rem;
+  --font-size-h3: 1.5rem;
+  --font-size-h4: 1.25rem;
+  --font-size-body: 1rem;
+  --font-size-label: 0.875rem;
+  --font-size-meta: 0.75rem;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-full: 9999px;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --transition-normal: 240ms cubic-bezier(0.16,1,0.3,1);
+  --page-max-width: 900px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--color-bg);
+  font-family: var(--font-body);
+  color: var(--color-text);
+  font-size: var(--font-size-body);
+  line-height: 1.6;
+}
+
+/* ナビバー */
+.navbar {
+  background: var(--color-bg-white);
+  border-bottom: 1px solid var(--color-border-light);
+  padding: var(--spacing-md) var(--spacing-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+.navbar-logo {
+  font-family: var(--font-heading);
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--color-text);
+}
+.navbar-nav {
+  display: flex;
+  gap: var(--spacing-lg);
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+}
+.navbar-nav a { cursor: pointer; }
+.navbar-nav a.active { color: var(--color-text); font-weight: var(--font-weight-medium); }
+
+/* ページ本体 */
+.page {
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: var(--spacing-2xl) var(--spacing-xl);
+}
+
+.page-header { margin-bottom: var(--spacing-xl); }
+.page-header h1 {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-h2);
+  font-weight: 700;
+  margin-bottom: var(--spacing-xs);
+}
+.page-header p {
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+}
+
+/* 更新バー */
+.update-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+}
+.update-bar .meta { display: flex; align-items: center; gap: var(--spacing-sm); }
+.update-bar .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-success); display: inline-block; }
+.update-btn {
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-meta);
+  font-family: var(--font-body);
+  cursor: pointer;
+  color: var(--color-text);
+  transition: background var(--transition-normal);
+}
+.update-btn:hover { background: var(--color-bg); }
+
+/* タブバー */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--color-border-light);
+  margin-bottom: var(--spacing-xl);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+
+.tab {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-label);
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  transition: color var(--transition-normal);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+.tab:hover { color: var(--color-text); }
+
+.tab.active {
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+}
+.tab.active.anime { border-bottom-color: var(--color-anime); color: var(--color-anime); }
+.tab.active.movie { border-bottom-color: var(--color-movie); color: var(--color-movie); }
+.tab.active.overall { border-bottom-color: var(--color-text); }
+
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: var(--color-border-light);
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+.tab.active .tab-badge { background: var(--color-anime); color: white; }
+
+/* 分析サマリーカード */
+.analysis-card {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.analysis-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: linear-gradient(to bottom, var(--color-anime), #6fa8dc);
+}
+.analysis-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+  padding-left: var(--spacing-sm);
+}
+.analysis-card-title {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+.ai-badge {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  padding: 2px var(--spacing-xs);
+}
+.analysis-text {
+  font-size: var(--font-size-label);
+  line-height: 1.8;
+  color: var(--color-text);
+  padding-left: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+.expand-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding-left: var(--spacing-sm);
+  font-family: var(--font-body);
+}
+
+/* スコアバー */
+.score-bars { padding: var(--spacing-md) var(--spacing-sm) 0; }
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+}
+.score-label {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+  width: 120px;
+  flex-shrink: 0;
+}
+.score-bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--color-border-light);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.score-bar-fill {
+  height: 100%;
+  background: var(--color-anime);
+  border-radius: var(--radius-full);
+  opacity: 0.8;
+}
+.score-value {
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  width: 30px;
+  text-align: right;
+}
+
+/* セクションタイトル */
+.section-title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-h4);
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+.section-subtitle {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-lg);
+  margin-top: calc(-1 * var(--spacing-sm));
+}
+
+/* 作品カードグリッド */
+.works-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.work-card {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
+  cursor: pointer;
+}
+.work-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.work-cover {
+  width: 100%;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  background: linear-gradient(135deg, #e0e0e0 0%, #c8c8c8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #aaa;
+  position: relative;
+}
+.work-cover-placeholder {
+  width: 100%;
+  aspect-ratio: 2/3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.65rem;
+  color: #999;
+  font-family: var(--font-body);
+  text-align: center;
+  padding: 8px;
+}
+
+/* ジャンルカラーの背景 */
+.cover-anime { background: linear-gradient(135deg, #3d5a8022 0%, #3d5a8044 100%); }
+.cover-movie { background: linear-gradient(135deg, #5e548e22 0%, #5e548e44 100%); }
+.cover-drama { background: linear-gradient(135deg, #9f86c022 0%, #9f86c044 100%); }
+.cover-book  { background: linear-gradient(135deg, #c4956a22 0%, #c4956a44 100%); }
+.cover-manga { background: linear-gradient(135deg, #e07a5f22 0%, #e07a5f44 100%); }
+.cover-game  { background: linear-gradient(135deg, #6b908022 0%, #6b908044 100%); }
+
+.work-info { padding: var(--spacing-sm); }
+.work-title {
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+  margin-bottom: var(--spacing-xs);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.work-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-xs);
+}
+.work-media-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-medium);
+  color: white;
+}
+.badge-anime { background: var(--color-anime); }
+.badge-movie { background: var(--color-movie); }
+.badge-drama { background: var(--color-drama); }
+.badge-book  { background: var(--color-book); }
+.badge-manga { background: var(--color-manga); }
+.badge-game  { background: var(--color-game); }
+
+.record-btn {
+  font-size: 10px;
+  padding: 2px 6px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--color-text-muted);
+}
+
+/* おすすめの理由 */
+.reason-box {
+  margin: var(--spacing-xs) var(--spacing-sm) var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-bg);
+  border-left: 2px solid var(--color-anime);
+  font-size: 10px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* クロスメディアセクション */
+.cross-section {
+  margin-bottom: var(--spacing-2xl);
+}
+.cross-works-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+}
+.cross-work-card {
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
+  cursor: pointer;
+}
+.cross-work-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+.cross-label {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  padding: var(--spacing-xs) var(--spacing-sm) 0;
+  font-style: italic;
+}
+
+/* 記録不足状態 */
+.insufficient-state {
+  text-align: center;
+  padding: var(--spacing-2xl) var(--spacing-xl);
+  background: var(--color-bg-white);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.insufficient-state .media-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #5e548e22;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+  font-size: 1.5rem;
+}
+.insufficient-state h3 {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-sm);
+}
+.insufficient-state p {
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-lg);
+}
+.progress-bar-track {
+  height: 6px;
+  background: var(--color-border-light);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  max-width: 240px;
+  margin: 0 auto var(--spacing-sm);
+}
+.progress-bar-fill {
+  height: 100%;
+  background: var(--color-movie);
+  border-radius: var(--radius-full);
+  width: 33%;
+}
+.progress-text {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+/* 記録なし状態 */
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-2xl) var(--spacing-xl);
+  background: var(--color-bg-white);
+  border: 1px dashed var(--color-border-light);
+  border-radius: var(--radius-md);
+}
+.empty-state .media-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+  font-size: 1.5rem;
+  opacity: 0.4;
+}
+.empty-state p {
+  font-size: var(--font-size-label);
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-md);
+}
+.empty-link {
+  font-size: var(--font-size-label);
+  color: var(--color-anime);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* タブコンテンツ */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ラベル */
+.from-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: white;
+  background: var(--color-anime);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  margin-bottom: var(--spacing-sm);
+  opacity: 0.85;
+}
+
+/* メディア色アクセント */
+.accent-movie { --color-accent-active: var(--color-movie); }
+.cross-reason-box {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  margin: 0 var(--spacing-sm) var(--spacing-sm);
+  background: var(--color-bg);
+  border-left: 2px solid var(--color-manga);
+  font-size: 10px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* 注記 */
+.note {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+  text-align: center;
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-xl);
+  border-top: 1px solid var(--color-border-light);
+}
+</style>
+</head>
+<body>
+
+<!-- ナビバー -->
+<nav class="navbar">
+  <div class="navbar-logo">Recolly</div>
+  <div class="navbar-nav">
+    <a>ダッシュボード</a>
+    <a>検索</a>
+    <a>マイライブラリ</a>
+    <a class="active">おすすめ</a>
+    <a>設定</a>
+  </div>
+</nav>
+
+<!-- ページ本体 -->
+<main class="page">
+  <div class="page-header">
+    <h1>おすすめ</h1>
+    <p>あなたの記録データから好みを分析し、メディアを横断しておすすめします</p>
+  </div>
+
+  <!-- 更新バー -->
+  <div class="update-bar">
+    <div class="meta">
+      <span class="dot"></span>
+      <span>87件の記録をもとに分析・5月9日 更新</span>
+    </div>
+    <button class="update-btn">分析を更新</button>
+  </div>
+
+  <!-- タブバー -->
+  <div class="tab-bar">
+    <button class="tab overall" onclick="switchTab('overall', this)">全体</button>
+    <button class="tab active anime" onclick="switchTab('anime', this)">
+      アニメ
+      <span class="tab-badge">24</span>
+    </button>
+    <button class="tab" onclick="switchTab('movie', this)">
+      映画
+      <span class="tab-badge">12</span>
+    </button>
+    <button class="tab" onclick="switchTab('drama', this)">
+      ドラマ
+      <span class="tab-badge" style="background:var(--color-border-light)">1</span>
+    </button>
+    <button class="tab" onclick="switchTab('book', this)">
+      本
+      <span class="tab-badge" style="background:var(--color-border-light)">8</span>
+    </button>
+    <button class="tab" onclick="switchTab('manga', this)">
+      漫画
+      <span class="tab-badge" style="background:var(--color-border-light)">18</span>
+    </button>
+    <button class="tab" onclick="switchTab('game', this)">
+      ゲーム
+      <span class="tab-badge" style="background:var(--color-border-light)">0</span>
+    </button>
+  </div>
+
+  <!-- アニメタブ（アクティブ） -->
+  <div id="tab-anime" class="tab-content active">
+
+    <!-- 分析サマリー -->
+    <div class="analysis-card">
+      <div class="analysis-card-header">
+        <span class="analysis-card-title">アニメでの好み傾向</span>
+        <span class="ai-badge">AI分析</span>
+      </div>
+      <p class="analysis-text">
+        感情的なカタルシスを重視する傾向が強く、「ヴァイオレット・エヴァーガーデン（9点）」「君の名は。（9点）」への高評価に象徴されるように、<strong>失われたものへの向き合い方を丁寧に描く作品</strong>に共鳴しやすい。ファンタジー世界観も好むが、それ自体よりも登場人物の感情的な成長と、丁寧な伏線回収を特に重視している。
+      </p>
+      <button class="expand-btn">好み分析の詳細を見る ▾</button>
+
+      <!-- スコアバー（詳細展開想定） -->
+      <div class="score-bars">
+        <div class="score-row">
+          <span class="score-label">感情的な深さ</span>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:91%"></div></div>
+          <span class="score-value">9.1</span>
+        </div>
+        <div class="score-row">
+          <span class="score-label">伏線・構成力</span>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:87%"></div></div>
+          <span class="score-value">8.7</span>
+        </div>
+        <div class="score-row">
+          <span class="score-label">キャラクター成長</span>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:83%"></div></div>
+          <span class="score-value">8.3</span>
+        </div>
+        <div class="score-row">
+          <span class="score-label">世界観・設定</span>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:74%"></div></div>
+          <span class="score-value">7.4</span>
+        </div>
+        <div class="score-row">
+          <span class="score-label">アクション</span>
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:52%"></div></div>
+          <span class="score-value">5.2</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 同メディアおすすめ -->
+    <h2 class="section-title">アニメのおすすめ</h2>
+    <p class="section-subtitle">あなたの好みに合ったアニメ作品</p>
+    <div class="works-grid">
+      <!-- カード1 -->
+      <div class="work-card">
+        <div class="work-cover cover-anime">
+          <div class="work-cover-placeholder">
+            <span style="font-size:2rem;opacity:0.3">🎬</span>
+            <span>葬送の<br>フリーレン</span>
+          </div>
+        </div>
+        <div class="work-info">
+          <div class="work-title">葬送のフリーレン</div>
+          <div class="work-meta">
+            <span class="work-media-badge badge-anime">アニメ</span>
+            <button class="record-btn">記録</button>
+          </div>
+        </div>
+        <div class="reason-box">VEに9点をつけたあなたへ。"失われたものへの向き合い方"を旅と出会いを通じて描く作品です。</div>
+      </div>
+
+      <!-- カード2 -->
+      <div class="work-card">
+        <div class="work-cover cover-anime">
+          <div class="work-cover-placeholder">
+            <span style="font-size:2rem;opacity:0.3">🎬</span>
+            <span>スパイ×ファミリー</span>
+          </div>
+        </div>
+        <div class="work-info">
+          <div class="work-title">スパイ×ファミリー</div>
+          <div class="work-meta">
+            <span class="work-media-badge badge-anime">アニメ</span>
+            <button class="record-btn">記録</button>
+          </div>
+        </div>
+        <div class="reason-box">「泣ける」タグ作品の平均9.2点から。家族の絆を軽妙に描く人気作。</div>
+      </div>
+
+      <!-- カード3 -->
+      <div class="work-card">
+        <div class="work-cover cover-anime">
+          <div class="work-cover-placeholder">
+            <span style="font-size:2rem;opacity:0.3">🎬</span>
+            <span>進撃の巨人<br>完結編</span>
+          </div>
+        </div>
+        <div class="work-info">
+          <div class="work-title">進撃の巨人 完結編</div>
+          <div class="work-meta">
+            <span class="work-media-badge badge-anime">アニメ</span>
+            <button class="record-btn">記録</button>
+          </div>
+        </div>
+        <div class="reason-box">伏線回収を評価する感想が多いあなたへ。10年越しの伏線が収束する最終章。</div>
+      </div>
+
+      <!-- カード4 -->
+      <div class="work-card">
+        <div class="work-cover cover-anime">
+          <div class="work-cover-placeholder">
+            <span style="font-size:2rem;opacity:0.3">🎬</span>
+            <span>フルメタル<br>アルケミスト</span>
+          </div>
+        </div>
+        <div class="work-info">
+          <div class="work-title">鋼の錬金術師 BROTHERHOOD</div>
+          <div class="work-meta">
+            <span class="work-media-badge badge-anime">アニメ</span>
+            <button class="record-btn">記録</button>
+          </div>
+        </div>
+        <div class="reason-box">キャラクター成長スコア8.3のあなたへ。完璧な伏線と感情の旅を持つ名作。</div>
+      </div>
+
+      <!-- カード5 -->
+      <div class="work-card">
+        <div class="work-cover cover-anime">
+          <div class="work-cover-placeholder">
+            <span style="font-size:2rem;opacity:0.3">🎬</span>
+            <span>夏目友人帳</span>
+          </div>
+        </div>
+        <div class="work-info">
+          <div class="work-title">夏目友人帳</div>
+          <div class="work-meta">
+            <span class="work-media-badge badge-anime">アニメ</span>
+            <button class="record-btn">記録</button>
+          </div>
+        </div>
+        <div class="reason-box">心理描写への言及が多い感想から。静かな感動が積み重なる長期シリーズ。</div>
+      </div>
+    </div>
+
+    <!-- クロスメディアおすすめ -->
+    <div class="cross-section">
+      <h2 class="section-title">
+        <span>アニメ好きにおすすめの他メディア</span>
+      </h2>
+      <p class="section-subtitle">アニメでの好みをもとに、他のメディアからもセレクト</p>
+      <div class="cross-works-grid">
+        <!-- 漫画 -->
+        <div class="cross-work-card">
+          <div class="from-label" style="margin:8px 8px 0;background:var(--color-anime)">アニメ好みから</div>
+          <div class="work-cover cover-manga" style="aspect-ratio:16/9;min-height:100px">
+            <div class="work-cover-placeholder" style="aspect-ratio:16/9">
+              <span style="font-size:2rem;opacity:0.3">📚</span>
+              <span>風の谷の<br>ナウシカ</span>
+            </div>
+          </div>
+          <div class="work-info">
+            <div class="work-title">風の谷のナウシカ</div>
+            <div class="work-meta">
+              <span class="work-media-badge badge-manga">漫画</span>
+              <button class="record-btn">記録</button>
+            </div>
+          </div>
+          <div style="padding:0 var(--spacing-sm) var(--spacing-sm);font-size:10px;color:var(--color-text-muted);border-left:2px solid var(--color-manga);margin:4px 8px 8px;border-radius:0 4px 4px 0;background:var(--color-bg);line-height:1.5">アニメの世界観好きから。宮崎駿が描いた原作漫画は映画より深い物語が待っています。</div>
+        </div>
+
+        <!-- 映画 -->
+        <div class="cross-work-card">
+          <div class="from-label" style="margin:8px 8px 0;background:var(--color-anime)">アニメ好みから</div>
+          <div class="work-cover cover-movie" style="aspect-ratio:16/9;min-height:100px">
+            <div class="work-cover-placeholder" style="aspect-ratio:16/9">
+              <span style="font-size:2rem;opacity:0.3">🎥</span>
+              <span>すずめの戸締まり</span>
+            </div>
+          </div>
+          <div class="work-info">
+            <div class="work-title">すずめの戸締まり</div>
+            <div class="work-meta">
+              <span class="work-media-badge badge-movie">映画</span>
+              <button class="record-btn">記録</button>
+            </div>
+          </div>
+          <div style="padding:0 var(--spacing-sm) var(--spacing-sm);font-size:10px;color:var(--color-text-muted);border-left:2px solid var(--color-movie);margin:4px 8px 8px;border-radius:0 4px 4px 0;background:var(--color-bg);line-height:1.5">「君の名は。9点」のあなたへ。新海誠の最新作。喪失と旅を描く感情的な一本。</div>
+        </div>
+
+        <!-- 本 -->
+        <div class="cross-work-card">
+          <div class="from-label" style="margin:8px 8px 0;background:var(--color-anime)">アニメ好みから</div>
+          <div class="work-cover cover-book" style="aspect-ratio:16/9;min-height:100px">
+            <div class="work-cover-placeholder" style="aspect-ratio:16/9">
+              <span style="font-size:2rem;opacity:0.3">📖</span>
+              <span>夜は短し歩けよ乙女</span>
+            </div>
+          </div>
+          <div class="work-info">
+            <div class="work-title">夜は短し歩けよ乙女</div>
+            <div class="work-meta">
+              <span class="work-media-badge badge-book">本</span>
+              <button class="record-btn">記録</button>
+            </div>
+          </div>
+          <div style="padding:0 var(--spacing-sm) var(--spacing-sm);font-size:10px;color:var(--color-text-muted);border-left:2px solid var(--color-book);margin:4px 8px 8px;border-radius:0 4px 4px 0;background:var(--color-bg);line-height:1.5">ファンタジー好きで本記録8件のあなたへ。森見登美彦の幻想的な世界観が合うはず。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 映画タブ（記録不足） -->
+  <div id="tab-movie" class="tab-content">
+    <div class="insufficient-state">
+      <div class="media-icon">🎥</div>
+      <h3>映画の分析にはあと2件必要です</h3>
+      <p>現在1件記録中。3件以上記録するとAI分析が利用できます。</p>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" style="background:var(--color-movie)"></div>
+      </div>
+      <p class="progress-text">1 / 3 件</p>
+      <br>
+      <a class="empty-link">映画を検索して記録する →</a>
+    </div>
+  </div>
+
+  <!-- ゲームタブ（記録なし） -->
+  <div id="tab-game" class="tab-content">
+    <div class="empty-state">
+      <div class="media-icon">🎮</div>
+      <p>まだゲームの記録がありません。<br>記録を追加するとAI分析が使えるようになります。</p>
+      <a class="empty-link">ゲームを検索して記録する →</a>
+    </div>
+  </div>
+
+  <!-- 全体タブ -->
+  <div id="tab-overall" class="tab-content">
+    <p style="color:var(--color-text-muted);font-size:var(--font-size-label);padding:var(--spacing-xl) 0;text-align:center">← 全体おすすめ（現行の表示がここに入ります）</p>
+  </div>
+
+  <!-- ドラマ・本・漫画はここでは省略 -->
+  <div id="tab-drama" class="tab-content">
+    <p style="color:var(--color-text-muted);font-size:var(--font-size-label);padding:var(--spacing-xl) 0;text-align:center">ドラマタブ（記録1件 → 不足状態表示）</p>
+  </div>
+  <div id="tab-book" class="tab-content">
+    <p style="color:var(--color-text-muted);font-size:var(--font-size-label);padding:var(--spacing-xl) 0;text-align:center">本タブ（記録8件 → 分析あり）</p>
+  </div>
+  <div id="tab-manga" class="tab-content">
+    <p style="color:var(--color-text-muted);font-size:var(--font-size-label);padding:var(--spacing-xl) 0;text-align:center">漫画タブ（記録18件 → 分析あり）</p>
+  </div>
+
+  <p class="note">これはブレスト用モックアップです — 実装前の確認用</p>
+</main>
+
+<script>
+function switchTab(id, el) {
+  // タブボタン
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.remove('active', 'anime', 'movie', 'overall', 'drama', 'book', 'manga', 'game');
+  });
+  el.classList.add('active', id);
+
+  // タブコンテンツ
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  const target = document.getElementById('tab-' + id);
+  if (target) target.classList.add('active');
+
+  // バッジ色
+  document.querySelectorAll('.tab-badge').forEach(b => b.style.background = '');
+  const activeBadge = el.querySelector('.tab-badge');
+  if (activeBadge) {
+    const colors = { anime: '#3d5a80', movie: '#5e548e', drama: '#9f86c0', book: '#c4956a', manga: '#e07a5f', game: '#6b9080', overall: '#2c2c2c' };
+    activeBadge.style.background = colors[id] || '#2c2c2c';
+    activeBadge.style.color = 'white';
+  }
+}
+</script>
+</body>
+</html>
