@@ -1,19 +1,11 @@
 import { Link } from 'react-router-dom'
 import { Button } from '../../components/ui/Button/Button'
+import { getMediaTypeLabel } from '../../lib/mediaTypeUtils'
 import type { MediaPreferenceProfile } from '../../types/mediaPreferenceProfile'
 import type { RecommendedWork } from '../../types/recommendation'
 import { MediaAnalysisSummaryCard } from './MediaAnalysisSummaryCard'
 import { RecommendedWorkCard } from './RecommendedWorkCard'
 import styles from './RecommendationsPage.module.css'
-
-const MEDIA_LABEL: Record<string, string> = {
-  anime: 'アニメ',
-  movie: '映画',
-  drama: 'ドラマ',
-  book: '本',
-  manga: '漫画',
-  game: 'ゲーム',
-}
 
 type Props = {
   profile: MediaPreferenceProfile
@@ -23,7 +15,7 @@ type Props = {
 }
 
 export function MediaTabContent({ profile, onRecord, recordedIds, recordingId }: Props) {
-  const mediaLabel = MEDIA_LABEL[profile.media_type] ?? profile.media_type
+  const mediaLabel = getMediaTypeLabel(profile.media_type)
   const workKey = (work: RecommendedWork) => `${work.external_api_source}:${work.external_api_id}`
 
   if (profile.status === 'no_records') {

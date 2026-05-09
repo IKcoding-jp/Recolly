@@ -1,15 +1,7 @@
 import { useState } from 'react'
+import { getMediaTypeLabel } from '../../lib/mediaTypeUtils'
 import type { MediaPreferenceProfileReady } from '../../types/mediaPreferenceProfile'
 import styles from './RecommendationsPage.module.css'
-
-const MEDIA_LABEL: Record<string, string> = {
-  anime: 'アニメ',
-  movie: '映画',
-  drama: 'ドラマ',
-  book: '本',
-  manga: '漫画',
-  game: 'ゲーム',
-}
 
 type Props = {
   profile: MediaPreferenceProfileReady
@@ -17,7 +9,7 @@ type Props = {
 
 export function MediaAnalysisSummaryCard({ profile }: Props) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const mediaLabel = MEDIA_LABEL[profile.media_type] ?? profile.media_type
+  const mediaLabel = getMediaTypeLabel(profile.media_type)
   const borderClass = styles[`mediaBorder${profile.media_type}` as keyof typeof styles]
 
   return (
