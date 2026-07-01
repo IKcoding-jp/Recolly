@@ -34,7 +34,7 @@ recolly/
 ## 開発スタイル：バイブコーディング（Claude Code主体）
 
 Claude Codeがすべての実装を担当する。IKさんは製品・設計の判断のみ行う。
-superpowersスキルを主軸とする。Git運用ルールは `recolly-git-rules` スキルを参照。
+汎用のsuperpowersスキルは通常通り使う。Recolly固有のルールは `.claude/rules/` を直接参照する（スキルの自動発動判定は経由しない）。
 
 ### ワークフロー（機能規模で3段階）
 
@@ -44,16 +44,22 @@ superpowersスキルを主軸とする。Git運用ルールは `recolly-git-rule
 | 小 | 既存機能の改善・軽微な変更 | Issue → 実装 → PR |
 | 修正 | バグ修正・コピー変更等 | 直接実装 → PR |
 
+詳細フロー: `.claude/rules/workflow.md`
+
 ### IKさんが判断する場面（Claude は必ず確認を取る）
 
 1. **UIデザインの変更** — コンポーネントの追加・見た目の大きな変更
 2. **PRのマージ・本番デプロイ** — IKさんが承認して初めて実行
 
-### 自動発動スキル
+### 常時参照するルール
 
-| スキル | 発動条件 |
-|--------|---------|
-| `adr` | 設計判断が確定したとき（「ADRを書きますか？」と聞かず自動作成） |
+| ルール | 参照するタイミング |
+|--------|-------------------|
+| `.claude/rules/git-rules.md` | コミット・PR作成・マージ・コードレビュー対応時 |
+| `.claude/rules/workflow.md` | 機能開発・バグ修正・リファクタリングの指示を受けた時 |
+| `.claude/rules/comprehension-guard.md` | 新技術導入・設計判断・構造変更の前 |
+| `.claude/rules/adr.md` | 設計判断が確定したとき（「ADRを書きますか？」と聞かず自動作成） |
+| `.claude/rules/learning-note.md` | 技術解説・学習ノート作成を求められた時 |
 
 ### `/clear`後のコンテキスト復元
 
@@ -171,5 +177,5 @@ HTMLの `<input>`, `<select>`, `<textarea>` を直接使わない。
 
 ## 設計記録
 
-- 設計判断は `docs/adr/` に自動記録（adrスキルが担当）
-- PR前セルフチェック → `recolly-git-rules` スキルの references/pr-self-check.md を参照
+- 設計判断は `docs/adr/` に自動記録（`.claude/rules/adr.md` に従う）
+- PR前セルフチェック → `.claude/rules/pr-self-check.md` を参照

@@ -1,8 +1,3 @@
----
-name: recolly-git-rules
-description: RecollyプロジェクトのGit運用ルール（コミット規約、マージ戦略、PRルール、コードレビュー）。以下の場面で使うこと：(1) コミット作成時、(2) PR作成時、(3) マージ時、(4) コードレビュー対応時、(5) `superpowers:finishing-a-development-branch` の発動時。
----
-
 # Recolly Git運用ルール
 
 ## コミットメッセージ
@@ -150,4 +145,4 @@ GH Actions Claude の指摘に対する対応は、以下の分業で進める�
 
 ## PR前セルフチェック
 
-PR作成前に [references/pr-self-check.md](references/pr-self-check.md) のチェックリストを確認すること。
+PR作成前に [pr-self-check.md](pr-self-check.md) のチェックリストを確認すること。
