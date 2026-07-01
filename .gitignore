@@ -74,3 +74,4 @@ infra/*.tfvars
 
 # PostHog scripts（Personal API Key は CI には入れない方針）
 scripts/posthog/.env.local
+infra/tfplan*
