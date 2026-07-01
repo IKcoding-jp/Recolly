@@ -16,7 +16,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "motion": "^12.38.0",
+    "motion": "^12.42.2",
     "posthog-js": "^1.367.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -40,7 +40,7 @@
     "jsdom": "^29.0.1",
     "prettier": "^3.8.1",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.57.0",
+    "typescript-eslint": "^8.62.1",
     "vite": "^8.0.1",
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.1.0"
