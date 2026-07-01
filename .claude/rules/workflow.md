@@ -1,9 +1,6 @@
----
-name: recolly-workflow
-description: Recollyプロジェクトの開発ワークフロー。SDD + TDD + Issue駆動開発のフルフローを管理する。以下の場面で使うこと：(1) 機能開発の指示を受けた時（「〜を実装して」「〜を作って」「〜を追加して」）、(2) バグ修正の指示を受けた時（「〜を修正して」「〜が動かない」）、(3) Issue番号を指定された時（「Issue #Xをやって」）、(4) リファクタリングの指示を受けた時。質問のみ・調査のみの会話では発動しない。
----
-
 # Recolly 開発ワークフロー
+
+機能開発・バグ修正・リファクタリングの指示を受けたときに従う。質問のみ・調査のみの会話では発動しない。
 
 ## パス判定
 
@@ -58,11 +55,11 @@ description: Recollyプロジェクトの開発ワークフロー。SDD + TDD + 
 
 **STOP — TDDを省略しない。** 各タスク内で必ず `superpowers:test-driven-development` スキルを使用すること。テストを先に書き、テストが失敗することを確認してから実装する。
 
-**実装中の自動発動ルール（CLAUDE.mdにも記載）:**
+**実装中に必ず従うルール:**
 
-- 技術選定・設計判断が発生 → `comprehension-guard` スキルを発動してから続行
-- comprehension-guardでユーザーが判断を確定 → `adr` スキルを自動作成
-- プロジェクトで初めて使う技術を説明した → `learning-note` スキルで学習ノート作成
+- 技術選定・設計判断が発生 → `.claude/rules/comprehension-guard.md` に従ってから続行
+- comprehension-guardでユーザーが判断を確定 → `.claude/rules/adr.md` に従ってADRを自動作成
+- プロジェクトで初めて使う技術を説明した → `.claude/rules/learning-note.md` に従って学習ノート作成
 
 ### GATE: Step 5へ進む前に
 
@@ -86,7 +83,7 @@ description: Recollyプロジェクトの開発ワークフロー。SDD + TDD + 
 ### Step 6: ブランチ完了 + PR
 
 `superpowers:finishing-a-development-branch` スキルを発動する。
-Git運用ルールは `recolly-git-rules` スキルに従う。
+Git運用ルールは `.claude/rules/git-rules.md` に従う。
 
 ## 軽量パス
 
