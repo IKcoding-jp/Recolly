@@ -1,7 +1,7 @@
 #!/bin/bash
 # infra/scripts/deploy.sh
 # EC2上で実行されるデプロイスクリプト
-# GitHub Actionsから SSH 経由で呼び出される
+# GitHub ActionsからSSM Run Command経由で呼び出される
 
 set -euo pipefail
 

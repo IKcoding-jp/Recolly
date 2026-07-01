@@ -22,6 +22,15 @@ resource "aws_key_pair" "main" {
   public_key = file(var.ssh_public_key_path)
 }
 
+# deploy.shをS3に配置（EC2起動時にuser_data.shが取得する）
+# インスタンスが再作成されても手動同期なしでCDが動くようにするため
+resource "aws_s3_object" "deploy_script" {
+  bucket = aws_s3_bucket.images.id
+  key    = "deploy/deploy.sh"
+  source = "${path.module}/scripts/deploy.sh"
+  etag   = filemd5("${path.module}/scripts/deploy.sh")
+}
+
 # EC2インスタンス
 resource "aws_instance" "api" {
   ami                    = data.aws_ami.amazon_linux.id
