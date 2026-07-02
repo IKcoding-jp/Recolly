@@ -96,6 +96,8 @@ export interface UserRecord {
 // API レスポンス型
 export interface SearchResponse {
   results: SearchResult[]
+  // 補完（日本語説明等）済みかどうか。false は速報結果（二段階レスポンスの1段目）
+  enriched: boolean
 }
 
 export interface WorkResponse {
