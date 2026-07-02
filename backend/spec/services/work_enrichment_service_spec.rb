@@ -19,6 +19,12 @@ RSpec.describe WorkEnrichmentService, type: :service do
     )
   end
 
+  def build_book_result(isbn)
+    ExternalApis::BaseAdapter::SearchResult.new(
+      '人間失格', 'book', nil, nil, nil, 'g1', 'google_books', { isbn: isbn, popularity: 0.5 }
+    )
+  end
+
   describe '#enrich の limit' do
     it 'limit 件目までのみ説明補完のHTTPリクエストを行う' do
       results = [build_result('作品A'), build_result('作品B'), build_result('作品C')]
@@ -45,6 +51,67 @@ RSpec.describe WorkEnrichmentService, type: :service do
 
       expect(child.description).to eq('巨人と戦う話。')
       expect(child.metadata[:description_from_parent]).to be true
+    end
+  end
+
+  describe '補完キャッシュ' do
+    let(:memory_store) { ActiveSupport::Cache::MemoryStore.new }
+
+    before do
+      allow(Rails).to receive(:cache).and_return(memory_store)
+    end
+
+    it '取得した日本語説明をタイトル単位でキャッシュし、2回目は外部APIを呼ばない' do
+      allow(tmdb_double).to receive(:fetch_japanese_description).with('葬送のフリーレン').and_return('魔王討伐後の物語。')
+
+      first = build_result('葬送のフリーレン')
+      service.enrich([first])
+      second = build_result('葬送のフリーレン')
+      service.enrich([second])
+
+      expect(second.description).to eq('魔王討伐後の物語。')
+      expect(tmdb_double).to have_received(:fetch_japanese_description).with('葬送のフリーレン').once
+    end
+
+    it 'タイトルの表記揺れ（末尾空白・大文字小文字）でも同じキャッシュにヒットする' do
+      allow(tmdb_double).to receive(:fetch_japanese_description).with('STEINS;GATE').and_return('タイムリープSF。')
+
+      service.enrich([build_result('STEINS;GATE')])
+      second = build_result('steins;gate ')
+      service.enrich([second])
+
+      expect(second.description).to eq('タイムリープSF。')
+      expect(tmdb_double).to have_received(:fetch_japanese_description).once
+    end
+
+    it '説明が見つからなかった事実もキャッシュし、2回目は再試行しない（ネガティブキャッシュ）' do
+      service.enrich([build_result('無名の作品')])
+      service.enrich([build_result('無名の作品')])
+
+      expect(tmdb_double).to have_received(:fetch_japanese_description).with('無名の作品').once
+      expect(wiki_double).to have_received(:search_and_fetch_extract).with('無名の作品').once
+    end
+
+    it 'ネガティブキャッシュヒット時は既存の説明を保持する' do
+      service.enrich([build_result('無名の作品')]) # NOT_FOUND がキャッシュされる
+      second = build_result('無名の作品', description: 'English description here.')
+      service.enrich([second])
+
+      expect(second.description).to eq('English description here.')
+    end
+
+    it 'openBDの書誌データをISBN単位でキャッシュし、2回目は外部APIを呼ばない' do
+      openbd_double = instance_double(ExternalApis::OpenbdClient)
+      allow(ExternalApis::OpenbdClient).to receive(:new).and_return(openbd_double)
+      allow(openbd_double).to receive(:fetch).with('9784101001340')
+                                             .and_return({ cover_image_url: 'https://c.jpg', description: '名作。' })
+
+      service.enrich([build_book_result('9784101001340')])
+      book2 = build_book_result('9784101001340')
+      service.enrich([book2])
+
+      expect(book2.cover_image_url).to eq('https://c.jpg')
+      expect(openbd_double).to have_received(:fetch).once
     end
   end
 end

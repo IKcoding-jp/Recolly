@@ -5,6 +5,14 @@
 # WorkSearchService から分離した（1ファイル200行ルール対応）
 class WorkEnrichmentService
   ENRICHMENT_BATCH_SIZE = 5
+  DESCRIPTION_CACHE_PREFIX = 'work_search:desc:v1'
+  OPENBD_CACHE_PREFIX = 'work_search:openbd:v1'
+  # 作品の説明文・書誌データはほぼ変わらないため長期キャッシュにする
+  ENRICHMENT_CACHE_TTL = 30.days
+  # 「見つからなかった」は外部APIのデータ追加で変わりうるため短めに再試行させる
+  NEGATIVE_CACHE_TTL = 1.day
+  # Rails.cache は nil を「キャッシュなし」と区別できないため、未発見を表すマーカー値
+  NOT_FOUND = 'NOT_FOUND'
 
   # sorted_results: 一次ソート済みの全検索結果
   # limit: HTTP補完（openBD・説明）の対象件数。nil なら全件
@@ -41,16 +49,24 @@ class WorkEnrichmentService
     result.metadata[:isbn].present?
   end
 
-  # スレッドごとに独立したクライアントインスタンスを使用する
-  # （Faradayコネクションの共有を避けるため、AniList補完と同じ方針）
   # 欠損している項目だけを補完する（既存データは上書きしない）
   def enrich_single_book(result)
-    openbd = ExternalApis::OpenbdClient.new
-    data = openbd.fetch(result.metadata[:isbn])
+    data = fetch_openbd_with_cache(result.metadata[:isbn])
     return if data.nil?
 
     result.cover_image_url ||= data[:cover_image_url]
     result.description ||= data[:description]
+  end
+
+  # ISBN単位でopenBD書誌をキャッシュする（説明キャッシュと同じNOT_FOUND方式）
+  def fetch_openbd_with_cache(isbn)
+    cache_key = "#{OPENBD_CACHE_PREFIX}:#{isbn}"
+    cached = Rails.cache.read(cache_key)
+    return cached == NOT_FOUND ? nil : cached unless cached.nil?
+
+    data = ExternalApis::OpenbdClient.new.fetch(isbn)
+    write_enrichment_cache(cache_key, data)
+    data
   end
 
   # 説明が空 or 英語の全結果を対象に日本語説明を補完する
@@ -71,16 +87,40 @@ class WorkEnrichmentService
   end
 
   # 補完の試行順:
-  # 1. TMDB日本語説明（映画・ドラマは元々これで取れる。AniList結果は title_english/title_romaji も試す）
-  # 2. Wikipedia search_and_fetch_extract（完全一致制約を回避した検索→取得の2段階）
-  # 3. 元の説明にフォールバック（英語でも nil にせずそのまま残す）
+  # 1. タイトル単位キャッシュ（検索クエリをまたいで再利用する）
+  # 2. TMDB日本語説明（映画・ドラマは元々これで取れる。AniList結果は title_english/title_romaji も試す）
+  # 3. Wikipedia search_and_fetch_extract（完全一致制約を回避した検索→取得の2段階）
+  # 4. 元の説明にフォールバック（英語でも nil にせずそのまま残す）
   def try_enrich_description(result)
+    cache_key = "#{DESCRIPTION_CACHE_PREFIX}:#{SearchTextNormalizer.normalize(result.title)}"
+    cached = Rails.cache.read(cache_key)
+    if cached
+      result.description = cached unless cached == NOT_FOUND
+      return
+    end
+
+    description = fetch_description_from_apis(result)
+    write_enrichment_cache(cache_key, description)
+    result.description = resolve_description(description, result.description)
+  end
+
+  # スレッドごとに独立したクライアントインスタンスを使用する
+  # （Faradayコネクションの共有を避けるため）
+  def fetch_description_from_apis(result)
     tmdb = ExternalApis::TmdbAdapter.new
     wikipedia = ExternalApis::WikipediaClient.new
 
     description = fetch_japanese_description_from_tmdb(result, tmdb)
-    description ||= wikipedia.search_and_fetch_extract(result.title)
-    result.description = resolve_description(description, result.description)
+    description || wikipedia.search_and_fetch_extract(result.title)
+  end
+
+  # 見つかった値は長期、未発見は NOT_FOUND マーカーで短期キャッシュする
+  def write_enrichment_cache(cache_key, value)
+    if value.present?
+      Rails.cache.write(cache_key, value, expires_in: ENRICHMENT_CACHE_TTL)
+    else
+      Rails.cache.write(cache_key, NOT_FOUND, expires_in: NEGATIVE_CACHE_TTL)
+    end
   end
 
   # TMDBで日本語説明を検索（メタデータにtitle_english/title_romajiがあれば順番に試す）
