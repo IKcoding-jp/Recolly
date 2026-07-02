@@ -43,7 +43,7 @@ describe('SearchProgress', () => {
 
   it('message 指定時は固定メッセージを表示しタイマー切り替えをしない', () => {
     vi.useFakeTimers()
-    const setTimeoutSpy = vi.spyOn(global, 'setTimeout')
+    const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout')
 
     render(<SearchProgress message="日本語の説明を取得中…" />)
 
