@@ -25,6 +25,12 @@ RSpec.describe WorkEnrichmentService, type: :service do
     )
   end
 
+  def build_result_with_media_type(title, media_type)
+    ExternalApis::BaseAdapter::SearchResult.new(
+      title, media_type, nil, nil, nil, title, 'anilist', { popularity: 0.5 }
+    )
+  end
+
   describe '#enrich の limit' do
     it 'limit 件目までのみ説明補完のHTTPリクエストを行う' do
       results = [build_result('作品A'), build_result('作品B'), build_result('作品C')]
@@ -103,6 +109,22 @@ RSpec.describe WorkEnrichmentService, type: :service do
 
       expect(second.description).to eq('English description here.')
       expect(tmdb_double).to have_received(:fetch_japanese_description).with('無名の作品').once
+    end
+
+    it '同じタイトルでもmedia_typeが異なれば説明キャッシュを共有しない' do
+      # 同一タイトルのアニメ版・漫画版が同じ検索結果に混在するケース（ジャンル横断アプリの前提）。
+      # media_typeを区別しないと、先に処理された方のキャッシュをもう一方が誤って引き継いでしまう
+      allow(tmdb_double).to receive(:fetch_japanese_description)
+        .with('鋼の錬金術師').and_return('アニメ版の説明。', '漫画版の説明。')
+
+      anime = build_result_with_media_type('鋼の錬金術師', 'anime')
+      service.enrich([anime])
+      manga = build_result_with_media_type('鋼の錬金術師', 'manga')
+      service.enrich([manga])
+
+      expect(anime.description).to eq('アニメ版の説明。')
+      expect(manga.description).to eq('漫画版の説明。')
+      expect(tmdb_double).to have_received(:fetch_japanese_description).with('鋼の錬金術師').twice
     end
 
     it 'openBDの書誌データをISBN単位でキャッシュし、2回目は外部APIを呼ばない' do

@@ -87,12 +87,18 @@ class WorkEnrichmentService
   end
 
   # 補完の試行順:
-  # 1. タイトル単位キャッシュ（検索クエリをまたいで再利用する）
+  # 1. タイトル+media_type単位キャッシュ（検索クエリをまたいで再利用する）
   # 2. TMDB日本語説明（映画・ドラマは元々これで取れる。AniList結果は title_english/title_romaji も試す）
   # 3. Wikipedia search_and_fetch_extract（完全一致制約を回避した検索→取得の2段階）
   # 4. 元の説明にフォールバック（英語でも nil にせずそのまま残す）
+  #
+  # キーに media_type を含める理由: 同一タイトルのアニメ版・漫画版・書籍版等が
+  # 同じ検索結果に混在しうる（ジャンル横断アプリの前提）。media_type を区別しないと、
+  # 先に処理された方が見つけた説明（自身のtitle_english/title_romaji経由かもしれない）を
+  # 別media_typeの結果がキャッシュ経由でそのまま引き継いでしまい、
+  # 本来自分自身のメタデータで見つかるはずのより適切な説明を取得する機会を失う
   def try_enrich_description(result)
-    cache_key = "#{DESCRIPTION_CACHE_PREFIX}:#{SearchTextNormalizer.normalize(result.title)}"
+    cache_key = "#{DESCRIPTION_CACHE_PREFIX}:#{result.media_type}:#{SearchTextNormalizer.normalize(result.title)}"
     cached = Rails.cache.read(cache_key)
     if cached
       result.description = cached unless cached == NOT_FOUND
