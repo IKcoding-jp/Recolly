@@ -98,6 +98,7 @@ describe('SearchPage', () => {
               metadata: {},
             },
           ],
+          enriched: true,
         }),
     })
 
@@ -116,7 +117,7 @@ describe('SearchPage', () => {
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ results: [] }),
+      json: () => Promise.resolve({ results: [], enriched: true }),
     })
 
     const searchInput = await screen.findByPlaceholderText('作品を検索...')
@@ -153,6 +154,7 @@ describe('SearchPage', () => {
               metadata: {},
             },
           ],
+          enriched: true,
         }),
     })
 
@@ -201,6 +203,7 @@ describe('SearchPage', () => {
               metadata: {},
             },
           ],
+          enriched: true,
         }),
     })
 
@@ -247,6 +250,7 @@ describe('SearchPage', () => {
               metadata: {},
             },
           ],
+          enriched: true,
         }),
     })
 
@@ -364,6 +368,7 @@ describe('SearchPage', () => {
               metadata: {},
             },
           ],
+          enriched: true,
         }),
     })
 
@@ -398,7 +403,7 @@ describe('SearchPage', () => {
     // クリーンアップ
     resolveSecond?.({
       ok: true,
-      json: () => Promise.resolve({ results: [] }),
+      json: () => Promise.resolve({ results: [], enriched: true }),
     })
   })
 
@@ -429,6 +434,7 @@ describe('SearchPage', () => {
               metadata: {},
             },
           ],
+          enriched: true,
         }),
     })
 
@@ -468,6 +474,7 @@ describe('SearchPage', () => {
               metadata: {},
             },
           ],
+          enriched: true,
         }),
     })
 
@@ -508,6 +515,7 @@ describe('SearchPage', () => {
               metadata: {},
             },
           ],
+          enriched: true,
         }),
     })
 
@@ -576,6 +584,7 @@ describe('SearchPage', () => {
               metadata: {},
             },
           ],
+          enriched: true,
         }),
     })
 
@@ -608,6 +617,7 @@ describe('SearchPage', () => {
               metadata: {},
             },
           ],
+          enriched: true,
         }),
     })
 
@@ -645,6 +655,7 @@ describe('SearchPage', () => {
               metadata: {},
             },
           ],
+          enriched: true,
         }),
     })
 
