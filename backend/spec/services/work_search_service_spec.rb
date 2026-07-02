@@ -759,4 +759,76 @@ RSpec.describe WorkSearchService, type: :service do
       expect(anilist_double).to have_received(:safe_search).exactly(:once)
     end
   end
+
+  describe '#search_with_status（二段階レスポンス）' do
+    let(:memory_store) { ActiveSupport::Cache::MemoryStore.new }
+
+    before do
+      allow(Rails).to receive(:cache).and_return(memory_store)
+      # 補完の呼び出し有無を検証するため WorkEnrichmentService をスパイする
+      allow(WorkEnrichmentService).to receive(:new).and_call_original
+    end
+
+    it 'enrich: false は補完をスキップし enriched: false を返す' do
+      outcome = service.search_with_status('テスト', media_type: 'anime', enrich: false)
+
+      expect(outcome.enriched).to be false
+      expect(outcome.results.length).to eq(1)
+      expect(WorkEnrichmentService).not_to have_received(:new)
+    end
+
+    it 'enrich: true（デフォルト）は補完を実行し enriched: true を返す' do
+      outcome = service.search_with_status('テスト', media_type: 'anime')
+
+      expect(outcome.enriched).to be true
+      expect(WorkEnrichmentService).to have_received(:new)
+    end
+
+    it 'enrich: false でもフルキャッシュヒット時は enriched: true で補完済み結果を返す' do
+      service.search_with_status('テスト', media_type: 'anime') # フルキャッシュを作る
+      outcome = service.search_with_status('テスト', media_type: 'anime', enrich: false)
+
+      expect(outcome.enriched).to be true
+    end
+
+    it 'enrich: false の生結果は5分キャッシュされ、直後の enrich: true が外部API検索を再実行しない' do
+      service.search_with_status('テスト', media_type: 'anime', enrich: false)
+      service.search_with_status('テスト', media_type: 'anime')
+
+      expect(anilist_double).to have_received(:safe_search).once
+    end
+
+    it 'enrich: false の結果はフルキャッシュに書き込まない' do
+      service.search_with_status('テスト', media_type: 'anime', enrich: false)
+      key = "work_search:#{WorkSearchService::CACHE_VERSION}:anime:テスト"
+
+      expect(Rails.cache.exist?(key)).to be false
+    end
+  end
+
+  describe 'キャッシュキーの正規化' do
+    let(:memory_store) { ActiveSupport::Cache::MemoryStore.new }
+
+    before { allow(Rails).to receive(:cache).and_return(memory_store) }
+
+    it '末尾空白・大文字の揺れで同じキャッシュにヒットする' do
+      service.search('STEINS;GATE', media_type: 'anime')
+      service.search('steins;gate ', media_type: 'anime')
+
+      expect(anilist_double).to have_received(:safe_search).once
+    end
+  end
+
+  describe '補完対象の上位N件限定' do
+    it '一次ソート上位 ENRICHMENT_TOP_N 件のみを limit として補完に渡す' do
+      enrichment = instance_double(WorkEnrichmentService)
+      allow(WorkEnrichmentService).to receive(:new).and_return(enrichment)
+      allow(enrichment).to receive(:enrich) { |results, **| results }
+
+      service.search('テスト', media_type: 'anime')
+
+      expect(enrichment).to have_received(:enrich)
+        .with(anything, limit: WorkSearchService::ENRICHMENT_TOP_N)
+    end
+  end
 end
