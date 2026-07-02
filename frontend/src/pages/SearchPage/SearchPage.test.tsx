@@ -699,4 +699,241 @@ describe('SearchPage', () => {
       expect(updateMediaTypesCount).toHaveBeenCalledTimes(1)
     })
   })
+
+  it('二段階検索: 速報結果を即表示し、補完済み結果で差し替える', async () => {
+    renderSearchPage()
+    const user = userEvent.setup()
+
+    // ①速報検索: enriched: false（英語の説明のみ）
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: '速報タイトル',
+              media_type: 'anime',
+              description: 'English description.',
+              cover_image_url: null,
+              total_episodes: 12,
+              external_api_id: '1',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+          ],
+          enriched: false,
+        }),
+    })
+    // ②補完検索: 意図的に保留し、①の表示を確認してから解決する（レースを避けるため）
+    let resolveFull: ((value: unknown) => void) | null = null
+    mockFetch.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFull = resolve
+        }),
+    )
+
+    const searchInput = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(searchInput, 'テスト')
+    await user.keyboard('{Enter}')
+
+    // ①速報（英語の説明）が即座に表示され、②の間は補完中メッセージが出る
+    expect(await screen.findByText('English description.')).toBeInTheDocument()
+    expect(screen.getByText('日本語の説明を取得中…')).toBeInTheDocument()
+
+    // ②補完検索: enriched: true（日本語の説明に差し替わる）
+    resolveFull?.({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: '速報タイトル',
+              media_type: 'anime',
+              description: '日本語の説明。',
+              cover_image_url: null,
+              total_episodes: 12,
+              external_api_id: '1',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+          ],
+          enriched: true,
+        }),
+    })
+
+    // ②完了後、補完中メッセージが消え説明が日本語に差し替わる
+    await waitFor(() => {
+      expect(screen.getByText('日本語の説明。')).toBeInTheDocument()
+    })
+    expect(screen.queryByText('日本語の説明を取得中…')).not.toBeInTheDocument()
+
+    // mockFetch呼び出し順: [0]=認証, [1]=recorded_external_ids, [2]=①速報, [3]=②補完
+    expect(mockFetch.mock.calls[2][0]).toContain('enrich=false')
+    expect(mockFetch.mock.calls[3][0]).not.toContain('enrich=')
+  })
+
+  it('速報が enriched: true（キャッシュヒット）なら2回目のリクエストをしない', async () => {
+    renderSearchPage()
+    const user = userEvent.setup()
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: 'キャッシュ済み',
+              media_type: 'anime',
+              description: '説明',
+              cover_image_url: null,
+              total_episodes: 12,
+              external_api_id: '1',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+          ],
+          enriched: true,
+        }),
+    })
+
+    const searchInput = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(searchInput, 'テスト')
+    await user.keyboard('{Enter}')
+
+    expect(await screen.findByText('キャッシュ済み')).toBeInTheDocument()
+    // 少し待っても2回目のリクエストが発生しないことを確認
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    // 認証 + recorded_external_ids + 検索1回のみ
+    expect(mockFetch).toHaveBeenCalledTimes(3)
+  })
+
+  it('補完検索が失敗しても速報結果を表示し続けエラーを出さない', async () => {
+    renderSearchPage()
+    const user = userEvent.setup()
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: '速報タイトル',
+              media_type: 'anime',
+              description: '説明',
+              cover_image_url: null,
+              total_episodes: 12,
+              external_api_id: '1',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+          ],
+          enriched: false,
+        }),
+    })
+    mockFetch.mockRejectedValueOnce(new TypeError('network error'))
+
+    const searchInput = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(searchInput, 'テスト')
+    await user.keyboard('{Enter}')
+
+    expect(await screen.findByText('速報タイトル')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText('日本語の説明を取得中…')).not.toBeInTheDocument()
+    })
+    expect(screen.queryByText(/ネットワークに接続できませんでした/)).not.toBeInTheDocument()
+  })
+
+  it('補完待ちの間に新しい検索を開始すると古い補完結果を反映しない', async () => {
+    const user = userEvent.setup()
+    let resolveFull: ((value: unknown) => void) | null = null
+
+    // 1回目検索: ①速報（enriched: false）
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: '古い速報',
+              media_type: 'anime',
+              description: '',
+              cover_image_url: null,
+              total_episodes: null,
+              external_api_id: '1',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+          ],
+          enriched: false,
+        }),
+    })
+    // 1回目検索: ②補完（保留のまま）。AbortSignalが中断されたらAbortErrorを投げる（実際のfetchと同じ挙動）
+    mockFetch.mockImplementationOnce(
+      (_url: string, options?: RequestInit) =>
+        new Promise((resolve, reject) => {
+          resolveFull = resolve
+          options?.signal?.addEventListener('abort', () => {
+            reject(new DOMException('aborted', 'AbortError'))
+          })
+        }),
+    )
+    // 2回目検索: キャッシュヒットで1リクエスト完結
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: '新しい結果',
+              media_type: 'anime',
+              description: '',
+              cover_image_url: null,
+              total_episodes: null,
+              external_api_id: '2',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+          ],
+          enriched: true,
+        }),
+    })
+
+    renderSearchPage()
+    const input = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(input, '古いクエリ')
+    await user.keyboard('{Enter}')
+    expect(await screen.findByText('古い速報')).toBeInTheDocument()
+
+    await user.clear(input)
+    await user.type(input, '新しいクエリ')
+    await user.keyboard('{Enter}')
+
+    expect(await screen.findByText('新しい結果')).toBeInTheDocument()
+
+    // 保留していた古い②が後から解決しても、画面は新しい結果のまま
+    resolveFull?.({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: '古い補完済み',
+              media_type: 'anime',
+              description: '',
+              cover_image_url: null,
+              total_episodes: null,
+              external_api_id: '1',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+          ],
+          enriched: true,
+        }),
+    })
+    await waitFor(() => {
+      expect(screen.queryByText('古い補完済み')).not.toBeInTheDocument()
+    })
+    expect(screen.getByText('新しい結果')).toBeInTheDocument()
+  })
 })

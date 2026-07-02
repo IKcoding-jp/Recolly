@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { motion } from 'motion/react'
 import { useRecollyMotion } from '../../lib/motion'
-import type { SearchResult, MediaType, RecordStatus } from '../../lib/types'
+import type { SearchResult, MediaType, RecordStatus, SearchResponse } from '../../lib/types'
 import { worksApi } from '../../lib/worksApi'
 import { recordsApi } from '../../lib/recordsApi'
 import { imagesApi } from '../../lib/imagesApi'
@@ -49,6 +49,7 @@ export function SearchPage() {
   const [recordedIds, setRecordedIds] = useState<Set<string>>(new Set())
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [isSearching, setIsSearching] = useState(false)
+  const [isEnriching, setIsEnriching] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
   const [error, setError] = useState('')
   const [showManualForm, setShowManualForm] = useState(false)
@@ -72,11 +73,10 @@ export function SearchPage() {
       })
   }, [])
 
-  const handleSearch = async (e: FormEvent) => {
-    e.preventDefault()
-    if (!query.trim()) return
-
-    // 古いリクエストがあればキャンセルする
+  // 二段階検索（ADR-0042）: ①enrich=false で速報を即表示 → ②補完済み結果で差し替え
+  // フルキャッシュヒット時は①が enriched: true で返るため②を省略する
+  const runSearch = async (searchQuery: string, searchGenre: GenreFilter) => {
+    // 古いリクエスト（①②とも）があればキャンセルする
     abortControllerRef.current?.abort()
     const controller = new AbortController()
     abortControllerRef.current = controller
@@ -84,36 +84,63 @@ export function SearchPage() {
     // 画面上の古い結果を即座にクリア
     setResults([])
     setIsSearching(true)
+    setIsEnriching(false)
     setError('')
     setHasSearched(true)
 
+    const mediaType = searchGenre === 'all' ? undefined : searchGenre
+
+    let quick: SearchResponse
     try {
-      const mediaType = genre === 'all' ? undefined : genre
-      const response = await worksApi.search(query, mediaType, { signal: controller.signal })
-      // このリクエストがキャンセルされていたら結果を反映しない
-      if (controller.signal.aborted) return
-      const searchResults = response.results
-      setResults(searchResults)
-      // クエリ本文は送らず長さのみ送る（プライバシー方針）
-      captureEvent(ANALYTICS_EVENTS.SEARCH_PERFORMED, {
-        query_length: query.length,
-        genre_filter: genre,
-        result_count: searchResults.length,
+      quick = await worksApi.search(searchQuery, mediaType, {
+        signal: controller.signal,
+        enrich: false,
       })
     } catch (err) {
       // AbortError（ユーザー/システムが中断した）は無視する
       if ((err as Error).name === 'AbortError') return
-      if (err instanceof ApiError) {
-        setError(err.message)
-      } else {
-        setError('検索に失敗しました')
-      }
-    } finally {
-      // キャンセルされていない場合のみローディングを解除
-      if (!controller.signal.aborted) {
-        setIsSearching(false)
-      }
+      setError(err instanceof ApiError ? err.message : '検索に失敗しました')
+      setIsSearching(false)
+      return
     }
+    // このリクエストがキャンセルされていたら結果を反映しない
+    if (controller.signal.aborted) return
+
+    setResults(quick.results)
+    setIsSearching(false)
+
+    let finalResults = quick.results
+    if (!quick.enriched) {
+      // ①が速報のみ（enriched: false）だった場合、②で補完済み結果に差し替える
+      setIsEnriching(true)
+      try {
+        const full = await worksApi.search(searchQuery, mediaType, { signal: controller.signal })
+        if (!controller.signal.aborted) {
+          setResults(full.results)
+          finalResults = full.results
+        }
+      } catch {
+        // ②の失敗は無視する（速報結果の表示を維持。補完なしでも機能は成立する）
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsEnriching(false)
+        }
+      }
+      if (controller.signal.aborted) return
+    }
+
+    // クエリ本文は送らず長さのみ送る（プライバシー方針）。二段階でも送信は1回だけ
+    captureEvent(ANALYTICS_EVENTS.SEARCH_PERFORMED, {
+      query_length: searchQuery.length,
+      genre_filter: searchGenre,
+      result_count: finalResults.length,
+    })
+  }
+
+  const handleSearch = (e: FormEvent) => {
+    e.preventDefault()
+    if (!query.trim()) return
+    void runSearch(query, genre)
   }
 
   const handleOpenModal = (work: SearchResult) => {
@@ -202,37 +229,7 @@ export function SearchPage() {
   const handleGenreChange = (newGenre: GenreFilter) => {
     setGenre(newGenre)
     if (query.trim() && hasSearched) {
-      abortControllerRef.current?.abort()
-      const controller = new AbortController()
-      abortControllerRef.current = controller
-
-      setResults([])
-      setIsSearching(true)
-      setError('')
-
-      const mediaType = newGenre === 'all' ? undefined : newGenre
-      worksApi
-        .search(query, mediaType, { signal: controller.signal })
-        .then((response) => {
-          if (controller.signal.aborted) return
-          const searchResults = response.results
-          setResults(searchResults)
-          // ジャンル変更による再検索も search_performed として記録する
-          captureEvent(ANALYTICS_EVENTS.SEARCH_PERFORMED, {
-            query_length: query.length,
-            genre_filter: newGenre,
-            result_count: searchResults.length,
-          })
-        })
-        .catch((err: Error) => {
-          if (err.name === 'AbortError') return
-          setError('検索に失敗しました')
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) {
-            setIsSearching(false)
-          }
-        })
+      void runSearch(query, newGenre)
     }
   }
 
@@ -291,6 +288,8 @@ export function SearchPage() {
           shouldShowEnglishHint(results, query, genre) && (
             <p className={styles.hint}>海外ゲームは英語タイトルでも検索してみてください</p>
           )}
+
+        {isEnriching && <SearchProgress message="日本語の説明を取得中…" />}
 
         {results.length > 0 && (
           <motion.div
