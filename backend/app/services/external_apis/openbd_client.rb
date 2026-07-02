@@ -11,6 +11,9 @@ module ExternalApis
     BASE_URL = 'https://api.openbd.jp'
     ENDPOINT_PATH = '/v1/get'
     USER_AGENT = 'Recolly/1.0 (https://github.com/IKcoding-jp/Recolly)'
+    # 補完用クライアントのため短いタイムアウトで攻める（失敗時は補完なしで表示するだけ）
+    OPEN_TIMEOUT = 2
+    TIMEOUT = 3
 
     # ISBN から書誌データを取得する
     # 戻り値: { cover_image_url: String|nil, description: String|nil } または nil
@@ -47,7 +50,7 @@ module ExternalApis
 
     def connection
       @connection ||= Faraday.new(
-        url: BASE_URL, request: { open_timeout: 5, timeout: 10 }
+        url: BASE_URL, request: { open_timeout: OPEN_TIMEOUT, timeout: TIMEOUT }
       ) do |f|
         f.response :json
         f.headers['User-Agent'] = USER_AGENT

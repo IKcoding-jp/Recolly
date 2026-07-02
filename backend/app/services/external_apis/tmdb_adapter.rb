@@ -8,6 +8,10 @@ module ExternalApis
     ANIMATION_GENRE_ID = 16
     # Wikipedia経由フォールバック検索を試みる閾値（この件数以下なら追加検索する）
     NAKAGURO_RETRY_THRESHOLD = 3
+    # 補完は失敗しても英語説明にフォールバックするだけなので短いタイムアウトで攻める
+    # 一次検索（tmdb_connection）は失敗＝結果ゼロになるため現行の 5/10 秒を維持する
+    ENRICHMENT_OPEN_TIMEOUT = 2
+    ENRICHMENT_TIMEOUT = 3
 
     def media_types
       %w[movie drama]
@@ -28,10 +32,10 @@ module ExternalApis
     # ただし TMDB が曖昧マッチで親作品（Season 1 等）を返すケースは TitleMatcher で弾く
     # 見つからない場合やエラー時はnilを返す（呼び出し元で英語説明をフォールバックに使う）
     def fetch_japanese_description(query)
-      response = tmdb_connection.get('/3/search/multi',
-                                     api_key: ENV.fetch('TMDB_API_KEY'),
-                                     query: query,
-                                     language: 'ja')
+      response = enrichment_connection.get('/3/search/multi',
+                                           api_key: ENV.fetch('TMDB_API_KEY'),
+                                           query: query,
+                                           language: 'ja')
 
       results = response.body['results'] || []
       best_match_description(results, query)
@@ -122,6 +126,14 @@ module ExternalApis
 
     def tmdb_connection
       @tmdb_connection ||= connection(url: BASE_URL)
+    end
+
+    # 補完は失敗しても英語説明にフォールバックするだけなので短いタイムアウトで攻める
+    # 一次検索（tmdb_connection）は失敗＝結果ゼロになるため現行の 5/10 秒を維持する
+    def enrichment_connection
+      @enrichment_connection ||= connection(
+        url: BASE_URL, open_timeout: ENRICHMENT_OPEN_TIMEOUT, timeout: ENRICHMENT_TIMEOUT
+      )
     end
 
     def normalize_movie(item)
