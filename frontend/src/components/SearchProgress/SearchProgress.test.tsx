@@ -40,4 +40,16 @@ describe('SearchProgress', () => {
     render(<SearchProgress />)
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
   })
+
+  it('message 指定時は固定メッセージを表示しタイマー切り替えをしない', () => {
+    vi.useFakeTimers()
+    render(<SearchProgress message="日本語の説明を取得中…" />)
+
+    expect(screen.getByText('日本語の説明を取得中…')).toBeInTheDocument()
+    act(() => {
+      vi.advanceTimersByTime(3000)
+    })
+    expect(screen.getByText('日本語の説明を取得中…')).toBeInTheDocument()
+    vi.useRealTimers()
+  })
 })
