@@ -40,4 +40,23 @@ describe('SearchProgress', () => {
     render(<SearchProgress />)
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
   })
+
+  it('message 指定時は固定メッセージを表示しタイマー切り替えをしない', () => {
+    vi.useFakeTimers()
+    const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout')
+
+    render(<SearchProgress message="日本語の説明を取得中…" />)
+
+    // タイマーが1つも生成されていないことを直接検証する
+    // （表示テキストのassertionだけだと、message ?? STEPS[stepIndex].message の
+    //   ?? 演算子によりガードが壊れていても検知できないため）
+    expect(setTimeoutSpy).not.toHaveBeenCalled()
+
+    expect(screen.getByText('日本語の説明を取得中…')).toBeInTheDocument()
+    act(() => {
+      vi.advanceTimersByTime(3000)
+    })
+    expect(screen.getByText('日本語の説明を取得中…')).toBeInTheDocument()
+    vi.useRealTimers()
+  })
 })

@@ -37,8 +37,8 @@ module ExternalApis
 
     private
 
-    def connection(url:)
-      Faraday.new(url: url, request: { open_timeout: 5, timeout: 10 }) do |f|
+    def connection(url:, open_timeout: 5, timeout: 10)
+      Faraday.new(url: url, request: { open_timeout: open_timeout, timeout: timeout }) do |f|
         f.request :json
         # POSTも含める（AniList GraphQL等の検索クエリは冪等のため安全）
         f.request :retry, max: 2, retry_statuses: [500, 502, 503, 504],

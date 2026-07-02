@@ -7,6 +7,9 @@ module ExternalApis
   class WikipediaClient
     ENDPOINT = 'https://ja.wikipedia.org/w/api.php'
     USER_AGENT = 'Recolly/1.0 (https://github.com/IKcoding-jp/Recolly)'
+    # 補完用クライアントのため短いタイムアウトで攻める（失敗時は補完なしで表示するだけ）
+    OPEN_TIMEOUT = 2
+    TIMEOUT = 3
 
     # キーワード検索でタイトル一覧を返す
     def search(query, limit: 10)
@@ -84,7 +87,7 @@ module ExternalApis
 
     def connection
       @connection ||= Faraday.new(
-        url: ENDPOINT, request: { open_timeout: 5, timeout: 10 }
+        url: ENDPOINT, request: { open_timeout: OPEN_TIMEOUT, timeout: TIMEOUT }
       ) do |f|
         f.response :json
         f.headers['User-Agent'] = USER_AGENT
