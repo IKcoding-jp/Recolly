@@ -15,10 +15,13 @@ RSpec.describe 'Api::V1::Works', type: :request do
     ]
   end
 
+  # search_with_status（Outcome を返す）を前提にスタブする
+  let(:service_double) { instance_spy(WorkSearchService) }
+
   before do
-    service_double = instance_spy(WorkSearchService)
     allow(WorkSearchService).to receive(:new).and_return(service_double)
-    allow(service_double).to receive(:search).and_return(mock_results)
+    allow(service_double).to receive(:search_with_status)
+      .and_return(WorkSearchService::Outcome.new(mock_results, true))
   end
 
   describe 'GET /api/v1/works/search' do
@@ -43,6 +46,27 @@ RSpec.describe 'Api::V1::Works', type: :request do
       it 'キーワード未指定で422' do
         get '/api/v1/works/search', params: {}, headers: { 'Accept' => 'application/json' }
         expect(response).to have_http_status(:unprocessable_content)
+      end
+
+      it 'enrich=false をサービスに引き渡し enriched を返す' do
+        allow(service_double).to receive(:search_with_status)
+          .and_return(WorkSearchService::Outcome.new([], false))
+
+        get '/api/v1/works/search', params: { q: 'テスト', enrich: 'false' },
+                                    headers: { 'Accept' => 'application/json' }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.parsed_body['enriched']).to be false
+        expect(service_double).to have_received(:search_with_status)
+          .with('テスト', media_type: nil, enrich: false)
+      end
+
+      it 'enrich 省略時は enrich: true でサービスを呼ぶ（後方互換）' do
+        get '/api/v1/works/search', params: { q: 'テスト' }, headers: { 'Accept' => 'application/json' }
+
+        expect(response.parsed_body['enriched']).to be true
+        expect(service_double).to have_received(:search_with_status)
+          .with('テスト', media_type: nil, enrich: true)
       end
     end
 

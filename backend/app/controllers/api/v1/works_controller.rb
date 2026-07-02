@@ -5,13 +5,16 @@ module Api
     class WorksController < ApplicationController
       before_action :authenticate_user!
 
-      # GET /api/v1/works/search?q=キーワード&media_type=anime
+      # GET /api/v1/works/search?q=キーワード&media_type=anime&enrich=false
+      # enrich=false は補完をスキップした速報結果を返す（二段階レスポンス・ADR-0042）
       def search
         query = params[:q]
         return render json: { error: '検索キーワードを入力してください' }, status: :unprocessable_content if query.blank?
 
-        results = WorkSearchService.new.search(query, media_type: params[:media_type])
-        render json: { results: results.map(&:to_h) }
+        outcome = WorkSearchService.new.search_with_status(
+          query, media_type: params[:media_type], enrich: params[:enrich] != 'false'
+        )
+        render json: { results: outcome.results.map(&:to_h), enriched: outcome.enriched }
       end
 
       # POST /api/v1/works（手動登録）
