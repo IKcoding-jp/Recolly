@@ -94,10 +94,15 @@ RSpec.describe WorkEnrichmentService, type: :service do
 
     it 'ネガティブキャッシュヒット時は既存の説明を保持する' do
       service.enrich([build_result('無名の作品')]) # NOT_FOUND がキャッシュされる
+
+      # NOT_FOUND キャッシュが効いていれば、ここで日本語説明が見つかるようにしても
+      # 外部APIは呼ばれず上書きされないはず（キャッシュが壊れていればこの説明で上書きされてしまう）
+      allow(tmdb_double).to receive(:fetch_japanese_description).with('無名の作品').and_return('後から見つかった説明。')
       second = build_result('無名の作品', description: 'English description here.')
       service.enrich([second])
 
       expect(second.description).to eq('English description here.')
+      expect(tmdb_double).to have_received(:fetch_japanese_description).with('無名の作品').once
     end
 
     it 'openBDの書誌データをISBN単位でキャッシュし、2回目は外部APIを呼ばない' do
