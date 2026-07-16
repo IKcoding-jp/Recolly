@@ -49,7 +49,6 @@ export function SearchPage() {
   const [recordedIds, setRecordedIds] = useState<Set<string>>(new Set())
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [isSearching, setIsSearching] = useState(false)
-  const [isEnriching, setIsEnriching] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
   const [error, setError] = useState('')
   const [showManualForm, setShowManualForm] = useState(false)
@@ -73,10 +72,8 @@ export function SearchPage() {
       })
   }, [])
 
-  // 二段階検索（ADR-0042）: ①enrich=false で速報を即表示 → ②補完済み結果で差し替え
-  // フルキャッシュヒット時は①が enriched: true で返るため②を省略する
   const runSearch = async (searchQuery: string, searchGenre: GenreFilter) => {
-    // 古いリクエスト（①②とも）があればキャンセルする
+    // 古いリクエストがあればキャンセルする
     abortControllerRef.current?.abort()
     const controller = new AbortController()
     abortControllerRef.current = controller
@@ -84,18 +81,14 @@ export function SearchPage() {
     // 画面上の古い結果を即座にクリア
     setResults([])
     setIsSearching(true)
-    setIsEnriching(false)
     setError('')
     setHasSearched(true)
 
     const mediaType = searchGenre === 'all' ? undefined : searchGenre
 
-    let quick: SearchResponse
+    let response: SearchResponse
     try {
-      quick = await worksApi.search(searchQuery, mediaType, {
-        signal: controller.signal,
-        enrich: false,
-      })
+      response = await worksApi.search(searchQuery, mediaType, { signal: controller.signal })
     } catch (err) {
       // AbortError（ユーザー/システムが中断した）は無視する
       if ((err as Error).name === 'AbortError') return
@@ -106,34 +99,14 @@ export function SearchPage() {
     // このリクエストがキャンセルされていたら結果を反映しない
     if (controller.signal.aborted) return
 
-    setResults(quick.results)
+    setResults(response.results)
     setIsSearching(false)
 
-    let finalResults = quick.results
-    if (!quick.enriched) {
-      // ①が速報のみ（enriched: false）だった場合、②で補完済み結果に差し替える
-      setIsEnriching(true)
-      try {
-        const full = await worksApi.search(searchQuery, mediaType, { signal: controller.signal })
-        if (!controller.signal.aborted) {
-          setResults(full.results)
-          finalResults = full.results
-        }
-      } catch {
-        // ②の失敗は無視する（速報結果の表示を維持。補完なしでも機能は成立する）
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsEnriching(false)
-        }
-      }
-      if (controller.signal.aborted) return
-    }
-
-    // クエリ本文は送らず長さのみ送る（プライバシー方針）。二段階でも送信は1回だけ
+    // クエリ本文は送らず長さのみ送る（プライバシー方針）
     captureEvent(ANALYTICS_EVENTS.SEARCH_PERFORMED, {
       query_length: searchQuery.length,
       genre_filter: searchGenre,
-      result_count: finalResults.length,
+      result_count: response.results.length,
     })
   }
 
@@ -288,8 +261,6 @@ export function SearchPage() {
           shouldShowEnglishHint(results, query, genre) && (
             <p className={styles.hint}>海外ゲームは英語タイトルでも検索してみてください</p>
           )}
-
-        {isEnriching && <SearchProgress message="日本語の説明を取得中…" />}
 
         {results.length > 0 && (
           <motion.div
