@@ -15,6 +15,11 @@ RSpec.describe 'Api::V1::Records', type: :request do
   end
 
   describe 'POST /api/v1/records' do
+    # 記録時の説明補完（ADR-0044）が外部APIへ実リクエストしないようスタブする
+    let(:enrichment_double) { instance_double(WorkEnrichmentService, enrich_work_description!: nil) }
+
+    before { allow(WorkEnrichmentService).to receive(:new).and_return(enrichment_double) }
+
     context '認証済み' do
       before { sign_in user }
 
@@ -84,6 +89,33 @@ RSpec.describe 'Api::V1::Records', type: :request do
       it 'work_id も work_data もない場合は422' do
         post '/api/v1/records', params: { record: {} }, as: :json
         expect(response).to have_http_status(:unprocessable_content)
+      end
+
+      it '外部API由来のWork作成時に日本語説明の補完を実行する（ADR-0044: 記録時補完）' do
+        params = { record: { work_data: { title: '新規作品', media_type: 'anime',
+                                          external_api_id: '99999', external_api_source: 'anilist' } } }
+        post '/api/v1/records', params: params, as: :json
+
+        expect(response).to have_http_status(:created)
+        work = Work.find_by(external_api_id: '99999')
+        expect(enrichment_double).to have_received(:enrich_work_description!).with(work)
+      end
+
+      it '既存の外部Work再利用時も説明補完を試みる（過去に補完できなかった作品の救済）' do
+        Work.create!(title: '既存外部作品', media_type: 'anime',
+                     external_api_id: '99999', external_api_source: 'anilist')
+        params = { record: { work_data: { title: '既存外部作品', media_type: 'anime',
+                                          external_api_id: '99999', external_api_source: 'anilist' } } }
+        post '/api/v1/records', params: params, as: :json
+
+        expect(enrichment_double).to have_received(:enrich_work_description!)
+      end
+
+      it '外部APIに紐づかないWork（手動登録）では説明補完を実行しない' do
+        post '/api/v1/records', params: { record: { work_id: existing_work.id } }, as: :json
+
+        expect(response).to have_http_status(:created)
+        expect(enrichment_double).not_to have_received(:enrich_work_description!)
       end
     end
 

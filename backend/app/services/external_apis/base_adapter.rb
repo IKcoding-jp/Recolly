@@ -37,12 +37,18 @@ module ExternalApis
 
     private
 
-    def connection(url:, open_timeout: 5, timeout: 10)
+    # タイムアウト例外はデフォルトでリトライしない（5xxのリトライは維持）
+    # 相手APIが詰まっている時のタイムアウトはリトライしても失敗し、待ち時間が実質2〜3倍になるだけのため
+    # （検索全体が30秒超になる実害があった。Faraday::RetriableResponseは
+    #  retry_statusesベースのリトライに必須のため必ず残す）
+    def connection(url:, open_timeout: 5, timeout: 10, retry_on_timeout: false)
       Faraday.new(url: url, request: { open_timeout: open_timeout, timeout: timeout }) do |f|
         f.request :json
         # POSTも含める（AniList GraphQL等の検索クエリは冪等のため安全）
-        f.request :retry, max: 2, retry_statuses: [500, 502, 503, 504],
-                          methods: %i[get head options put delete post]
+        retry_options = { max: 2, retry_statuses: [500, 502, 503, 504],
+                          methods: %i[get head options put delete post] }
+        retry_options[:exceptions] = [Faraday::RetriableResponse] unless retry_on_timeout
+        f.request :retry, retry_options
         f.response :logger, Rails.logger, headers: false, bodies: !Rails.env.production?
         f.response :json
         f.adapter Faraday.default_adapter
