@@ -1,29 +1,28 @@
+/* WorkCard の縦型カードと同じ形・同じグリッド列数のスケルトン */
 .container {
   margin-top: var(--spacing-lg);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--spacing-md);
 }
 
 .card {
   display: flex;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  border-bottom: var(--border-width-thin) var(--border-style) var(--color-border-light);
-  align-items: flex-start;
-}
-
-.card:last-child {
-  opacity: 0.5;
-  border-bottom: none;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border: var(--border-width-thin) var(--border-style) var(--color-border-light);
+  border-radius: var(--radius-md);
 }
 
 .coverPlaceholder {
-  flex-shrink: 0;
-  width: 80px;
-  height: 120px;
+  width: 100%;
+  aspect-ratio: 2 / 3;
   border-radius: var(--radius-sm);
   background: linear-gradient(
     90deg,
     var(--color-border-light) 25%,
-    #f1f3f5 50%,
+    var(--color-skeleton-highlight) 50%,
     var(--color-border-light) 75%
   );
   background-size: 200% 100%;
@@ -35,7 +34,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
-  padding-top: var(--spacing-xs);
 }
 
 .line {
@@ -43,7 +41,7 @@
   background: linear-gradient(
     90deg,
     var(--color-border-light) 25%,
-    #f1f3f5 50%,
+    var(--color-skeleton-highlight) 50%,
     var(--color-border-light) 75%
   );
   background-size: 200% 100%;
@@ -52,34 +50,22 @@
 
 .lineGenre {
   height: 10px;
-  width: 50px;
+  width: 50%;
 }
 
 .lineTitle {
-  height: 16px;
-  width: 65%;
-}
-
-.lineDesc {
-  height: 12px;
+  height: 14px;
   width: 85%;
 }
 
-.lineDescShort {
-  height: 12px;
-  width: 60%;
-}
-
 .buttonPlaceholder {
-  flex-shrink: 0;
   width: 72px;
   height: 32px;
   border-radius: var(--radius-sm);
-  margin-top: var(--spacing-lg);
   background: linear-gradient(
     90deg,
     var(--color-border-light) 25%,
-    #f1f3f5 50%,
+    var(--color-skeleton-highlight) 50%,
     var(--color-border-light) 75%
   );
   background-size: 200% 100%;
@@ -96,8 +82,13 @@
 }
 
 @media (max-width: 768px) {
-  .coverPlaceholder {
-    width: 48px;
-    height: 68px;
+  .container {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
