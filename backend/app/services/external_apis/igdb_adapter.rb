@@ -120,8 +120,9 @@ module ExternalApis
       token = access_token
       client_id = ENV.fetch('IGDB_CLIENT_ID')
       Faraday.new(url: IGDB_URL, request: { open_timeout: 5, timeout: 10 }) do |f|
+        # 5xxのみリトライし、タイムアウト例外ではリトライしない（BaseAdapter#connectionと同じ方針）
         f.request :retry, max: 2, retry_statuses: [500, 502, 503, 504],
-                          methods: %i[get head options put delete post]
+                          exceptions: [Faraday::RetriableResponse], methods: %i[get head options put delete post]
         f.response :logger, Rails.logger, headers: false, bodies: !Rails.env.production?
         f.response :json
         f.headers['Authorization'] = "Bearer #{token}"
