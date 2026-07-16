@@ -8,17 +8,24 @@ module ExternalApis
     ANIMATION_GENRE_ID = 16
     # Wikipedia経由フォールバック検索を試みる閾値（この件数以下なら追加検索する）
     NAKAGURO_RETRY_THRESHOLD = 3
+    # 一次検索のタイムアウト。TMDBが詰まっても他アダプタの結果があるため、早めに諦めて検索全体の応答を優先する
+    PRIMARY_OPEN_TIMEOUT = 2
+    PRIMARY_TIMEOUT = 5
     # 補完は失敗しても英語説明にフォールバックするだけなので短いタイムアウトで攻める
-    # 一次検索（tmdb_connection）は失敗＝結果ゼロになるため現行の 5/10 秒を維持する
     ENRICHMENT_OPEN_TIMEOUT = 2
     ENRICHMENT_TIMEOUT = 3
+    # 代替タイトル追加検索もベストエフォート（失敗しても一次検索結果を返すだけ）のため短いタイムアウトで攻める。
+    # 対象タイトル数を絞るのは、同時リクエストの束がTMDB側の流量制限を踏み後続の一次検索まで詰まる事象があったため
+    SUPPLEMENTARY_OPEN_TIMEOUT = 2
+    SUPPLEMENTARY_TIMEOUT = 3
+    SUPPLEMENTARY_TITLE_LIMIT = 3
 
     def media_types
       %w[movie drama]
     end
 
     def search(query, media_type: nil) # rubocop:disable Lint/UnusedMethodArgument -- BaseAdapterインターフェース準拠
-      results = search_movies(query) + search_tv(query)
+      results = search_movies_and_tv_in_parallel(query)
 
       # 結果が少ない場合、WikipediaClientで正式タイトルを取得してTMDB再検索する
       # 例: 「ウォーキングデッド」→ Wikipedia「ウォーキング・デッド」→ TMDB再検索
@@ -46,23 +53,51 @@ module ExternalApis
 
     private
 
+    # 映画検索とTV検索を並列に実行する（逐次だと最悪でタイムアウト2回分待つため）
+    # スレッドごとに新しいコネクションを使う（Faradayコネクションの共有を避けるため）
+    def search_movies_and_tv_in_parallel(query)
+      [Thread.new { search_movies(query, conn: primary_connection) },
+       Thread.new { search_tv(query, conn: primary_connection) }].flat_map(&:value)
+    end
+
+    def primary_connection
+      connection(url: BASE_URL, open_timeout: PRIMARY_OPEN_TIMEOUT, timeout: PRIMARY_TIMEOUT)
+    end
+
     # Wikipedia検索で正式タイトルを取得し、TMDBで追加検索する
     # 例: 「ウォーキングデッド」→ Wikipedia「ウォーキング・デッド」→ TMDB再検索
     def search_via_wikipedia(query, existing_results)
       wikipedia = ExternalApis::WikipediaClient.new
-      titles = wikipedia.search(query, limit: 5)
+      titles = wikipedia.search(query, limit: SUPPLEMENTARY_TITLE_LIMIT).reject { |title| title == query }
       return existing_results if titles.empty?
 
-      additional = titles.flat_map do |title|
-        next [] if title == query
-
-        search_movies(title) + search_tv(title)
-      end
-
-      merge_results(existing_results, additional)
+      merge_results(existing_results, fetch_supplementary_results(titles))
     rescue StandardError => e
       Rails.logger.error("[TmdbAdapter] Wikipedia補完エラー: #{e.message}")
       existing_results
+    end
+
+    # 代替タイトルを短いタイムアウトで並列問い合わせする
+    # movie/tvもタイトル単位でスレッドを分け、逐次待ちをなくす
+    # エンドポイントごとに個別にエラーを握りつぶす（片方が失敗してももう片方の結果は活かす）
+    def fetch_supplementary_results(titles)
+      threads = titles.flat_map do |title|
+        [
+          Thread.new { supplementary_search(title) { |t, c| search_movies(t, conn: c) } },
+          Thread.new { supplementary_search(title) { |t, c| search_tv(t, conn: c) } }
+        ]
+      end
+      threads.flat_map(&:value)
+    end
+
+    # スレッドごとに短タイムアウト・リトライなしのコネクションを作って検索する
+    def supplementary_search(title)
+      conn = connection(url: BASE_URL, open_timeout: SUPPLEMENTARY_OPEN_TIMEOUT,
+                        timeout: SUPPLEMENTARY_TIMEOUT, retry_on_timeout: false)
+      yield(title, conn)
+    rescue Faraday::Error => e
+      Rails.logger.error("[TmdbAdapter] 代替タイトル検索エラー: #{e.message}")
+      []
     end
 
     # TMDB IDで重複除去しながら結果をマージする
@@ -98,22 +133,22 @@ module ExternalApis
     end
 
     # search/movie エンドポイントで映画を検索
-    def search_movies(query)
-      response = tmdb_connection.get('/3/search/movie',
-                                     api_key: ENV.fetch('TMDB_API_KEY'),
-                                     query: query,
-                                     language: 'ja')
+    def search_movies(query, conn: primary_connection)
+      response = conn.get('/3/search/movie',
+                          api_key: ENV.fetch('TMDB_API_KEY'),
+                          query: query,
+                          language: 'ja')
       (response.body['results'] || [])
         .reject { |item| japanese_animation?(item) }
         .map { |item| normalize_movie(item) }
     end
 
     # search/tv エンドポイントでTV番組を検索
-    def search_tv(query)
-      response = tmdb_connection.get('/3/search/tv',
-                                     api_key: ENV.fetch('TMDB_API_KEY'),
-                                     query: query,
-                                     language: 'ja')
+    def search_tv(query, conn: primary_connection)
+      response = conn.get('/3/search/tv',
+                          api_key: ENV.fetch('TMDB_API_KEY'),
+                          query: query,
+                          language: 'ja')
       (response.body['results'] || [])
         .reject { |item| japanese_animation?(item) }
         .map { |item| normalize_tv(item) }
@@ -124,15 +159,11 @@ module ExternalApis
       genre_ids.include?(ANIMATION_GENRE_ID) && item['original_language'] == 'ja'
     end
 
-    def tmdb_connection
-      @tmdb_connection ||= connection(url: BASE_URL)
-    end
-
     # 補完は失敗しても英語説明にフォールバックするだけなので短いタイムアウトで攻める
-    # 一次検索（tmdb_connection）は失敗＝結果ゼロになるため現行の 5/10 秒を維持する
     def enrichment_connection
       @enrichment_connection ||= connection(
-        url: BASE_URL, open_timeout: ENRICHMENT_OPEN_TIMEOUT, timeout: ENRICHMENT_TIMEOUT
+        url: BASE_URL, open_timeout: ENRICHMENT_OPEN_TIMEOUT, timeout: ENRICHMENT_TIMEOUT,
+        retry_on_timeout: false
       )
     end
 

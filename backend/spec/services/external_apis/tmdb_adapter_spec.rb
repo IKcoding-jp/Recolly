@@ -190,7 +190,7 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
           .to_return(status: 200, body: { 'results' => [] }.to_json,
                      headers: { 'Content-Type' => 'application/json' })
         # Wikipedia → 正式タイトル取得
-        allow(wikipedia_client).to receive(:search).with('ウォーキングデッド', limit: 5).and_return(['ウォーキング・デッド'])
+        allow(wikipedia_client).to receive(:search).with('ウォーキングデッド', limit: 3).and_return(['ウォーキング・デッド'])
         # 正式タイトルでTMDB再検索 → ヒット
         stub_request(:get, %r{api.themoviedb.org/3/search/tv})
           .with(query: hash_including('query' => 'ウォーキング・デッド'))
@@ -208,6 +208,32 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
       it 'Wikipedia経由で正式タイトルを取得して追加検索する' do
         results = adapter.search('ウォーキングデッド')
         expect(results.map(&:title)).to include('ウォーキング・デッド')
+      end
+    end
+
+    context '代替タイトルの追加検索がタイムアウトする場合' do
+      before do
+        stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+          .with(query: hash_including('query' => '元クエリ'))
+          .to_return(status: 200, body: { 'results' => [] }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+        allow(wikipedia_client).to receive(:search).with('元クエリ', limit: 3).and_return(['代替タイトル'])
+        stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+          .with(query: hash_including('query' => '代替タイトル')).to_raise(Net::ReadTimeout)
+        stub_request(:get, %r{api.themoviedb.org/3/search/movie})
+          .with(query: hash_including('query' => '代替タイトル')).to_raise(Net::ReadTimeout)
+      end
+
+      it 'リトライせず1回のみ試行し、既存結果にフォールバックする' do
+        results = adapter.search('元クエリ')
+
+        expect(results).to eq([])
+        expect(
+          a_request(:get, %r{api.themoviedb.org/3/search/tv}).with(query: hash_including('query' => '代替タイトル'))
+        ).to have_been_made.once
+        expect(
+          a_request(:get, %r{api.themoviedb.org/3/search/movie}).with(query: hash_including('query' => '代替タイトル'))
+        ).to have_been_made.once
       end
     end
 
@@ -306,10 +332,29 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
   end
 
   describe 'タイムアウト設定' do
-    it 'open_timeout と timeout が設定されている' do
-      conn = adapter.send(:tmdb_connection)
-      expect(conn.options.open_timeout).to eq(5)
-      expect(conn.options.timeout).to eq(10)
+    it '一次検索は短いタイムアウトを使う（TMDBが詰まっても検索全体を待たせない）' do
+      conn = adapter.send(:primary_connection)
+      expect(conn.options.open_timeout).to eq(2)
+      expect(conn.options.timeout).to eq(5)
+    end
+
+    it '一次検索は読み取りタイムアウト時にリトライしない（詰まっている時に待ち時間を倍増させない）' do
+      stub_request(:get, %r{api.themoviedb.org/3/search/movie}).to_raise(Net::ReadTimeout)
+      stub_request(:get, %r{api.themoviedb.org/3/search/tv})
+        .to_return(status: 200, body: { 'results' => [] }.to_json,
+                   headers: { 'Content-Type' => 'application/json' })
+
+      adapter.safe_search('テスト')
+
+      expect(a_request(:get, %r{api.themoviedb.org/3/search/movie})).to have_been_made.once
+    end
+
+    it '補完検索（enrichment_connection）は読み取りタイムアウト時にリトライしない（1回のみ試行する）' do
+      stub_request(:get, %r{api.themoviedb.org/3/search/multi}).to_raise(Net::ReadTimeout)
+
+      adapter.fetch_japanese_description('テスト')
+
+      expect(a_request(:get, %r{api.themoviedb.org/3/search/multi})).to have_been_made.once
     end
   end
 
