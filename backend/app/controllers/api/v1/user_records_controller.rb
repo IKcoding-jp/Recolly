@@ -6,7 +6,7 @@ class Api::V1::UserRecordsController < ApplicationController
 
   # GET /api/v1/users/:user_id/records
   def index
-    user = User.find(params[:user_id])
+    user = User.find(params.expect(:user_id))
     records = build_query(user)
     paginated = paginate(records)
 

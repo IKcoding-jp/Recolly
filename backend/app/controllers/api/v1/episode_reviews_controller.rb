@@ -39,7 +39,7 @@ module Api
       private
 
       def set_record
-        @record = Record.find(params[:record_id])
+        @record = Record.find(params.expect(:record_id))
       end
 
       def authorize_record!
@@ -49,7 +49,7 @@ module Api
       end
 
       def set_episode_review
-        @episode_review = @record.episode_reviews.find(params[:id])
+        @episode_review = @record.episode_reviews.find(params.expect(:id))
       end
 
       def episode_review_params
