@@ -6,7 +6,7 @@ class Api::V1::ProfilesController < ApplicationController
 
   # GET /api/v1/users/:id
   def show
-    user = User.find(params[:id])
+    user = User.find(params.expect(:id))
     records = user.records.includes(:work)
 
     render json: {

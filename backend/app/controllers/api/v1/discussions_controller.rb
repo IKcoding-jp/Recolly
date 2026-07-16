@@ -111,7 +111,7 @@ module Api
       end
 
       def set_discussion
-        @discussion = Discussion.includes(:user, work: :images).find(params[:id])
+        @discussion = Discussion.includes(:user, work: :images).find(params.expect(:id))
       end
 
       def discussion_list_json(discussion)

@@ -5,7 +5,7 @@ module Api
     class FavoriteWorksController < ApplicationController
       # GET /api/v1/users/:user_id/favorite_works（認証不要）
       def index
-        user = User.find(params[:user_id])
+        user = User.find(params.expect(:user_id))
         favorite_works = user.favorite_works.includes(:work).order(:position)
 
         render json: {

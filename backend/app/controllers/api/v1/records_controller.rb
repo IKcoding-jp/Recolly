@@ -99,7 +99,7 @@ module Api
       end
 
       def set_record
-        @record = Record.includes(work: :images, tags: []).find(params[:id])
+        @record = Record.includes(work: :images, tags: []).find(params.expect(:id))
       end
 
       def authorize_record!

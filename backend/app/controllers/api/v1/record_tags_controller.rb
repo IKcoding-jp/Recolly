@@ -22,7 +22,7 @@ module Api
 
       # DELETE /api/v1/records/:record_id/tags/:id
       def destroy
-        record_tag = @record.record_tags.find_by!(tag_id: params[:id])
+        record_tag = @record.record_tags.find_by!(tag_id: params.expect(:id))
         record_tag.destroy!
         head :no_content
       end
@@ -30,7 +30,7 @@ module Api
       private
 
       def set_record
-        @record = Record.find(params[:record_id])
+        @record = Record.find(params.expect(:record_id))
       end
 
       def authorize_record!
