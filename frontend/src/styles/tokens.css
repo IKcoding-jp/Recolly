@@ -12,6 +12,8 @@
   --color-text-muted: #6b6b6b;
   --color-border: #2c2c2c;
   --color-border-light: #e0e0e0;
+  /* スケルトン（ローディングシマー）のハイライト色 */
+  --color-skeleton-highlight: #f1f3f5;
 
   /* --- ランディングページ用 --- */
   --color-bg-paper: #f4f0e6;
