@@ -49,11 +49,11 @@ class Api::V1::CommentsController < ApplicationController
   private
 
   def set_discussion
-    @discussion = Discussion.find(params[:discussion_id])
+    @discussion = Discussion.find(params.expect(:discussion_id))
   end
 
   def set_comment
-    @comment = Comment.find(params[:id])
+    @comment = Comment.find(params.expect(:id))
   end
 
   def authorize_record_owner_for_comment!

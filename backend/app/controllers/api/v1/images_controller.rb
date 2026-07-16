@@ -50,7 +50,7 @@ module Api
       # DELETE /api/v1/images/:id
       # DBレコードとS3ファイルの両方を削除する
       def destroy
-        image = Image.find(params[:id])
+        image = Image.find(params.expect(:id))
         return unless authorize_image!(image)
 
         s3_key = image.s3_key
