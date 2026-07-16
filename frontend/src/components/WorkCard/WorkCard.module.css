@@ -1,10 +1,15 @@
 /* WorkCard.module.css */
+/* ジャケット主体の縦型カード（ADR-0044）。グリッド内で使用する */
 .card {
   display: flex;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  border-bottom: var(--border-width) var(--border-style) var(--color-border-light);
-  align-items: flex-start;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  /* グリッドセル全体を埋め、タイトル行数の差でカード高さがばらつかないようにする */
+  height: 100%;
+  background-color: var(--color-bg-white);
+  border: var(--border-width-thin) var(--border-style) var(--color-border-light);
+  border-radius: var(--radius-md);
   transition:
     background-color var(--transition-fast),
     box-shadow var(--transition-fast);
@@ -16,9 +21,11 @@
 }
 
 .coverWrapper {
-  flex-shrink: 0;
-  width: 80px;
-  height: 120px;
+  width: 100%;
+  /* 書影・ポスターの標準比率 */
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
 }
 
 .cover {
@@ -70,51 +77,29 @@
 
 .title {
   font-family: var(--font-body);
-  font-size: var(--font-size-body);
+  font-size: var(--font-size-meta);
   font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-normal);
   color: var(--color-text);
   margin: 0;
-}
-
-/* シリーズ子作品（Season 2 等）で親の日本語説明を流用した際の注釈ラベル */
-/* description の上に小さく表示し、ユーザーに「シーズン固有ではなく全体概要」と伝える */
-.parentDescriptionNote {
-  display: block;
-  font-family: var(--font-body);
-  font-size: var(--font-size-meta);
-  color: var(--color-text-muted);
-  margin-bottom: var(--spacing-xs);
-}
-
-.description {
-  font-family: var(--font-body);
-  font-size: var(--font-size-meta);
-  color: var(--color-text-muted);
-  margin: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  /* 1行タイトルでも2行分の高さを確保し、ボタン位置とカード高さを揃える */
+  min-height: calc(var(--line-height-normal) * 2em);
 }
 
 .action {
-  flex-shrink: 0;
-  padding-top: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  min-height: var(--spacing-xl);
+  /* カード下端に固定する（タイトル行数に関わらず揃える） */
+  margin-top: auto;
 }
 
 .recorded {
   font-family: var(--font-body);
   font-size: var(--font-size-meta);
   color: var(--color-text-muted);
-}
-
-@media (max-width: 768px) {
-  .coverWrapper {
-    width: 48px;
-    height: 68px;
-  }
-
-  .description {
-    -webkit-line-clamp: 2;
-  }
 }

@@ -31,39 +31,13 @@ describe('worksApi', () => {
     it('media_type指定時にクエリパラメータに含まれる', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ results: [], enriched: true }),
+        json: () => Promise.resolve({ results: [] }),
       })
       await worksApi.search('テスト', 'anime')
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('media_type=anime'),
         expect.any(Object),
       )
-    })
-
-    it('enrich: false のとき enrich=false クエリパラメータを付与する', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ results: [], enriched: false }),
-      })
-
-      await worksApi.search('テスト', undefined, { enrich: false })
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('enrich=false'),
-        expect.any(Object),
-      )
-    })
-
-    it('enrich 未指定のとき enrich パラメータを付与しない', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ results: [], enriched: true }),
-      })
-
-      await worksApi.search('テスト')
-
-      const calledUrl = mockFetch.mock.calls[0][0] as string
-      expect(calledUrl).not.toContain('enrich')
     })
   })
 

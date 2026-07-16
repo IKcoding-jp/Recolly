@@ -30,7 +30,9 @@ module Api
         work = find_or_create_work
         return render json: { error: 'work_id または work_data が必要です' }, status: :unprocessable_content unless work
 
-        return render json: { error: 'この作品はすでに記録されています' }, status: :conflict if current_user.records.exists?(work: work)
+        return render json: { error: 'この作品はすでに記録されています' }, status: :conflict if duplicate_record?(work)
+
+        enrich_work_description(work)
 
         record = current_user.records.new(work: work, **record_create_params)
 
@@ -130,6 +132,19 @@ module Api
         elsif params.dig(:record, :work_data).present?
           find_or_create_from_external
         end
+      end
+
+      def duplicate_record?(work)
+        current_user.records.exists?(work: work)
+      end
+
+      # 検索結果には説明文を表示しないため、日本語説明の補完は記録時に行う（ADR-0044）
+      # 外部API由来のWorkのみ対象（手動登録はユーザー入力の説明を尊重する）
+      # 補完失敗はサービス内で握りつぶされるため、記録の作成は必ず続行される
+      def enrich_work_description(work)
+        return if work.external_api_id.blank?
+
+        WorkEnrichmentService.new.enrich_work_description!(work)
       end
 
       def find_or_create_from_external
