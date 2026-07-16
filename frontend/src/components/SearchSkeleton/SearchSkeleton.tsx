@@ -1,10 +1,12 @@
 import styles from './SearchSkeleton.module.css'
 
-const SKELETON_COUNT = 4
+// グリッド1行分（PC5列）を埋める数
+const SKELETON_COUNT = 5
 
 // 各カードのシマー開始タイミングをずらすためのディレイ
-const ANIMATION_DELAYS = ['0s', '0.1s', '0.2s', '0.3s']
+const ANIMATION_DELAYS = ['0s', '0.1s', '0.2s', '0.3s', '0.4s']
 
+// ジャケット主体の縦型カード（WorkCard）と同じ形のスケルトンをグリッド表示する
 export function SearchSkeleton() {
   return (
     <div className={styles.container}>
@@ -21,14 +23,6 @@ export function SearchSkeleton() {
             />
             <div
               className={`${styles.line} ${styles.lineTitle}`}
-              style={{ animationDelay: ANIMATION_DELAYS[i] }}
-            />
-            <div
-              className={`${styles.line} ${styles.lineDesc}`}
-              style={{ animationDelay: ANIMATION_DELAYS[i] }}
-            />
-            <div
-              className={`${styles.line} ${styles.lineDescShort}`}
               style={{ animationDelay: ANIMATION_DELAYS[i] }}
             />
           </div>

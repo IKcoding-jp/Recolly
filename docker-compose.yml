@@ -28,6 +28,10 @@ services:
 
   backend:
     build: ./backend
+    # ./backend をバインドマウントしているため tmp/pids/server.pid がホスト側に残り、
+    # 非グレースフルな停止（Docker Desktop再起動等）の後に「A server is already running」で
+    # 起動失敗することがある。起動のたびに削除してから起動する
+    command: bash -c "rm -f tmp/pids/server.pid && bin/rails server -b 0.0.0.0"
     ports:
       - "3000:3000"
     depends_on:
