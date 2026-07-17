@@ -55,4 +55,9 @@ describe('RatingSlider', () => {
       expect(screen.getAllByText(String(i)).length).toBeGreaterThanOrEqual(1)
     }
   })
+
+  it('disabled指定時はスライダーが無効化される', () => {
+    render(<RatingSlider value={5} onChange={() => {}} disabled />)
+    expect(screen.getByRole('slider')).toBeDisabled()
+  })
 })

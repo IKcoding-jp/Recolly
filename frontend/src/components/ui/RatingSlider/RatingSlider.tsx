@@ -18,9 +18,10 @@ type RatingSliderProps = {
   value: number
   onChange: (value: number) => void
   mediaType?: MediaType
+  disabled?: boolean
 }
 
-export function RatingSlider({ value, onChange, mediaType }: RatingSliderProps) {
+export function RatingSlider({ value, onChange, mediaType, disabled = false }: RatingSliderProps) {
   const genreColor = mediaType ? GENRE_COLOR_VAR[mediaType] : 'var(--color-text)'
   const percentage = (value / 10) * 100
   const sliderBackground = `linear-gradient(to right, ${genreColor} ${String(percentage)}%, var(--color-border-light) ${String(percentage)}%)`
@@ -48,6 +49,7 @@ export function RatingSlider({ value, onChange, mediaType }: RatingSliderProps) 
           step="1"
           value={value}
           onChange={handleChange}
+          disabled={disabled}
           className={styles.slider}
           style={
             {
