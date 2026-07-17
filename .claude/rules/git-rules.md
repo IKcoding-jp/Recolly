@@ -15,10 +15,11 @@ refactor: 認証ロジックを整理
 
 ## マージ戦略
 
-- **全PRをMerge commitで統一する**
-- Squash and merge は使用しない
+- **全PRをSquash and mergeで統一する**（2026-07-17変更。旧: Merge commit統一。理由: dependabot PRの積み重ねでコミットグラフが読みにくくなったため）
+- Merge commit は使用しない
 - Rebase and merge は使用しない
 - mainへの直接プッシュは禁止。ドキュメントのみの変更でも必ずブランチを切ってPR経由でマージする
+- Squash and mergeへの切り替え以前にマージされた履歴（Merge commit）はそのまま残す。過去のグラフを整理する目的でのhistory書き換えは行わない
 
 ## PRルール
 
