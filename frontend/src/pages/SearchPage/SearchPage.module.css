@@ -4,8 +4,9 @@
   padding: var(--spacing-xl);
 }
 
+/* ライブラリ画面のカード表示時（.pageWide）と同じ幅に揃える */
 .container {
-  max-width: 800px;
+  max-width: 1100px;
   margin: 0 auto;
 }
 
