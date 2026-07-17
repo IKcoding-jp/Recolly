@@ -15,9 +15,11 @@ module ExternalApis
 
     # 日本語Wikipediaでキーワード検索し、ゲームソフトの記事タイトルのみ返す
     # ① タイトルパターンで事前フィルタ → ② カテゴリチェックでゲーム記事のみ通す
+    # クエリと完全一致する記事は除外しない（曖昧さ回避ページはゲームカテゴリを
+    # 持たないため②で弾ける。一致除外すると完全一致検索した作品ほどヒットしなくなる）
     def search_titles(query)
       titles = @client.search(query)
-      filtered = titles.reject { |title| excluded_title?(title, query) }
+      filtered = titles.reject { |title| excluded_title?(title) }
       filter_by_game_categories(filtered)
     end
 
@@ -25,11 +27,8 @@ module ExternalApis
 
     private
 
-    def excluded_title?(title, query)
-      return true if title.match?(NON_GAME_PATTERNS)
-      return true if title == query
-
-      false
+    def excluded_title?(title)
+      title.match?(NON_GAME_PATTERNS)
     end
 
     # Wikipediaカテゴリでゲーム記事かどうかを判定し、ゲーム記事のみ返す

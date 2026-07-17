@@ -59,9 +59,32 @@ RSpec.describe ExternalApis::WikipediaGameAdapter, type: :service do
       expect(titles).to eq(['星のカービィ スーパーデラックス'])
     end
 
-    it '検索クエリと完全一致するタイトルを除外する（曖昧さ回避ページ対策）' do
-      allow(client_double).to receive_messages(search: %w[ゼルダ ゼルダの伝説],
-                                               fetch_categories: { 'ゼルダの伝説' => ['Category:ゲーム作品'] })
+    it '検索クエリと完全一致するゲーム記事を除外しない（トモダチコレクション問題の再現）' do
+      # かつて「タイトル==クエリなら除外」ルールがあり、完全一致で検索した作品ほど
+      # ヒットしないバグがあった。曖昧さ回避ページはカテゴリフィルタで弾けるため、
+      # 完全一致のゲーム記事は通さなければならない
+      allow(client_double).to receive_messages(
+        search: %w[トモダチコレクション Mii],
+        fetch_categories: {
+          'トモダチコレクション' => ['Category:2009年のコンピュータゲーム',
+                                     'Category:ニンテンドーDS用ソフト'],
+          'Mii' => ['Category:アバター']
+        }
+      )
+      titles = adapter.search_titles('トモダチコレクション')
+      expect(titles).to eq(['トモダチコレクション'])
+    end
+
+    it 'クエリと完全一致する曖昧さ回避ページはカテゴリフィルタで除外する' do
+      # 「ゼルダ」のような曖昧さ回避ページはゲームカテゴリを持たないため、
+      # タイトル一致ルールがなくてもカテゴリチェックだけで弾ける
+      allow(client_double).to receive_messages(
+        search: %w[ゼルダ ゼルダの伝説],
+        fetch_categories: {
+          'ゼルダ' => ['Category:曖昧さ回避', 'Category:英語の女性名'],
+          'ゼルダの伝説' => ['Category:ゲーム作品']
+        }
+      )
       titles = adapter.search_titles('ゼルダ')
       expect(titles).to eq(['ゼルダの伝説'])
     end
