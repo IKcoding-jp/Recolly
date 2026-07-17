@@ -23,7 +23,7 @@ describe('DashboardEmptyState', () => {
     expect(screen.getByText('映画')).toBeInTheDocument()
     expect(screen.getByText('ドラマ')).toBeInTheDocument()
     expect(screen.getByText('本')).toBeInTheDocument()
-    expect(screen.getByText('漫画')).toBeInTheDocument()
+    expect(screen.getByText('漫画・ラノベ')).toBeInTheDocument()
     expect(screen.getByText('ゲーム')).toBeInTheDocument()
   })
 

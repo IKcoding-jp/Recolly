@@ -10,7 +10,7 @@ describe('MediaTypeFilter', () => {
     expect(screen.getByRole('button', { name: '映画' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'ドラマ' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '本' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '漫画' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '漫画・ラノベ' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'ゲーム' })).toBeInTheDocument()
   })
 

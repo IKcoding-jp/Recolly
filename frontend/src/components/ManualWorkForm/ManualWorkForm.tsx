@@ -23,7 +23,7 @@ const MEDIA_TYPE_OPTIONS: { value: MediaType; label: string }[] = [
   { value: 'movie', label: '映画' },
   { value: 'drama', label: 'ドラマ' },
   { value: 'book', label: '本' },
-  { value: 'manga', label: '漫画' },
+  { value: 'manga', label: '漫画・ラノベ' },
   { value: 'game', label: 'ゲーム' },
 ]
 

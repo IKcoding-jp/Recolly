@@ -27,7 +27,7 @@ const MEDIA_TYPE_LABELS: Record<MediaType, string> = {
   movie: '映画',
   drama: 'ドラマ',
   book: '本',
-  manga: '漫画',
+  manga: '漫画・ラノベ',
   game: 'ゲーム',
 }
 

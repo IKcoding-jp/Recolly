@@ -7,7 +7,7 @@ const TABS = [
   { id: 'movie', label: '映画' },
   { id: 'drama', label: 'ドラマ' },
   { id: 'book', label: '本' },
-  { id: 'manga', label: '漫画' },
+  { id: 'manga', label: '漫画・ラノベ' },
   { id: 'game', label: 'ゲーム' },
 ] as const
 

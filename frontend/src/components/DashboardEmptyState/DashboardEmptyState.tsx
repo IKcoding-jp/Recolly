@@ -10,7 +10,7 @@ const GENRES = [
   { label: '映画', className: styles.pillMovie },
   { label: 'ドラマ', className: styles.pillDrama },
   { label: '本', className: styles.pillBook },
-  { label: '漫画', className: styles.pillManga },
+  { label: '漫画・ラノベ', className: styles.pillManga },
   { label: 'ゲーム', className: styles.pillGame },
 ] as const
 

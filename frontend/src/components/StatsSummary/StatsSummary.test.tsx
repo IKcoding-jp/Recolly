@@ -42,7 +42,7 @@ describe('StatsSummary', () => {
     render(<StatsSummary statistics={mockStats} />)
     expect(screen.getByText('アニメ')).toBeInTheDocument()
     expect(screen.getByText('映画')).toBeInTheDocument()
-    expect(screen.getByText('漫画')).toBeInTheDocument()
+    expect(screen.getByText('漫画・ラノベ')).toBeInTheDocument()
   })
 
   it('ステータス名を表示する', () => {
