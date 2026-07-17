@@ -6,6 +6,9 @@ module ExternalApis
     # Google Booksが漫画に付与する分類タグ。漫画はAniList由来の
     # 「漫画・ラノベ」ジャンルでシリーズ単位に管理するため本の検索から除外する
     COMIC_CATEGORY = 'Comics & Graphic Novels'
+    # 検索グリッドのカード幅200px前後 × 高精細ディスプレイ(2倍)を想定した画像幅。
+    # 素のthumbnailは128px幅で粗く、w800は1枚300KB超と過剰なためw400とする
+    COVER_IMAGE_SIZE_PARAM = 'fife=w400'
 
     def media_types
       %w[book]
@@ -71,10 +74,15 @@ module ExternalApis
     end
 
     # Google Books は thumbnail URL を http:// で返すことが多いが、
-    # 本番は HTTPS 配信のため Mixed Content でブロックされる。
-    # プロトコルのみ https:// に置換する（Google Books は同一パスを HTTPS でも配信している）
+    # 本番は HTTPS 配信のため Mixed Content でブロックされる。https:// に置換した上で、
+    # 低解像度画像にしか付かない edge=curl（ページめくれ装飾）を除去し、
+    # fife パラメータで高解像度画像を要求する（Google Booksの画像サーバーが対応）
     def normalize_cover_image_url(url)
-      url&.sub(%r{\Ahttp://}, 'https://')
+      return nil if url.nil?
+
+      cleaned = url.sub(%r{\Ahttp://}, 'https://').gsub(/&edge=curl|edge=curl&/, '')
+      separator = cleaned.include?('?') ? '&' : '?'
+      "#{cleaned}#{separator}#{COVER_IMAGE_SIZE_PARAM}"
     end
 
     # industryIdentifiersからISBNを抽出。ISBN-13を最優先、なければISBN-10

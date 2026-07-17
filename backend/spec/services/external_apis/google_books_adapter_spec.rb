@@ -178,7 +178,8 @@ RSpec.describe ExternalApis::GoogleBooksAdapter, type: :service do
 
     describe 'カバー画像URLの正規化' do
       # Google Books API は thumbnail URL を http:// で返すことが多く、
-      # HTTPS ページで Mixed Content としてブロックされるため https:// に正規化する
+      # HTTPS ページで Mixed Content としてブロックされるため https:// に正規化する。
+      # また素のthumbnailは128px幅しかないため fife=w400 で400px幅を要求する
       def build_book_item(thumbnail:)
         {
           'id' => 'abc123',
@@ -194,15 +195,34 @@ RSpec.describe ExternalApis::GoogleBooksAdapter, type: :service do
           thumbnail: 'http://books.google.com/books/content?id=abc123&img=1'
         )])
         book = adapter.search('テスト本').first
-        expect(book.cover_image_url).to eq('https://books.google.com/books/content?id=abc123&img=1')
+        expect(book.cover_image_url)
+          .to eq('https://books.google.com/books/content?id=abc123&img=1&fife=w400')
       end
 
-      it '既に https:// の thumbnail URL はそのまま保持する（冪等性）' do
+      it '既に https:// の thumbnail URL はプロトコルを変えない' do
         stub_books_response([build_book_item(
           thumbnail: 'https://books.google.com/books/content?id=abc123'
         )])
         book = adapter.search('テスト本').first
-        expect(book.cover_image_url).to eq('https://books.google.com/books/content?id=abc123')
+        expect(book.cover_image_url)
+          .to eq('https://books.google.com/books/content?id=abc123&fife=w400')
+      end
+
+      it '低解像度画像用の edge=curl パラメータを除去する' do
+        stub_books_response([build_book_item(
+          thumbnail: 'http://books.google.com/books/content?id=abc123&zoom=1&edge=curl&source=gbs_api'
+        )])
+        book = adapter.search('テスト本').first
+        expect(book.cover_image_url)
+          .to eq('https://books.google.com/books/content?id=abc123&zoom=1&source=gbs_api&fife=w400')
+      end
+
+      it 'fife=w400 を付与して高解像度画像を要求する' do
+        stub_books_response([build_book_item(
+          thumbnail: 'http://books.google.com/books/content?id=abc123&zoom=1'
+        )])
+        book = adapter.search('テスト本').first
+        expect(book.cover_image_url).to include('fife=w400')
       end
 
       it 'thumbnail が nil の場合は nil のままエラーにしない' do
