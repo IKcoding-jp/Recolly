@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 module ExternalApis
-  # rubocop:disable Metrics/ClassLength -- シーズン展開(Task 2)の組み込みで150行上限を5行超過。
-  # 展開ロジック自体はTmdbSeasonExpanderに分離済みで、本クラスへの追加は呼び出し1メソッド分のみ
   class TmdbAdapter < BaseAdapter
     BASE_URL = 'https://api.themoviedb.org'
     IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
@@ -20,7 +18,6 @@ module ExternalApis
     # 対象タイトル数を絞るのは、同時リクエストの束がTMDB側の流量制限を踏み後続の一次検索まで詰まる事象があったため
     SUPPLEMENTARY_OPEN_TIMEOUT = 2
     SUPPLEMENTARY_TIMEOUT = 3
-    SUPPLEMENTARY_TITLE_LIMIT = 3
 
     def media_types
       %w[movie drama]
@@ -31,7 +28,7 @@ module ExternalApis
 
       # 結果が少ない場合、WikipediaClientで正式タイトルを取得してTMDB再検索する
       # 例: 「ウォーキングデッド」→ Wikipedia「ウォーキング・デッド」→ TMDB再検索
-      results = search_via_wikipedia(query, results) if results.length <= NAKAGURO_RETRY_THRESHOLD
+      results = wikipedia_fallback.search(query, results) if results.length <= NAKAGURO_RETRY_THRESHOLD
 
       expand_seasons(query, results)
     end
@@ -69,60 +66,25 @@ module ExternalApis
     # TVシリーズ結果をシーズン単位に展開する（展開ロジックはTmdbSeasonExpander参照）
     # 詳細取得コネクションはスレッドごとに生成する（Faradayコネクション共有回避）
     def expand_seasons(query, results)
-      factory = lambda do
+      TmdbSeasonExpander.new(query, connection_factory: supplementary_connection_factory).expand(results)
+    end
+
+    # Wikipedia補完検索の組み立て。検索本体（search_movies/search_tv）はこちらの実装を渡す
+    def wikipedia_fallback
+      TmdbWikipediaFallback.new(
+        movie_search: ->(title, conn) { search_movies(title, conn: conn) },
+        tv_search: ->(title, conn) { search_tv(title, conn: conn) },
+        connection_factory: supplementary_connection_factory
+      )
+    end
+
+    # 短タイムアウト・リトライなしのコネクションを都度生成するlambda
+    # （シーズン展開の詳細取得とWikipedia補完検索で共用）
+    def supplementary_connection_factory
+      lambda do
         connection(url: BASE_URL, open_timeout: SUPPLEMENTARY_OPEN_TIMEOUT,
                    timeout: SUPPLEMENTARY_TIMEOUT, retry_on_timeout: false)
       end
-      TmdbSeasonExpander.new(query, connection_factory: factory).expand(results)
-    end
-
-    # Wikipedia検索で正式タイトルを取得し、TMDBで追加検索する
-    # 例: 「ウォーキングデッド」→ Wikipedia「ウォーキング・デッド」→ TMDB再検索
-    def search_via_wikipedia(query, existing_results)
-      wikipedia = ExternalApis::WikipediaClient.new
-      titles = wikipedia.search(query, limit: SUPPLEMENTARY_TITLE_LIMIT).reject { |title| title == query }
-      return existing_results if titles.empty?
-
-      merge_results(existing_results, fetch_supplementary_results(titles))
-    rescue StandardError => e
-      Rails.logger.error("[TmdbAdapter] Wikipedia補完エラー: #{e.message}")
-      existing_results
-    end
-
-    # 代替タイトルを短いタイムアウトで並列問い合わせする
-    # movie/tvもタイトル単位でスレッドを分け、逐次待ちをなくす
-    # エンドポイントごとに個別にエラーを握りつぶす（片方が失敗してももう片方の結果は活かす）
-    def fetch_supplementary_results(titles)
-      threads = titles.flat_map do |title|
-        [
-          Thread.new { supplementary_search(title) { |t, c| search_movies(t, conn: c) } },
-          Thread.new { supplementary_search(title) { |t, c| search_tv(t, conn: c) } }
-        ]
-      end
-      threads.flat_map(&:value)
-    end
-
-    # スレッドごとに短タイムアウト・リトライなしのコネクションを作って検索する
-    def supplementary_search(title)
-      conn = connection(url: BASE_URL, open_timeout: SUPPLEMENTARY_OPEN_TIMEOUT,
-                        timeout: SUPPLEMENTARY_TIMEOUT, retry_on_timeout: false)
-      yield(title, conn)
-    rescue Faraday::Error => e
-      Rails.logger.error("[TmdbAdapter] 代替タイトル検索エラー: #{e.message}")
-      []
-    end
-
-    # TMDB IDで重複除去しながら結果をマージする
-    def merge_results(primary, additional)
-      seen_ids = primary.to_set(&:external_api_id)
-      combined = primary.dup
-      additional.each do |r|
-        next if seen_ids.include?(r.external_api_id)
-
-        seen_ids.add(r.external_api_id)
-        combined << r
-      end
-      combined
     end
 
     # 候補から最も適切な日本語説明を選ぶ
@@ -224,5 +186,4 @@ module ExternalApis
       [value.to_f / 100.0, 1.0].min
     end
   end
-  # rubocop:enable Metrics/ClassLength
 end
