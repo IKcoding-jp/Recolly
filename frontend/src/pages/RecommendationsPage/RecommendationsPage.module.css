@@ -1,6 +1,6 @@
-/* ページコンテナ */
+/* ページコンテナ（ライブラリ・検索のカードグリッドと同じ幅に揃える） */
 .container {
-  max-width: 800px;
+  max-width: 1100px;
   margin: var(--spacing-xl) auto;
   padding: 0 var(--spacing-xl);
 }
