@@ -1,12 +1,11 @@
+import type { KeyboardEvent } from 'react'
 import type { SearchResult, MediaType } from '../../lib/types'
-import { Button } from '../ui/Button/Button'
 import styles from './WorkCard.module.css'
 
 type WorkCardProps = {
   work: SearchResult
   onRecord: (work: SearchResult) => void
   isRecorded?: boolean
-  isLoading?: boolean
 }
 
 const MEDIA_TYPE_LABELS: Record<MediaType, string> = {
@@ -18,16 +17,29 @@ const MEDIA_TYPE_LABELS: Record<MediaType, string> = {
   game: 'ゲーム',
 }
 
-// ジャケット主体の縦型カード（ADR-0044: 説明文は表示しない）
-export function WorkCard({ work, onRecord, isRecorded = false, isLoading = false }: WorkCardProps) {
-  const handleRecord = () => {
-    if (!isRecorded && !isLoading) {
+// ジャケット主体の縦型カード（ADR-0044）。カード全体のクリックで記録モーダルを開く
+export function WorkCard({ work, onRecord, isRecorded = false }: WorkCardProps) {
+  const handleClick = () => {
+    onRecord(work)
+  }
+
+  // ボタンではなくdivをクリック対象にしているため、Enter/Spaceキー操作を自前で処理する
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
       onRecord(work)
     }
   }
 
   return (
-    <div className={styles.card}>
+    <div
+      className={styles.card}
+      role="button"
+      tabIndex={0}
+      aria-label={isRecorded ? `${work.title}（記録済み）` : `${work.title}を記録する`}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+    >
       <div className={styles.coverWrapper}>
         {work.cover_image_url ? (
           <img
@@ -47,13 +59,7 @@ export function WorkCard({ work, onRecord, isRecorded = false, isLoading = false
         <h3 className={styles.title}>{work.title}</h3>
       </div>
       <div className={styles.action}>
-        {isRecorded ? (
-          <span className={styles.recorded}>記録済み</span>
-        ) : (
-          <Button variant="primary" size="sm" onClick={handleRecord} disabled={isLoading}>
-            {isLoading ? '記録中...' : '記録する'}
-          </Button>
-        )}
+        {isRecorded && <span className={styles.recorded}>記録済み</span>}
       </div>
     </div>
   )
