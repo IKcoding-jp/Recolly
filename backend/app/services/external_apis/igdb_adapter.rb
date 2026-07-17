@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ExternalApis
-  class IgdbAdapter < BaseAdapter
+  class IgdbAdapter < BaseAdapter # rubocop:disable Metrics/ClassLength -- Wikipedia補完の並列化で行数増加。分割は将来検討
     IGDB_URL = 'https://api.igdb.com/v4'
     TWITCH_TOKEN_URL = 'https://id.twitch.tv/oauth2/token'
     IMAGE_BASE_URL = 'https://images.igdb.com/igdb/image/upload/t_cover_big'
@@ -62,11 +62,40 @@ module ExternalApis
       titles = wikipedia.search_titles(query)
       return [] if titles.empty?
 
+      # 直接検索で見つかった既存IDのスナップショット。スレッドからは読み取りのみ行い、
+      # 変更（重複排除の記録）は全スレッド完了後にまとめて行うことで競合状態を避ける
       existing_ids = existing_results.to_set(&:external_api_id)
-      titles.filter_map { |jp_title| find_game_via_wikipedia(jp_title, wikipedia, existing_ids) }
+      candidates = fetch_wikipedia_candidates_in_parallel(titles, wikipedia, existing_ids)
+      dedupe_candidates(candidates, existing_ids)
     rescue StandardError => e
       Rails.logger.error("[IgdbAdapter] Wikipedia補完エラー: #{e.message}")
       []
+    end
+
+    # タイトルごとの補完チェーン（英語タイトル取得→IGDB再検索）は独立しているため
+    # 並列実行する。直列だと最大10タイトル×2回のHTTP往復が積み重なり検索が遅くなる
+    def fetch_wikipedia_candidates_in_parallel(titles, wikipedia, existing_ids)
+      threads = titles.map do |jp_title|
+        Thread.new do
+          find_game_via_wikipedia(jp_title, wikipedia, existing_ids)
+        rescue StandardError => e
+          # 1タイトルの失敗で他タイトルの補完まで失わないよう、スレッド内で握りつぶす
+          Rails.logger.error("[IgdbAdapter] Wikipedia補完エラー(#{jp_title}): #{e.message}")
+          nil
+        end
+      end
+      threads.map(&:value)
+    end
+
+    # 直接検索結果および補完同士の重複を除去する（先勝ち）
+    def dedupe_candidates(candidates, existing_ids)
+      seen = existing_ids.dup
+      candidates.compact.filter_map do |candidate|
+        next if seen.include?(candidate.external_api_id)
+
+        seen.add(candidate.external_api_id)
+        candidate
+      end
     end
 
     def find_game_via_wikipedia(jp_title, wikipedia, existing_ids)
@@ -75,12 +104,11 @@ module ExternalApis
 
       # 説明はIGDBのsummaryのまま返す。日本語説明は記録時の1作品補完（ADR-0044）に任せる
       match.title = jp_title
-      existing_ids.add(match.external_api_id)
       match
     end
 
     # Wikipedia言語間リンクで英語タイトル取得 → IGDBで検索（発売年でリメイク版を区別）
-    def igdb_match_from_wikipedia(jp_title, wikipedia, existing_ids = Set.new)
+    def igdb_match_from_wikipedia(jp_title, wikipedia, existing_ids)
       en_title = wikipedia.fetch_english_title(jp_title)
       return nil unless en_title
 

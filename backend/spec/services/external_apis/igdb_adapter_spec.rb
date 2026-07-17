@@ -147,18 +147,17 @@ RSpec.describe ExternalApis::IgdbAdapter, type: :service do
         allow(wikipedia_double).to receive(:fetch_english_title)
           .with('星のカービィ (アニメ)').and_return(nil)
 
-        # 1回目: search_by_keyword（日本語）→ 0件
-        # 2回目: search_by_pattern（日本語）→ 0件
-        # 3回目: Wikipedia「星のカービィ スーパーデラックス」でIGDB再検索 → ヒット
-        # 4回目: Wikipedia「星のカービィ (アニメ)」でIGDB再検索 → 0件
+        # 並列化により呼び出し順が不定になるため、順序依存ではなくボディでマッチさせる
+        # 日本語の直接検索（keyword/pattern）→ 0件
         stub_request(:post, 'https://api.igdb.com/v4/games')
-          .to_return(
-            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
-            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
-            { status: 200, body: igdb_wikipedia_match.to_json,
-              headers: { 'Content-Type' => 'application/json' } },
-            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } }
-          )
+          .with(body: /カービィ/)
+          .to_return(status: 200, body: [].to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+        # Wikipedia経由の英語タイトル再検索 → ヒット
+        stub_request(:post, 'https://api.igdb.com/v4/games')
+          .with(body: /Kirby Super Star/)
+          .to_return(status: 200, body: igdb_wikipedia_match.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
       end
 
       it 'IGDB直接検索で見つからないゲームをWikipedia経由で見つける' do
@@ -177,6 +176,78 @@ RSpec.describe ExternalApis::IgdbAdapter, type: :service do
         expect(wikipedia_double).not_to have_received(:fetch_extract)
         # 説明は記録時の1作品補完（ADR-0044）に任せる
         expect(results.first.description).to eq('A Kirby game')
+      end
+    end
+
+    context 'Wikipedia補完の並列実行' do
+      let(:wikipedia_double) { instance_double(ExternalApis::WikipediaGameAdapter) }
+
+      let(:kirby_match) do
+        [{ 'id' => 3075, 'name' => 'Kirby Super Star', 'summary' => 'A Kirby game',
+           'cover' => { 'image_id' => 'co5xyz' }, 'total_rating' => 88.0 }]
+      end
+      let(:mario_match) do
+        [{ 'id' => 1074, 'name' => 'Super Mario RPG', 'summary' => 'A Mario RPG',
+           'cover' => { 'image_id' => 'co6abc' }, 'total_rating' => 90.0 }]
+      end
+
+      before do
+        allow(ExternalApis::WikipediaGameAdapter).to receive(:new).and_return(wikipedia_double)
+        allow(wikipedia_double).to receive(:fetch_extract)
+        stub_request(:post, 'https://api.igdb.com/v4/games')
+          .with(body: /ニンテンドー/)
+          .to_return(status: 200, body: [].to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it '複数タイトルの補完結果をすべてマージして返す' do # rubocop:disable RSpec/ExampleLength
+        allow(wikipedia_double).to receive(:search_titles)
+          .and_return(['星のカービィ スーパーデラックス', 'スーパーマリオRPG'])
+        allow(wikipedia_double).to receive(:fetch_english_title)
+          .with('星のカービィ スーパーデラックス').and_return('Kirby Super Star')
+        allow(wikipedia_double).to receive(:fetch_english_title)
+          .with('スーパーマリオRPG').and_return('Super Mario RPG')
+        stub_request(:post, 'https://api.igdb.com/v4/games')
+          .with(body: /Kirby Super Star/)
+          .to_return(status: 200, body: kirby_match.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+        stub_request(:post, 'https://api.igdb.com/v4/games')
+          .with(body: /Super Mario RPG/)
+          .to_return(status: 200, body: mario_match.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+
+        results = adapter.search('ニンテンドー')
+        expect(results.map(&:external_api_id)).to contain_exactly('3075', '1074')
+      end
+
+      it '1タイトルの補完が失敗しても他タイトルの結果は返る' do # rubocop:disable RSpec/ExampleLength
+        allow(wikipedia_double).to receive(:search_titles)
+          .and_return(['星のカービィ スーパーデラックス', 'スーパーマリオRPG'])
+        allow(wikipedia_double).to receive(:fetch_english_title)
+          .with('星のカービィ スーパーデラックス').and_raise(Faraday::TimeoutError)
+        allow(wikipedia_double).to receive(:fetch_english_title)
+          .with('スーパーマリオRPG').and_return('Super Mario RPG')
+        stub_request(:post, 'https://api.igdb.com/v4/games')
+          .with(body: /Super Mario RPG/)
+          .to_return(status: 200, body: mario_match.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+
+        results = adapter.search('ニンテンドー')
+        expect(results.map(&:external_api_id)).to contain_exactly('1074')
+      end
+
+      it '複数タイトルが同じIGDBゲームに解決された場合は重複排除する' do
+        allow(wikipedia_double).to receive_messages(
+          search_titles: ['星のカービィ スーパーデラックス', '星のカービィSDX'],
+          fetch_english_title: 'Kirby Super Star'
+        )
+        stub_request(:post, 'https://api.igdb.com/v4/games')
+          .with(body: /Kirby Super Star/)
+          .to_return(status: 200, body: kirby_match.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+
+        results = adapter.search('ニンテンドー')
+        expect(results.map(&:external_api_id)).to eq(['3075'])
       end
     end
 
@@ -233,15 +304,14 @@ RSpec.describe ExternalApis::IgdbAdapter, type: :service do
         allow(wikipedia_double).to receive(:fetch_english_title)
           .with('バイオハザード RE:2').and_return('Resident Evil 2 (2019 video game)')
 
-        # 1回目・2回目: IGDB直接検索（日本語）→ 0件
-        # 3回目: Wikipedia経由でIGDB再検索 → 2件（1998版 + 2019版）
         stub_request(:post, 'https://api.igdb.com/v4/games')
-          .to_return(
-            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
-            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
-            { status: 200, body: igdb_multiple_versions.to_json,
-              headers: { 'Content-Type' => 'application/json' } }
-          )
+          .with(body: /バイオハザード/)
+          .to_return(status: 200, body: [].to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+        stub_request(:post, 'https://api.igdb.com/v4/games')
+          .with(body: /Resident Evil 2/)
+          .to_return(status: 200, body: igdb_multiple_versions.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
       end
 
       it '発売年が一致するリメイク版（2019年）を優先して返す' do
@@ -258,12 +328,13 @@ RSpec.describe ExternalApis::IgdbAdapter, type: :service do
           .with('バイオハザード RE:2').and_return('Resident Evil 2')
 
         stub_request(:post, 'https://api.igdb.com/v4/games')
-          .to_return(
-            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
-            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
-            { status: 200, body: igdb_multiple_versions.to_json,
-              headers: { 'Content-Type' => 'application/json' } }
-          )
+          .with(body: /バイオハザード/)
+          .to_return(status: 200, body: [].to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+        stub_request(:post, 'https://api.igdb.com/v4/games')
+          .with(body: /Resident Evil 2/)
+          .to_return(status: 200, body: igdb_multiple_versions.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
       end
 
       it '最初のマッチ（人気順の先頭）を返す' do
