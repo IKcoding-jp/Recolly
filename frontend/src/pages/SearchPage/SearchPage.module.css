@@ -71,22 +71,21 @@
   margin-top: var(--spacing-sm);
 }
 
-/* ジャケット主体の縦型カードを並べるグリッド（ADR-0044） */
-/* 列数はADR-0026の3段階ブレークポイントに合わせる */
+/* ジャケット主体の縦型カードを並べるグリッド（ADR-0044）。列数はライブラリ画面のグリッドに合わせる */
 .results {
   margin-top: var(--spacing-lg);
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: var(--spacing-md);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .results {
     grid-template-columns: repeat(4, 1fr);
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .results {
     grid-template-columns: repeat(3, 1fr);
   }

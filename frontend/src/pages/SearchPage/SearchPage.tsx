@@ -277,7 +277,6 @@ export function SearchPage() {
                     work={work}
                     onRecord={handleOpenModal}
                     isRecorded={recordedIds.has(workKey)}
-                    isLoading={loadingId === workKey}
                   />
                 </motion.div>
               )
@@ -312,6 +311,11 @@ export function SearchPage() {
           setManualWorkId(null)
         }}
         isLoading={loadingId !== null}
+        alreadyRecorded={
+          modalWork
+            ? recordedIds.has(`${modalWork.external_api_source}:${modalWork.external_api_id}`)
+            : false
+        }
       />
     </div>
   )

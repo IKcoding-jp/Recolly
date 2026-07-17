@@ -260,9 +260,8 @@ describe('SearchPage', () => {
       expect(screen.getByText('作品A')).toBeInTheDocument()
     })
 
-    // 作品Aの「記録する」をクリック → RecordModal が開く
-    const recordButtons = screen.getAllByRole('button', { name: '記録する' })
-    await user.click(recordButtons[0])
+    // 作品Aのカードをクリック → RecordModal が開く
+    await user.click(screen.getByRole('button', { name: '作品Aを記録する' }))
 
     // モーダルが開いたことを確認
     await waitFor(() => {
@@ -285,18 +284,16 @@ describe('SearchPage', () => {
         }),
     })
 
-    // 「記録する」をクリック（モーダル内の確定ボタン）
-    const confirmButtons = screen.getAllByRole('button', { name: '記録する' })
-    await user.click(confirmButtons[confirmButtons.length - 1])
+    // モーダル内の「記録する」をクリック
+    await user.click(screen.getByRole('button', { name: '記録する' }))
 
     // モーダルが閉じるのを待つ
     await waitFor(() => {
       expect(screen.queryByText('作品Aを記録')).not.toBeInTheDocument()
     })
 
-    // 作品Bの「記録する」をクリック → RecordModal が開く
-    const recordButtons2 = screen.getAllByRole('button', { name: '記録する' })
-    await user.click(recordButtons2[0])
+    // 作品Bのカードをクリック → RecordModal が開く
+    await user.click(screen.getByRole('button', { name: '作品Bを記録する' }))
 
     // モーダルが開いたことを確認
     await waitFor(() => {
@@ -313,8 +310,7 @@ describe('SearchPage', () => {
     })
 
     // 何も変更せずにそのまま「記録する」をクリック
-    const confirmButtons2 = screen.getAllByRole('button', { name: '記録する' })
-    await user.click(confirmButtons2[confirmButtons2.length - 1])
+    await user.click(screen.getByRole('button', { name: '記録する' }))
 
     // APIに送信されたデータを検証: 初期値（watching, ratingなし）で送信されているか
     // mockFetch の呼び出し履歴: [0]=認証, [1]=recorded_external_ids, [2]=検索, [3]=作品A記録, [4]=作品B記録
@@ -337,7 +333,7 @@ describe('SearchPage', () => {
 
     // スケルトンカードが表示される
     await waitFor(() => {
-      expect(screen.getAllByRole('status')).toHaveLength(5)
+      expect(screen.getAllByRole('status')).toHaveLength(6)
     })
     // プログレスメッセージが表示される
     expect(screen.getByText('作品を検索しています...')).toBeInTheDocument()
@@ -658,8 +654,7 @@ describe('SearchPage', () => {
     })
 
     // 記録モーダルを開く
-    const recordButtons = screen.getAllByRole('button', { name: '記録する' })
-    await user.click(recordButtons[0])
+    await user.click(screen.getByRole('button', { name: 'テストアニメを記録する' }))
 
     await waitFor(() => {
       expect(screen.getByText('テストアニメを記録')).toBeInTheDocument()
@@ -675,8 +670,7 @@ describe('SearchPage', () => {
     })
 
     // モーダル内の「記録する」をクリック
-    const confirmButtons = screen.getAllByRole('button', { name: '記録する' })
-    await user.click(confirmButtons[confirmButtons.length - 1])
+    await user.click(screen.getByRole('button', { name: '記録する' }))
 
     await waitFor(() => {
       expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.RECORD_CREATED, {
@@ -687,5 +681,65 @@ describe('SearchPage', () => {
     await waitFor(() => {
       expect(updateMediaTypesCount).toHaveBeenCalledTimes(1)
     })
+  })
+
+  it('記録済みの作品カードをクリックするとモーダルは開くが確定できない', async () => {
+    renderSearchPage()
+    const user = userEvent.setup()
+
+    // 検索API: アニメ作品 1 件を返す
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              title: 'テストアニメ',
+              media_type: 'anime',
+              description: 'アニメ説明',
+              cover_image_url: null,
+              total_episodes: 12,
+              external_api_id: '1',
+              external_api_source: 'anilist',
+              metadata: {},
+            },
+          ],
+        }),
+    })
+
+    const searchInput = await screen.findByPlaceholderText('作品を検索...')
+    await user.type(searchInput, 'テスト')
+    await user.keyboard('{Enter}')
+
+    await waitFor(() => {
+      expect(screen.getByText('テストアニメ')).toBeInTheDocument()
+    })
+
+    // 1回目のクリック: 記録APIが409を返す（既に他経路で記録済み）
+    await user.click(screen.getByRole('button', { name: 'テストアニメを記録する' }))
+    await waitFor(() => {
+      expect(screen.getByText('テストアニメを記録')).toBeInTheDocument()
+    })
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 409,
+      json: () => Promise.resolve({ error: '既に記録済みです' }),
+    })
+    await user.click(screen.getByRole('button', { name: '記録する' }))
+
+    // モーダルが閉じ、カードが「記録済み」表示になる
+    await waitFor(() => {
+      expect(screen.queryByText('テストアニメを記録')).not.toBeInTheDocument()
+    })
+    expect(screen.getByText('記録済み')).toBeInTheDocument()
+
+    // 2回目のクリック: 記録済みカードをクリックしてもモーダルは開く
+    await user.click(screen.getByRole('button', { name: 'テストアニメ（記録済み）' }))
+    await waitFor(() => {
+      expect(screen.getByText('テストアニメを記録')).toBeInTheDocument()
+    })
+    expect(screen.getByText('この作品はすでに記録済みです')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '記録済み' })).toBeDisabled()
   })
 })
