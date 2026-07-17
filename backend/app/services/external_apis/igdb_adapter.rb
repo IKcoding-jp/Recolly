@@ -1,15 +1,19 @@
 # frozen_string_literal: true
 
 module ExternalApis
-  class IgdbAdapter < BaseAdapter # rubocop:disable Metrics/ClassLength -- Wikipedia補完の並列化で行数増加。分割は将来検討
+  class IgdbAdapter < BaseAdapter
     IGDB_URL = 'https://api.igdb.com/v4'
     TWITCH_TOKEN_URL = 'https://id.twitch.tv/oauth2/token'
     IMAGE_BASE_URL = 'https://images.igdb.com/igdb/image/upload/t_cover_big'
     TOKEN_CACHE_KEY = 'igdb_access_token'
+    # IGDB regionsテーブルにおける日本のID。game_localizationsから日本語版を特定するのに使う
+    REGION_JAPAN = 3
     SEARCH_FIELDS = [
       'name', 'summary', 'cover.image_id', 'platforms.name',
       'genres.name', 'first_release_date',
       'alternative_names.name', 'alternative_names.comment',
+      'game_localizations.name', 'game_localizations.region',
+      'game_localizations.cover.image_id',
       'total_rating'
     ].join(',').freeze
 
@@ -17,10 +21,12 @@ module ExternalApis
       %w[game]
     end
 
+    # 日本語クエリではパターン検索を併用する。IGDBのsearchはgame_localizations
+    # （日本語版タイトル）を照合しないため、whereでの直接マッチが必要（ADR-0046）
     def search(query, media_type: nil) # rubocop:disable Lint/UnusedMethodArgument -- BaseAdapterインターフェース準拠
       sanitized = query.gsub('"', '\\"').gsub(';', '')
       if japanese?(query)
-        search_japanese(sanitized)
+        merge_results(search_by_keyword(sanitized), search_by_pattern(sanitized))
       else
         search_by_keyword(sanitized)
       end
@@ -28,23 +34,16 @@ module ExternalApis
 
     private
 
-    # 日本語: IGDB直接検索 + Wikipedia補完を組み合わせる
-    def search_japanese(sanitized)
-      keyword_results = search_by_keyword(sanitized)
-      pattern_results = search_by_pattern(sanitized)
-      igdb_results = merge_results(keyword_results, pattern_results)
-      wikipedia_results = search_via_wikipedia(sanitized, igdb_results)
-      merge_results(igdb_results, wikipedia_results)
-    end
-
     def search_by_keyword(sanitized)
       body = "search \"#{sanitized}\"; fields #{SEARCH_FIELDS}; limit 50;"
       response = igdb_connection.post('/v4/games', body)
       (response.body || []).map { |item| normalize(item) }
     end
 
+    # 原題・別名・日本語版ローカライズ名のいずれかに部分一致するゲームを探す
     def search_by_pattern(sanitized)
-      where_clause = "name ~ *\"#{sanitized}\"* | alternative_names.name ~ *\"#{sanitized}\"*"
+      where_clause = "name ~ *\"#{sanitized}\"* | alternative_names.name ~ *\"#{sanitized}\"* | " \
+                     "game_localizations.name ~ *\"#{sanitized}\"*"
       body = "fields #{SEARCH_FIELDS}; where #{where_clause}; limit 50;"
       response = igdb_connection.post('/v4/games', body)
       (response.body || []).map { |item| normalize(item) }
@@ -55,89 +54,6 @@ module ExternalApis
       combined = primary.dup
       secondary.each { |r| combined << r unless seen_ids.include?(r.external_api_id) }
       combined
-    end
-
-    def search_via_wikipedia(query, existing_results)
-      wikipedia = WikipediaGameAdapter.new
-      titles = wikipedia.search_titles(query)
-      return [] if titles.empty?
-
-      # 直接検索で見つかった既存IDのスナップショット。スレッドからは読み取りのみ行い、
-      # 変更（重複排除の記録）は全スレッド完了後にまとめて行うことで競合状態を避ける
-      existing_ids = existing_results.to_set(&:external_api_id)
-      candidates = fetch_wikipedia_candidates_in_parallel(titles, wikipedia, existing_ids)
-      dedupe_candidates(candidates, existing_ids)
-    rescue StandardError => e
-      Rails.logger.error("[IgdbAdapter] Wikipedia補完エラー: #{e.message}")
-      []
-    end
-
-    # タイトルごとの補完チェーン（英語タイトル取得→IGDB再検索）は独立しているため
-    # 並列実行する。直列だと最大10タイトル×2回のHTTP往復が積み重なり検索が遅くなる
-    def fetch_wikipedia_candidates_in_parallel(titles, wikipedia, existing_ids)
-      threads = titles.map do |jp_title|
-        Thread.new do
-          find_game_via_wikipedia(jp_title, wikipedia, existing_ids)
-        rescue StandardError => e
-          # 1タイトルの失敗で他タイトルの補完まで失わないよう、スレッド内で握りつぶす
-          Rails.logger.error("[IgdbAdapter] Wikipedia補完エラー(#{jp_title}): #{e.message}")
-          nil
-        end
-      end
-      threads.map(&:value)
-    end
-
-    # 直接検索結果および補完同士の重複を除去する（先勝ち）
-    def dedupe_candidates(candidates, existing_ids)
-      seen = existing_ids.dup
-      candidates.compact.filter_map do |candidate|
-        next if seen.include?(candidate.external_api_id)
-
-        seen.add(candidate.external_api_id)
-        candidate
-      end
-    end
-
-    def find_game_via_wikipedia(jp_title, wikipedia, existing_ids)
-      match = igdb_match_from_wikipedia(jp_title, wikipedia, existing_ids)
-      return nil if match.nil?
-
-      # 説明はIGDBのsummaryのまま返す。日本語説明は記録時の1作品補完（ADR-0044）に任せる
-      match.title = jp_title
-      match
-    end
-
-    # Wikipedia言語間リンクで英語タイトル取得 → IGDBで検索（発売年でリメイク版を区別）
-    def igdb_match_from_wikipedia(jp_title, wikipedia, existing_ids)
-      en_title = wikipedia.fetch_english_title(jp_title)
-      return nil unless en_title
-
-      release_year = extract_year_from_title(en_title)
-      candidates = search_igdb_candidates(en_title, existing_ids)
-      select_best_candidate(candidates, release_year)
-    end
-
-    def extract_year_from_title(en_title)
-      year_match = en_title.match(/\((\d{4})/)
-      year_match && year_match[1].to_i
-    end
-
-    def search_igdb_candidates(en_title, existing_ids)
-      clean_title = en_title.sub(/\s*\(.*\)\s*$/, '')
-      sanitized = clean_title.gsub('"', '\\"').gsub(';', '')
-      search_by_keyword(sanitized).reject { |r| existing_ids.include?(r.external_api_id) }
-    end
-
-    def select_best_candidate(candidates, release_year)
-      return nil if candidates.empty?
-      return candidates.first unless release_year
-
-      candidates.find { |r| game_release_year(r) == release_year } || candidates.first
-    end
-
-    def game_release_year(result)
-      timestamp = result.metadata[:first_release_date]
-      timestamp && Time.at(timestamp).utc.year
     end
 
     def japanese?(text)
@@ -176,13 +92,28 @@ module ExternalApis
       end
     end
 
+    def japanese_localization(item)
+      (item['game_localizations'] || []).find { |l| l['region'] == REGION_JAPAN }
+    end
+
+    # 表示タイトルの優先順: 日本語版ローカライズ名 → 別名の日本語タイトル → 原題
+    # ローカライズ名の方が「Japanese title」コメント頼りの別名より信頼できる
     def japanese_title(item)
+      japanese_localization(item)&.dig('name') || japanese_alt_name(item)
+    end
+
+    def japanese_alt_name(item)
       alt_names = item['alternative_names'] || []
       jp = alt_names.find do |a|
         a['comment']&.match?(/Japanese title/i) &&
           a['name']&.match?(/[\p{Hiragana}\p{Katakana}\p{Han}]/)
       end
       jp&.dig('name')
+    end
+
+    # 日本語版ジャケットがあれば優先する（利用者は日本語版パッケージの見た目に馴染みがある）
+    def cover_image_id(item)
+      japanese_localization(item)&.dig('cover', 'image_id') || item.dig('cover', 'image_id')
     end
 
     def normalize_popularity(value)
@@ -192,7 +123,7 @@ module ExternalApis
     end
 
     def normalize(item)
-      cover_id = item.dig('cover', 'image_id')
+      cover_id = cover_image_id(item)
 
       SearchResult.new(
         japanese_title(item) || item['name'],

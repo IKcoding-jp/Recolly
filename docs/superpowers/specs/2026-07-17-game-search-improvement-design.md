@@ -53,6 +53,11 @@
 
 ### 3. Wikipedia補完の高速化（`IgdbAdapter`）
 
+> **注記（2026-07-17 実装後の変更）:** 本節のWikipedia補完（並列化含む）は実タイトル検証で
+> 発覚した続編ヒット問題の調査により、IGDB `game_localizations` による日本語直接検索に
+> 置き換えられ削除された。詳細は [ADR-0046](../../adr/0046-ゲーム検索の日本語対応をigdb-game_localizationsに置き換え.md) を参照。
+> 関連度ソート（§1〜2）とキャッシュ（§4）は本設計のまま有効。
+
 - タイトルごとの「英語タイトル取得→IGDB再検索」チェーンを直列→**並列化**する
   （`WorkSearchService#fetch_from_adapters_in_parallel` と同じThread方式）
 - 検索時の `fetch_extract`（Wikipedia説明文取得）を**廃止**する。
