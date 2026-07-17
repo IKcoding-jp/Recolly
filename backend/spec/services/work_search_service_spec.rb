@@ -259,6 +259,55 @@ RSpec.describe WorkSearchService, type: :service do
     end
   end
 
+  describe '#search 関連度ソート' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+    let(:exact_match) do
+      ExternalApis::BaseAdapter::SearchResult.new(
+        'ゼルダ', 'game', nil, nil, nil, '1', 'igdb', { popularity: 0.1 }
+      )
+    end
+    let(:prefix_match) do
+      ExternalApis::BaseAdapter::SearchResult.new(
+        'ゼルダの伝説', 'game', '説明', 'https://img.jpg', nil, '2', 'igdb', { popularity: 0.2 }
+      )
+    end
+    let(:partial_match) do
+      ExternalApis::BaseAdapter::SearchResult.new(
+        'リンクの冒険 ゼルダの伝説2', 'game', '説明', 'https://img.jpg', nil, '3', 'igdb',
+        { popularity: 0.3 }
+      )
+    end
+    let(:no_match) do
+      ExternalApis::BaseAdapter::SearchResult.new(
+        'マリオカート', 'game', '説明', 'https://img.jpg', nil, '4', 'igdb', { popularity: 1.0 }
+      )
+    end
+
+    before do
+      allow(igdb_double).to receive(:safe_search).and_return(
+        [no_match, partial_match, prefix_match, exact_match]
+      )
+    end
+
+    it '人気や品質より関連度ティアを優先して並べる' do
+      results = service.search('ゼルダ', media_type: 'game')
+      expect(results.map(&:title)).to eq(
+        ['ゼルダ', 'ゼルダの伝説', 'リンクの冒険 ゼルダの伝説2', 'マリオカート']
+      )
+    end
+
+    it '同じ関連度ティア内では品質→人気度の順で並べる' do
+      same_tier_low_quality = ExternalApis::BaseAdapter::SearchResult.new(
+        'ゼルダの伝説 夢をみる島', 'game', nil, nil, nil, '5', 'igdb', { popularity: 0.9 }
+      )
+      allow(igdb_double).to receive(:safe_search).and_return(
+        [same_tier_low_quality, prefix_match]
+      )
+      results = service.search('ゼルダ', media_type: 'game')
+      # 両方とも前方一致ティアだが、画像+説明ありのprefix_matchが品質で勝つ
+      expect(results.map(&:title)).to eq(['ゼルダの伝説', 'ゼルダの伝説 夢をみる島'])
+    end
+  end
+
   describe 'キャッシュ' do
     # キャッシュ動作テストではメモリストアを使用（test環境のデフォルトは:null_store）
     around do |example|
@@ -270,6 +319,10 @@ RSpec.describe WorkSearchService, type: :service do
 
     it 'キャッシュTTLが12時間に設定されている' do
       expect(WorkSearchService::CACHE_TTL).to eq(12.hours)
+    end
+
+    it 'キャッシュバージョンがv9である（関連度ソート導入で旧キャッシュを無効化）' do
+      expect(WorkSearchService::CACHE_VERSION).to eq('v9')
     end
 
     it '同じクエリの2回目はキャッシュから返す（APIを再呼び出ししない）' do
