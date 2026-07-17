@@ -5,8 +5,8 @@
 class WorkSearchService
   CACHE_TTL = 12.hours
   # 実装変更時にインクリメントしてキャッシュを無効化する
-  # v8: 説明補完を検索パスから撤去・二段階レスポンス廃止（v7以前の履歴はgit参照）
-  CACHE_VERSION = 'v8'
+  # v9: 関連度ティアソート導入・ゲーム検索のWikipedia補完軽量化（v8以前の履歴はgit参照）
+  CACHE_VERSION = 'v9'
   # ユーザーが最初に見るのは上位の結果だけなので、HTTP補完は上位に限定する
   ENRICHMENT_TOP_N = 20
 
@@ -15,7 +15,7 @@ class WorkSearchService
     cached = Rails.cache.read(key)
     return cached unless cached.nil?
 
-    results = enrich_covers_and_sort(fetch_and_sort(query, media_type))
+    results = enrich_covers_and_sort(fetch_and_sort(query, media_type), query)
     # 外部APIの一時障害で空になった結果を12時間キャッシュしない（1件以上のときのみ書き込む）
     Rails.cache.write(key, results, expires_in: CACHE_TTL) if results.any?
     results
@@ -27,13 +27,13 @@ class WorkSearchService
     adapters = select_adapters(media_type)
     results = fetch_from_adapters_in_parallel(adapters, query, media_type)
     results = results.select { |r| r.media_type == media_type } if media_type.present?
-    sort_by_quality_and_popularity(results)
+    sort_results(results, query)
   end
 
   # 補完で書影が付くと品質スコアが変わるため、補完後に最終ソートし直す
-  def enrich_covers_and_sort(results)
+  def enrich_covers_and_sort(results, query)
     WorkEnrichmentService.new.enrich_covers(results, limit: ENRICHMENT_TOP_N)
-    sort_by_quality_and_popularity(results)
+    sort_results(results, query)
   end
 
   def cache_key(query, media_type)
@@ -89,11 +89,12 @@ class WorkSearchService
     score
   end
 
-  # 品質スコア降順 → 人気度降順の2段ソート
-  # 情報がしっかりある結果を上位に並べることで、欠損結果を下位に押し下げる
-  def sort_by_quality_and_popularity(results)
+  # 関連度ティア降順 → 品質スコア降順 → 人気度降順の3段ソート（ADR-0045）
+  # 検索語にマッチする作品を上位に固め、同ティア内では情報が揃った人気作を先に出す
+  def sort_results(results, query)
     results.sort_by do |r|
-      [-quality_score(r), -(r.metadata[:popularity] || 0)]
+      [-SearchRelevanceScorer.tier(query, r.title), -quality_score(r),
+       -(r.metadata[:popularity] || 0)]
     end
   end
 end

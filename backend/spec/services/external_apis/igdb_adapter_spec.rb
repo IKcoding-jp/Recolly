@@ -77,6 +77,11 @@ RSpec.describe ExternalApis::IgdbAdapter, type: :service do
         .with(headers: { 'Authorization' => 'Bearer test_token', 'Client-ID' => client_id })
     end
 
+    it '英語クエリではパターン検索を行わない（リクエストは1回のみ）' do
+      adapter.search('Witcher')
+      expect(WebMock).to have_requested(:post, 'https://api.igdb.com/v4/games').once
+    end
+
     context '日本語クエリの場合' do
       let(:keyword_response) do
         [{ 'id' => 2623, 'name' => "Kirby's Dream Land", 'summary' => 'カービィのアクションゲーム',
@@ -94,9 +99,6 @@ RSpec.describe ExternalApis::IgdbAdapter, type: :service do
       end
 
       before do
-        # Wikipedia補完はこのコンテキストでは空を返す（別コンテキストでテスト）
-        wiki_stub = instance_double(ExternalApis::WikipediaGameAdapter, search_titles: [])
-        allow(ExternalApis::WikipediaGameAdapter).to receive(:new).and_return(wiki_stub)
         stub_request(:post, 'https://api.igdb.com/v4/games')
           .to_return(
             { status: 200, body: keyword_response.to_json, headers: { 'Content-Type' => 'application/json' } },
@@ -115,158 +117,94 @@ RSpec.describe ExternalApis::IgdbAdapter, type: :service do
         ids = results.map(&:external_api_id)
         expect(ids.uniq.length).to eq(ids.length)
       end
+
+      it 'パターン検索の条件にgame_localizations.nameを含める（日本語版タイトルで直接検索）' do
+        adapter.search('カービィ')
+        expect(WebMock).to have_requested(:post, 'https://api.igdb.com/v4/games')
+          .with(body: /game_localizations\.name ~ \*"カービィ"\*/)
+      end
+
+      it '取得フィールドにgame_localizationsの名前と日本語版ジャケットを含める' do
+        adapter.search('カービィ')
+        expect(WebMock).to have_requested(:post, 'https://api.igdb.com/v4/games')
+          .with(body: /game_localizations\.name,game_localizations\.region,game_localizations\.cover\.image_id/)
+          .at_least_once
+      end
     end
 
-    context '日本語クエリ + Wikipedia補完' do
-      let(:wikipedia_double) { instance_double(ExternalApis::WikipediaGameAdapter) }
-
-      let(:igdb_wikipedia_match) do
+    context 'game_localizations（日本語ローカライズ）がある場合' do
+      let(:localized_response) do
         [
           {
-            'id' => 3075,
-            'name' => 'Kirby Super Star',
-            'summary' => 'A Kirby game',
-            'cover' => { 'image_id' => 'co5xyz' },
-            'total_rating' => 88.0,
+            'id' => 6403,
+            'name' => 'Tomodachi Life',
+            'summary' => 'A life simulation game',
+            'cover' => { 'image_id' => 'co_en' },
+            'total_rating' => 78.0,
             'alternative_names' => [
-              { 'name' => '星のカービィ スーパーデラックス', 'comment' => 'Japanese title' }
+              { 'name' => 'トモコレ新生活', 'comment' => 'Japanese title' }
+            ],
+            'game_localizations' => [
+              { 'region' => 2, 'name' => '친구모아 아파트',
+                'cover' => { 'image_id' => 'co_kr' } },
+              { 'region' => 3, 'name' => 'トモダチコレクション 新生活',
+                'cover' => { 'image_id' => 'co_jp' } }
             ]
           }
         ]
       end
 
       before do
-        allow(ExternalApis::WikipediaGameAdapter).to receive(:new).and_return(wikipedia_double)
-        allow(wikipedia_double).to receive_messages(
-          search_titles: ['星のカービィ スーパーデラックス', '星のカービィ (アニメ)'],
-          fetch_extract: '任天堂が発売したアクションゲーム。'
-        )
-        # 言語間リンク: 日本語→英語タイトル
-        allow(wikipedia_double).to receive(:fetch_english_title)
-          .with('星のカービィ スーパーデラックス').and_return('Kirby Super Star')
-        allow(wikipedia_double).to receive(:fetch_english_title)
-          .with('星のカービィ (アニメ)').and_return(nil)
-
-        # 1回目: search_by_keyword（日本語）→ 0件
-        # 2回目: search_by_pattern（日本語）→ 0件
-        # 3回目: Wikipedia「星のカービィ スーパーデラックス」でIGDB再検索 → ヒット
-        # 4回目: Wikipedia「星のカービィ (アニメ)」でIGDB再検索 → 0件
         stub_request(:post, 'https://api.igdb.com/v4/games')
-          .to_return(
-            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
-            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
-            { status: 200, body: igdb_wikipedia_match.to_json,
-              headers: { 'Content-Type' => 'application/json' } },
-            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } }
-          )
-      end
-
-      it 'IGDB直接検索で見つからないゲームをWikipedia経由で見つける' do
-        results = adapter.search('カービィ')
-        expect(results.length).to eq(1)
-        expect(results.first.external_api_id).to eq('3075')
-      end
-
-      it 'Wikipedia経由の結果に日本語タイトルをセットする' do
-        results = adapter.search('カービィ')
-        expect(results.first.title).to eq('星のカービィ スーパーデラックス')
-      end
-
-      it 'Wikipedia経由の結果に日本語説明をセットする' do
-        results = adapter.search('カービィ')
-        expect(results.first.description).to eq('任天堂が発売したアクションゲーム。')
-      end
-    end
-
-    context '英語クエリではWikipedia検索を呼ばない' do
-      let(:wikipedia_double) { instance_spy(ExternalApis::WikipediaGameAdapter) }
-
-      before do
-        allow(ExternalApis::WikipediaGameAdapter).to receive(:new).and_return(wikipedia_double)
-        stub_request(:post, 'https://api.igdb.com/v4/games')
-          .to_return(status: 200, body: igdb_response.to_json,
+          .to_return(status: 200, body: localized_response.to_json,
                      headers: { 'Content-Type' => 'application/json' })
       end
 
-      it 'WikipediaGameAdapterのsearch_titlesを呼び出さない' do
-        adapter.search('Witcher')
-        expect(wikipedia_double).not_to have_received(:search_titles)
+      it '日本（region=3）のローカライズ名を表示タイトルに使う（別名より優先）' do
+        results = adapter.search('トモダチコレクション')
+        expect(results.first.title).to eq('トモダチコレクション 新生活')
+      end
+
+      it '日本語版ジャケットを優先して使う' do
+        results = adapter.search('トモダチコレクション')
+        expect(results.first.cover_image_url).to include('co_jp')
+      end
+
+      it '日本以外のリージョン（韓国等）のローカライズは使わない' do
+        results = adapter.search('トモダチコレクション')
+        expect(results.first.title).not_to eq('친구모아 아파트')
+        expect(results.first.cover_image_url).not_to include('co_kr')
       end
     end
-  end
 
-  describe '発売年によるリメイク版・原作版の区別' do
-    let(:wikipedia_double) { instance_double(ExternalApis::WikipediaGameAdapter) }
+    context 'game_localizationsがない場合のフォールバック' do
+      let(:no_localization_response) do
+        [
+          {
+            'id' => 2623,
+            'name' => "Kirby's Dream Land",
+            'summary' => 'カービィのアクションゲーム',
+            'cover' => { 'image_id' => 'co2abc' },
+            'total_rating' => 80.0,
+            'alternative_names' => [{ 'name' => '星のカービィ', 'comment' => 'Japanese title' }]
+          }
+        ]
+      end
 
-    # 1998年のオリジナル版と2019年のリメイク版
-    let(:igdb_multiple_versions) do
-      [
-        {
-          'id' => 732,
-          'name' => 'Resident Evil 2',
-          'summary' => 'Original 1998 version',
-          'cover' => { 'image_id' => 'co1abc' },
-          'first_release_date' => 885_427_200, # 1998-01-21
-          'total_rating' => 85.0
-        },
-        {
-          'id' => 19_686,
-          'name' => 'Resident Evil 2',
-          'summary' => '2019 remake version',
-          'cover' => { 'image_id' => 'co2def' },
-          'first_release_date' => 1_548_374_400, # 2019-01-25
-          'total_rating' => 92.0
-        }
-      ]
-    end
-
-    before do
-      allow(ExternalApis::WikipediaGameAdapter).to receive(:new).and_return(wikipedia_double)
-      allow(wikipedia_double).to receive_messages(search_titles: ['バイオハザード RE:2'], fetch_extract: 'カプコンのサバイバルホラーゲーム。')
-    end
-
-    context '括弧に発売年がある場合' do
       before do
-        allow(wikipedia_double).to receive(:fetch_english_title)
-          .with('バイオハザード RE:2').and_return('Resident Evil 2 (2019 video game)')
-
-        # 1回目・2回目: IGDB直接検索（日本語）→ 0件
-        # 3回目: Wikipedia経由でIGDB再検索 → 2件（1998版 + 2019版）
         stub_request(:post, 'https://api.igdb.com/v4/games')
-          .to_return(
-            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
-            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
-            { status: 200, body: igdb_multiple_versions.to_json,
-              headers: { 'Content-Type' => 'application/json' } }
-          )
+          .to_return(status: 200, body: no_localization_response.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
       end
 
-      it '発売年が一致するリメイク版（2019年）を優先して返す' do
-        results = adapter.search('バイオハザードRE:2')
-        expect(results.length).to eq(1)
-        expect(results.first.external_api_id).to eq('19686')
-        expect(results.first.description).to eq('カプコンのサバイバルホラーゲーム。')
-      end
-    end
-
-    context '括弧に発売年がない場合' do
-      before do
-        allow(wikipedia_double).to receive(:fetch_english_title)
-          .with('バイオハザード RE:2').and_return('Resident Evil 2')
-
-        stub_request(:post, 'https://api.igdb.com/v4/games')
-          .to_return(
-            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
-            { status: 200, body: [].to_json, headers: { 'Content-Type' => 'application/json' } },
-            { status: 200, body: igdb_multiple_versions.to_json,
-              headers: { 'Content-Type' => 'application/json' } }
-          )
+      it '別名（alternative_names）の日本語タイトルにフォールバックする' do
+        results = adapter.search('カービィ')
+        expect(results.first.title).to eq('星のカービィ')
       end
 
-      it '最初のマッチ（人気順の先頭）を返す' do
-        results = adapter.search('バイオハザードRE:2')
-        expect(results.length).to eq(1)
-        expect(results.first.external_api_id).to eq('732')
+      it 'ジャケットは通常のcoverを使う' do
+        results = adapter.search('カービィ')
+        expect(results.first.cover_image_url).to include('co2abc')
       end
     end
   end
