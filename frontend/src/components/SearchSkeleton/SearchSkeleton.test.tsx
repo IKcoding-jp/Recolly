@@ -3,10 +3,10 @@ import { render, screen } from '@testing-library/react'
 import { SearchSkeleton } from './SearchSkeleton'
 
 describe('SearchSkeleton', () => {
-  it('スケルトンカードがグリッド1行分（5枚）レンダリングされる', () => {
+  it('スケルトンカードがグリッド1行分（6枚）レンダリングされる', () => {
     render(<SearchSkeleton />)
     const cards = screen.getAllByRole('status')
-    expect(cards).toHaveLength(5)
+    expect(cards).toHaveLength(6)
   })
 
   it('各カードにaria-labelが設定されている', () => {
