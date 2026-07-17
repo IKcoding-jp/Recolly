@@ -728,11 +728,11 @@ describe('SearchPage', () => {
     })
     await user.click(screen.getByRole('button', { name: '記録する' }))
 
-    // モーダルが閉じ、カードが「記録済み」表示になる
+    // モーダルが閉じる（一覧上には「記録済み」の文字は表示しない）
     await waitFor(() => {
       expect(screen.queryByText('テストアニメを記録')).not.toBeInTheDocument()
     })
-    expect(screen.getByText('記録済み')).toBeInTheDocument()
+    expect(screen.queryByText('記録済み')).not.toBeInTheDocument()
 
     // 2回目のクリック: 記録済みカードをクリックしてもモーダルは開く
     await user.click(screen.getByRole('button', { name: 'テストアニメ（記録済み）' }))

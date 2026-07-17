@@ -58,9 +58,6 @@ export function WorkCard({ work, onRecord, isRecorded = false }: WorkCardProps) 
         </span>
         <h3 className={styles.title}>{work.title}</h3>
       </div>
-      <div className={styles.action}>
-        {isRecorded && <span className={styles.recorded}>記録済み</span>}
-      </div>
     </div>
   )
 }

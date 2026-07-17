@@ -56,21 +56,15 @@ describe('WorkCard', () => {
     expect(onRecord).toHaveBeenCalledWith(mockWork)
   })
 
-  it('記録済みの場合は「記録済み」と表示される', () => {
+  it('記録済みの場合も「記録済み」の文字は表示しない（一覧上は記録有無を表示しない）', () => {
     render(<WorkCard work={mockWork} onRecord={vi.fn()} isRecorded />)
-    expect(screen.getByText('記録済み')).toBeInTheDocument()
+    expect(screen.queryByText('記録済み')).not.toBeInTheDocument()
   })
 
   it('カバー画像が表示される', () => {
     render(<WorkCard work={mockWork} onRecord={vi.fn()} />)
     const img = screen.getByRole('img')
     expect(img).toHaveAttribute('src', 'https://example.com/cover.jpg')
-  })
-
-  it('記録済みの場合は「記録済み」がaction領域に表示される', () => {
-    const { container } = render(<WorkCard work={mockWork} onRecord={vi.fn()} isRecorded />)
-    const action = container.querySelector('[class*="action"]')
-    expect(action?.textContent).toBe('記録済み')
   })
 
   it('説明文は表示しない（ADR-0044: 検索カードはジャケット・ジャンル・タイトルのみ）', () => {
