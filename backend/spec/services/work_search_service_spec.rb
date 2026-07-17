@@ -306,6 +306,20 @@ RSpec.describe WorkSearchService, type: :service do
       # 両方とも前方一致ティアだが、画像+説明ありのprefix_matchが品質で勝つ
       expect(results.map(&:title)).to eq(['ゼルダの伝説', 'ゼルダの伝説 夢をみる島'])
     end
+
+    it '関連度・品質・人気度が同点ならシーズン番号昇順で並べる' do # rubocop:disable RSpec/ExampleLength
+      season2 = ExternalApis::BaseAdapter::SearchResult.new(
+        'コード・ブルー 2nd season', 'game', '説明', 'https://img.jpg', nil,
+        '21021-s2', 'igdb', { popularity: 0.3, season_number: 2 }
+      )
+      season1 = ExternalApis::BaseAdapter::SearchResult.new(
+        'コード・ブルー 1st season', 'game', '説明', 'https://img.jpg', nil,
+        '21021-s1', 'igdb', { popularity: 0.3, season_number: 1 }
+      )
+      allow(igdb_double).to receive(:safe_search).and_return([season2, season1])
+      results = service.search('コード・ブルー', media_type: 'game')
+      expect(results.map(&:external_api_id)).to eq(%w[21021-s1 21021-s2])
+    end
   end
 
   describe 'キャッシュ' do
@@ -321,8 +335,8 @@ RSpec.describe WorkSearchService, type: :service do
       expect(WorkSearchService::CACHE_TTL).to eq(12.hours)
     end
 
-    it 'キャッシュバージョンがv9である（関連度ソート導入で旧キャッシュを無効化）' do
-      expect(WorkSearchService::CACHE_VERSION).to eq('v9')
+    it 'キャッシュバージョンがv10である（シーズン展開導入で旧キャッシュを無効化）' do
+      expect(WorkSearchService::CACHE_VERSION).to eq('v10')
     end
 
     it '同じクエリの2回目はキャッシュから返す（APIを再呼び出ししない）' do
