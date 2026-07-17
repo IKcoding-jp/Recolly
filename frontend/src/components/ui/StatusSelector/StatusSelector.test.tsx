@@ -46,4 +46,11 @@ describe('StatusSelector', () => {
     await user.click(screen.getByRole('button', { name: '視聴完了' }))
     expect(handleChange).toHaveBeenCalledWith('completed')
   })
+
+  it('disabled指定時は全ボタンが無効化される', () => {
+    render(<StatusSelector value="watching" onChange={() => {}} mediaType="anime" disabled />)
+    expect(screen.getByRole('button', { name: '視聴中' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '視聴完了' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '視聴予定' })).toBeDisabled()
+  })
 })

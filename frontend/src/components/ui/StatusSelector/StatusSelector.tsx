@@ -6,6 +6,7 @@ type StatusSelectorProps = {
   value: RecordStatus
   onChange: (status: RecordStatus) => void
   mediaType?: MediaType
+  disabled?: boolean
 }
 
 const STATUS_VALUES: RecordStatus[] = [
@@ -16,7 +17,12 @@ const STATUS_VALUES: RecordStatus[] = [
   'plan_to_watch',
 ]
 
-export function StatusSelector({ value, onChange, mediaType }: StatusSelectorProps) {
+export function StatusSelector({
+  value,
+  onChange,
+  mediaType,
+  disabled = false,
+}: StatusSelectorProps) {
   return (
     <div className={styles.container}>
       {STATUS_VALUES.map((status) => {
@@ -28,6 +34,7 @@ export function StatusSelector({ value, onChange, mediaType }: StatusSelectorPro
             className={`${styles.tab} ${value === status ? styles.active : ''}`}
             onClick={() => onChange(status)}
             aria-label={label}
+            disabled={disabled}
           >
             {label}
           </button>
