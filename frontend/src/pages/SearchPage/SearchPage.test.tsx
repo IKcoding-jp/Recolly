@@ -742,4 +742,82 @@ describe('SearchPage', () => {
     expect(screen.getByText('この作品はすでに記録済みです')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '記録済み' })).toBeDisabled()
   })
+
+  it('手動登録作品が409衝突しても、別の手動登録作品に記録済み状態が誤って伝播しない', async () => {
+    renderSearchPage()
+    const user = userEvent.setup()
+
+    // 1件目の手動作品を登録
+    await user.click(await screen.findByRole('button', { name: '+ 手動で登録する' }))
+    await user.type(await screen.findByLabelText('タイトル'), '手動作品A')
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          work: {
+            id: 1,
+            title: '手動作品A',
+            media_type: 'anime',
+            description: null,
+            cover_image_url: null,
+            total_episodes: null,
+            external_api_id: null,
+            external_api_source: null,
+            metadata: {},
+            last_synced_at: null,
+            created_at: '2026-07-17T00:00:00Z',
+          },
+        }),
+    })
+    await user.click(screen.getByRole('button', { name: '登録する' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('手動作品Aを記録')).toBeInTheDocument()
+    })
+
+    // 記録APIが409を返す（重複タイトル等の衝突を想定）
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 409,
+      json: () => Promise.resolve({ error: '既に記録済みです' }),
+    })
+    await user.click(screen.getByRole('button', { name: '記録する' }))
+
+    await waitFor(() => {
+      expect(screen.queryByText('手動作品Aを記録')).not.toBeInTheDocument()
+    })
+
+    // 2件目の別の手動作品を登録
+    await user.click(await screen.findByRole('button', { name: '+ 手動で登録する' }))
+    await user.type(await screen.findByLabelText('タイトル'), '手動作品B')
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          work: {
+            id: 2,
+            title: '手動作品B',
+            media_type: 'anime',
+            description: null,
+            cover_image_url: null,
+            total_episodes: null,
+            external_api_id: null,
+            external_api_source: null,
+            metadata: {},
+            last_synced_at: null,
+            created_at: '2026-07-17T00:00:00Z',
+          },
+        }),
+    })
+    await user.click(screen.getByRole('button', { name: '登録する' }))
+
+    // 2件目は1件目とは別作品のため、記録済み状態を引き継がないはず
+    await waitFor(() => {
+      expect(screen.getByText('手動作品Bを記録')).toBeInTheDocument()
+    })
+    expect(screen.queryByText('この作品はすでに記録済みです')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '記録する' })).toBeEnabled()
+  })
 })
