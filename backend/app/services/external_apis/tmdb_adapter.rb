@@ -23,12 +23,16 @@ module ExternalApis
       %w[movie drama]
     end
 
-    def search(query, media_type: nil) # rubocop:disable Lint/UnusedMethodArgument -- BaseAdapterインターフェース準拠
+    def search(query, media_type: nil)
       results = search_movies_and_tv_in_parallel(query)
 
       # 結果が少ない場合、WikipediaClientで正式タイトルを取得してTMDB再検索する
       # 例: 「ウォーキングデッド」→ Wikipedia「ウォーキング・デッド」→ TMDB再検索
       results = wikipedia_fallback.search(query, results) if results.length <= NAKAGURO_RETRY_THRESHOLD
+
+      # 映画タブ検索（media_type: 'movie'）ではドラマ展開結果はWorkSearchService側の
+      # media_typeフィルタで全部捨てられるため、無駄なTMDB /tv/{id} 詳細取得を避けて素通しする
+      return results if media_type == 'movie'
 
       expand_seasons(query, results)
     end

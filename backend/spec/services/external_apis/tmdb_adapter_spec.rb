@@ -194,6 +194,17 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
         dramas = results.select { |r| r.media_type == 'drama' }
         expect(dramas.map(&:external_api_id)).to eq(%w[1396-s1 1396-s2])
       end
+
+      it 'media_type: dramaを指定してもシーズン別エントリに展開して返す' do
+        results = adapter.search('ブレイキング・バッド', media_type: 'drama')
+        dramas = results.select { |r| r.media_type == 'drama' }
+        expect(dramas.map(&:external_api_id)).to eq(%w[1396-s1 1396-s2])
+      end
+
+      it 'media_type: movieを指定した場合はTV詳細取得（シーズン展開）を行わない' do
+        adapter.search('ブレイキング・バッド', media_type: 'movie')
+        expect(a_request(:get, %r{api.themoviedb.org/3/tv/1396\?})).not_to have_been_made
+      end
     end
   end
 
