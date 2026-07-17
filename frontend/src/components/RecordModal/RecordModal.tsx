@@ -13,6 +13,7 @@ type RecordModalProps = {
   onConfirm: (data: { status: RecordStatus; rating: number | null }) => void
   onCancel: () => void
   isLoading: boolean
+  alreadyRecorded?: boolean
 }
 
 export function RecordModal({
@@ -23,6 +24,7 @@ export function RecordModal({
   onConfirm,
   onCancel,
   isLoading,
+  alreadyRecorded = false,
 }: RecordModalProps) {
   const [status, setStatus] = useState<RecordStatus>('watching')
   const [rating, setRating] = useState<number | null>(null)
@@ -41,19 +43,32 @@ export function RecordModal({
           <p className={styles.meta}>{mediaTypeLabel}</p>
         </div>
 
+        {alreadyRecorded && (
+          <p className={styles.alreadyRecordedNotice}>この作品はすでに記録済みです</p>
+        )}
+
         <div className={styles.card}>
           <label className={styles.label}>ステータス</label>
-          <StatusSelector value={status} onChange={setStatus} mediaType={mediaType} />
+          <StatusSelector
+            value={status}
+            onChange={setStatus}
+            mediaType={mediaType}
+            disabled={alreadyRecorded}
+          />
         </div>
 
         <div className={styles.card}>
           <label className={styles.label}>評価（任意）</label>
-          <RatingSlider value={rating ?? 0} onChange={(v) => setRating(v === 0 ? null : v)} />
+          <RatingSlider
+            value={rating ?? 0}
+            onChange={(v) => setRating(v === 0 ? null : v)}
+            disabled={alreadyRecorded}
+          />
         </div>
 
         <div className={styles.actions}>
-          <Button variant="primary" onClick={handleConfirm} disabled={isLoading}>
-            {isLoading ? '記録中...' : '記録する'}
+          <Button variant="primary" onClick={handleConfirm} disabled={isLoading || alreadyRecorded}>
+            {alreadyRecorded ? '記録済み' : isLoading ? '記録中...' : '記録する'}
           </Button>
           <Button variant="secondary" onClick={onCancel}>
             キャンセル

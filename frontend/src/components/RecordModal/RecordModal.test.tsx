@@ -64,4 +64,41 @@ describe('RecordModal', () => {
     const { container } = render(<RecordModal {...defaultProps} isOpen={false} />)
     expect(container.innerHTML).toBe('')
   })
+
+  describe('alreadyRecorded=true のとき', () => {
+    const alreadyRecordedProps = {
+      isOpen: true,
+      title: '進撃の巨人',
+      mediaType: 'anime' as const,
+      mediaTypeLabel: 'アニメ',
+      onConfirm: vi.fn(),
+      onCancel: vi.fn(),
+      isLoading: false,
+      alreadyRecorded: true,
+    }
+
+    it('案内文が表示される', () => {
+      render(<RecordModal {...alreadyRecordedProps} />)
+      expect(screen.getByText('この作品はすでに記録済みです')).toBeInTheDocument()
+    })
+
+    it('確定ボタンが「記録済み」表示でdisabledになる', () => {
+      render(<RecordModal {...alreadyRecordedProps} />)
+      expect(screen.getByRole('button', { name: '記録済み' })).toBeDisabled()
+    })
+
+    it('ステータス・評価の入力が無効化される', () => {
+      render(<RecordModal {...alreadyRecordedProps} />)
+      expect(screen.getByRole('button', { name: '視聴中' })).toBeDisabled()
+      expect(screen.getByRole('slider')).toBeDisabled()
+    })
+
+    it('キャンセルボタンは操作可能', async () => {
+      const user = userEvent.setup()
+      const handleCancel = vi.fn()
+      render(<RecordModal {...alreadyRecordedProps} onCancel={handleCancel} />)
+      await user.click(screen.getByRole('button', { name: 'キャンセル' }))
+      expect(handleCancel).toHaveBeenCalled()
+    })
+  })
 })
