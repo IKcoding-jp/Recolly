@@ -11,9 +11,15 @@ module ExternalApis
     OPEN_TIMEOUT = 2
     TIMEOUT = 3
 
+    # 並列スレッドから共有されるため、遅延メモ化（||=）の競合を避けて
+    # 接続はメインスレッドで先に構築する
+    def initialize
+      @connection = build_connection
+    end
+
     # キーワード検索でタイトル一覧を返す
     def search(query, limit: 10)
-      response = connection.get('', search_params(query, limit))
+      response = @connection.get('', search_params(query, limit))
       results = response.body.dig('query', 'search') || []
       results.pluck('title')
     rescue Faraday::Error => e
@@ -23,7 +29,7 @@ module ExternalApis
 
     # 記事の冒頭テキスト（概要）を取得する
     def fetch_extract(title)
-      response = connection.get('', extract_params(title))
+      response = @connection.get('', extract_params(title))
       pages = response.body.dig('query', 'pages') || {}
       page = pages.values.first
       return nil if page.nil? || page.key?('missing')
@@ -52,7 +58,7 @@ module ExternalApis
 
     # 日本語Wikipediaの言語間リンクから英語タイトルを取得する
     def fetch_english_title(title)
-      response = connection.get('', langlink_params(title))
+      response = @connection.get('', langlink_params(title))
       pages = response.body.dig('query', 'pages') || {}
       page = pages.values.first
       langlinks = page&.dig('langlinks') || []
@@ -66,7 +72,7 @@ module ExternalApis
     # 戻り値: { "タイトル" => ["Category:カテゴリ名", ...], ... }
     def fetch_categories(titles)
       joined = Array(titles).join('|')
-      response = connection.get('', categories_params(joined))
+      response = @connection.get('', categories_params(joined))
       pages = response.body.dig('query', 'pages') || {}
       parse_categories(pages)
     rescue Faraday::Error => e
@@ -85,8 +91,8 @@ module ExternalApis
       end
     end
 
-    def connection
-      @connection ||= Faraday.new(
+    def build_connection
+      Faraday.new(
         url: ENDPOINT, request: { open_timeout: OPEN_TIMEOUT, timeout: TIMEOUT }
       ) do |f|
         f.response :json
