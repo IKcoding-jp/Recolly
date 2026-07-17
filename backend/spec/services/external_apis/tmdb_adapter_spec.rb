@@ -16,6 +16,11 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
     allow(ENV).to receive(:fetch).with('TMDB_API_KEY').and_return(api_key)
     allow(ExternalApis::WikipediaClient).to receive(:new).and_return(default_wikipedia_client)
     allow(default_wikipedia_client).to receive(:search).and_return([])
+
+    # シーズン展開の詳細取得スタブ（デフォルトはシーズンなし＝展開されない）
+    stub_request(:get, %r{api.themoviedb.org/3/tv/\d+})
+      .to_return(status: 200, body: { 'seasons' => [] }.to_json,
+                 headers: { 'Content-Type' => 'application/json' })
   end
 
   describe '#media_types' do
@@ -168,6 +173,26 @@ RSpec.describe ExternalApis::TmdbAdapter, type: :service do
       it '海外のアニメーション（Animation + 原語en）は除外しない' do
         results = adapter.search('スポンジ')
         expect(results.map(&:title)).to include('スポンジ・ボブ')
+      end
+    end
+
+    context 'シーズン展開' do
+      before do
+        stub_request(:get, %r{api.themoviedb.org/3/tv/1396\?})
+          .to_return(status: 200, body: {
+            'seasons' => [
+              { 'season_number' => 1, 'name' => 'シーズン1', 'air_date' => '2008-01-20',
+                'episode_count' => 7, 'overview' => '1期', 'poster_path' => '/s1.jpg' },
+              { 'season_number' => 2, 'name' => 'シーズン2', 'air_date' => '2009-03-08',
+                'episode_count' => 13, 'overview' => '2期', 'poster_path' => '/s2.jpg' }
+            ]
+          }.to_json, headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it '複数シーズンのTVシリーズをシーズン別エントリに展開して返す' do
+        results = adapter.search('ブレイキング・バッド')
+        dramas = results.select { |r| r.media_type == 'drama' }
+        expect(dramas.map(&:external_api_id)).to eq(%w[1396-s1 1396-s2])
       end
     end
   end

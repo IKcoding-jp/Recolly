@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module ExternalApis
+  # rubocop:disable Metrics/ClassLength -- シーズン展開(Task 2)の組み込みで150行上限を5行超過。
+  # 展開ロジック自体はTmdbSeasonExpanderに分離済みで、本クラスへの追加は呼び出し1メソッド分のみ
   class TmdbAdapter < BaseAdapter
     BASE_URL = 'https://api.themoviedb.org'
     IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
@@ -31,7 +33,7 @@ module ExternalApis
       # 例: 「ウォーキングデッド」→ Wikipedia「ウォーキング・デッド」→ TMDB再検索
       results = search_via_wikipedia(query, results) if results.length <= NAKAGURO_RETRY_THRESHOLD
 
-      results
+      expand_seasons(query, results)
     end
 
     # AniListの結果に対して、TMDBから日本語の説明文を取得する
@@ -62,6 +64,16 @@ module ExternalApis
 
     def primary_connection
       connection(url: BASE_URL, open_timeout: PRIMARY_OPEN_TIMEOUT, timeout: PRIMARY_TIMEOUT)
+    end
+
+    # TVシリーズ結果をシーズン単位に展開する（展開ロジックはTmdbSeasonExpander参照）
+    # 詳細取得コネクションはスレッドごとに生成する（Faradayコネクション共有回避）
+    def expand_seasons(query, results)
+      factory = lambda do
+        connection(url: BASE_URL, open_timeout: SUPPLEMENTARY_OPEN_TIMEOUT,
+                   timeout: SUPPLEMENTARY_TIMEOUT, retry_on_timeout: false)
+      end
+      TmdbSeasonExpander.new(query, connection_factory: factory).expand(results)
     end
 
     # Wikipedia検索で正式タイトルを取得し、TMDBで追加検索する
@@ -212,4 +224,5 @@ module ExternalApis
       [value.to_f / 100.0, 1.0].min
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end
