@@ -138,9 +138,9 @@ RSpec.describe ExternalApis::IgdbAdapter, type: :service do
       before do
         allow(ExternalApis::WikipediaGameAdapter).to receive(:new).and_return(wikipedia_double)
         allow(wikipedia_double).to receive_messages(
-          search_titles: ['星のカービィ スーパーデラックス', '星のカービィ (アニメ)'],
-          fetch_extract: '任天堂が発売したアクションゲーム。'
+          search_titles: ['星のカービィ スーパーデラックス', '星のカービィ (アニメ)']
         )
+        allow(wikipedia_double).to receive(:fetch_extract)
         # 言語間リンク: 日本語→英語タイトル
         allow(wikipedia_double).to receive(:fetch_english_title)
           .with('星のカービィ スーパーデラックス').and_return('Kirby Super Star')
@@ -172,9 +172,11 @@ RSpec.describe ExternalApis::IgdbAdapter, type: :service do
         expect(results.first.title).to eq('星のカービィ スーパーデラックス')
       end
 
-      it 'Wikipedia経由の結果に日本語説明をセットする' do
+      it '検索時にはWikipediaの説明取得を呼ばず、説明はIGDBのsummaryのまま返す' do
         results = adapter.search('カービィ')
-        expect(results.first.description).to eq('任天堂が発売したアクションゲーム。')
+        expect(wikipedia_double).not_to have_received(:fetch_extract)
+        # 説明は記録時の1作品補完（ADR-0044）に任せる
+        expect(results.first.description).to eq('A Kirby game')
       end
     end
 
@@ -222,7 +224,8 @@ RSpec.describe ExternalApis::IgdbAdapter, type: :service do
 
     before do
       allow(ExternalApis::WikipediaGameAdapter).to receive(:new).and_return(wikipedia_double)
-      allow(wikipedia_double).to receive_messages(search_titles: ['バイオハザード RE:2'], fetch_extract: 'カプコンのサバイバルホラーゲーム。')
+      allow(wikipedia_double).to receive(:search_titles).and_return(['バイオハザード RE:2'])
+      allow(wikipedia_double).to receive(:fetch_extract)
     end
 
     context '括弧に発売年がある場合' do
@@ -245,7 +248,7 @@ RSpec.describe ExternalApis::IgdbAdapter, type: :service do
         results = adapter.search('バイオハザードRE:2')
         expect(results.length).to eq(1)
         expect(results.first.external_api_id).to eq('19686')
-        expect(results.first.description).to eq('カプコンのサバイバルホラーゲーム。')
+        expect(results.first.description).to eq('2019 remake version')
       end
     end
 

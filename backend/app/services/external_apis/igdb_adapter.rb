@@ -73,8 +73,8 @@ module ExternalApis
       match = igdb_match_from_wikipedia(jp_title, wikipedia, existing_ids)
       return nil if match.nil?
 
+      # 説明はIGDBのsummaryのまま返す。日本語説明は記録時の1作品補完（ADR-0044）に任せる
       match.title = jp_title
-      match.description = wikipedia.fetch_extract(jp_title).presence || match.description
       existing_ids.add(match.external_api_id)
       match
     end
