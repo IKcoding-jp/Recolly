@@ -5,8 +5,8 @@
 class WorkSearchService
   CACHE_TTL = 12.hours
   # 実装変更時にインクリメントしてキャッシュを無効化する
-  # v9: 関連度ティアソート導入・ゲーム検索のWikipedia補完軽量化（v8以前の履歴はgit参照）
-  CACHE_VERSION = 'v9'
+  # v10: ドラマ検索のシーズン展開導入（v9以前の履歴はgit参照）
+  CACHE_VERSION = 'v10'
   # ユーザーが最初に見るのは上位の結果だけなので、HTTP補完は上位に限定する
   ENRICHMENT_TOP_N = 20
 
@@ -89,12 +89,13 @@ class WorkSearchService
     score
   end
 
-  # 関連度ティア降順 → 品質スコア降順 → 人気度降順の3段ソート（ADR-0045）
-  # 検索語にマッチする作品を上位に固め、同ティア内では情報が揃った人気作を先に出す
+  # 関連度ティア降順 → 品質スコア降順 → 人気度降順 → シーズン番号昇順の4段ソート（ADR-0045）
+  # 検索語にマッチする作品を上位に固め、同ティア内では情報が揃った人気作を先に出す。
+  # 同一シリーズのシーズン同士は前3キーが同点になるため、シーズン番号で並び順を保証する
   def sort_results(results, query)
     results.sort_by do |r|
       [-SearchRelevanceScorer.tier(query, r.title), -quality_score(r),
-       -(r.metadata[:popularity] || 0)]
+       -(r.metadata[:popularity] || 0), r.metadata[:season_number] || 0]
     end
   end
 end
