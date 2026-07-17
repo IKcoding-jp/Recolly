@@ -150,6 +150,34 @@ RSpec.describe ExternalApis::TmdbSeasonExpander, type: :service do
       end
     end
 
+    context '詳細取得のレスポンスボディが空だった場合' do
+      before do
+        stub_request(:get, %r{api.themoviedb.org/3/tv/21021})
+          .to_return(status: 200, body: 'null', headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it 'シリーズエントリのまま返す（検索全体を落とさない）' do
+        results = expander.expand([series])
+        expect(results).to eq([series])
+      end
+
+      it '他の展開対象シリーズは巻き込まれず正常に展開される' do # rubocop:disable RSpec/ExampleLength
+        other_series = ExternalApis::BaseAdapter::SearchResult.new(
+          'コード・ブルー2', 'drama', 'シリーズ2の説明',
+          'https://image.tmdb.org/t/p/w500/series2.jpg', nil, '21022', 'tmdb',
+          { popularity: 0.2 }
+        )
+        stub_request(:get, %r{api.themoviedb.org/3/tv/21022})
+          .to_return(status: 200, body: detail_body.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+
+        results = expander.expand([series, other_series])
+
+        expect(results.first).to eq(series)
+        expect(results.drop(1).map(&:external_api_id)).to eq(%w[21022-s1 21022-s2])
+      end
+    end
+
     context 'キャッシュ' do
       # test環境のデフォルトは:null_storeのためメモリストアに差し替える
       around do |example|

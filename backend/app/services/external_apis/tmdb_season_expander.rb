@@ -67,7 +67,13 @@ module ExternalApis
       response = @connection_factory.call.get("/3/tv/#{series_id}",
                                               api_key: ENV.fetch('TMDB_API_KEY'),
                                               language: 'ja')
-      seasons = response.body['seasons']
+      body = response.body
+      # TMDBが空ボディ（JSON null等）を返すとbodyがnilになり、
+      # 素通しで['seasons']を呼ぶとNoMethodErrorがFaraday::Errorとして捕捉されず、
+      # Thread#value経由でexpand全体のrescueまで波及して他シリーズの展開も巻き込んでしまう
+      return nil unless body.is_a?(Hash)
+
+      seasons = body['seasons']
       return nil unless seasons.is_a?(Array)
 
       { 'seasons' => seasons }
