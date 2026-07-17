@@ -26,41 +26,45 @@ describe('WorkCard', () => {
     expect(screen.getByText('アニメ')).toBeInTheDocument()
   })
 
-  it('「記録する」ボタンが表示される', () => {
+  it('「記録する」ボタンは表示されない（カード全体がクリック対象のため）', () => {
     render(<WorkCard work={mockWork} onRecord={vi.fn()} />)
-    expect(screen.getByRole('button', { name: '記録する' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '記録する' })).not.toBeInTheDocument()
   })
 
-  it('「記録する」ボタン押下でコールバックが呼ばれる', async () => {
+  it('カードクリックでコールバックが呼ばれる', async () => {
     const onRecord = vi.fn()
     render(<WorkCard work={mockWork} onRecord={onRecord} />)
     const user = userEvent.setup()
-    await user.click(screen.getByRole('button', { name: '記録する' }))
+    await user.click(screen.getByRole('button', { name: 'テスト作品を記録する' }))
     expect(onRecord).toHaveBeenCalledWith(mockWork)
   })
 
-  it('記録済みの場合は「記録済み」と表示される', () => {
+  it('Enterキーでコールバックが呼ばれる', async () => {
+    const onRecord = vi.fn()
+    render(<WorkCard work={mockWork} onRecord={onRecord} />)
+    const user = userEvent.setup()
+    screen.getByRole('button', { name: 'テスト作品を記録する' }).focus()
+    await user.keyboard('{Enter}')
+    expect(onRecord).toHaveBeenCalledWith(mockWork)
+  })
+
+  it('記録済みの場合はカードクリックでもコールバックが呼ばれる', async () => {
+    const onRecord = vi.fn()
+    render(<WorkCard work={mockWork} onRecord={onRecord} isRecorded />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'テスト作品（記録済み）' }))
+    expect(onRecord).toHaveBeenCalledWith(mockWork)
+  })
+
+  it('記録済みの場合も「記録済み」の文字は表示しない（一覧上は記録有無を表示しない）', () => {
     render(<WorkCard work={mockWork} onRecord={vi.fn()} isRecorded />)
-    expect(screen.getByText('記録済み')).toBeInTheDocument()
+    expect(screen.queryByText('記録済み')).not.toBeInTheDocument()
   })
 
   it('カバー画像が表示される', () => {
     render(<WorkCard work={mockWork} onRecord={vi.fn()} />)
     const img = screen.getByRole('img')
     expect(img).toHaveAttribute('src', 'https://example.com/cover.jpg')
-  })
-
-  it('「記録する」ボタンがaction領域に配置されている', () => {
-    const { container } = render(<WorkCard work={mockWork} onRecord={vi.fn()} />)
-    const action = container.querySelector('[class*="action"]')
-    expect(action).toBeInTheDocument()
-    expect(action?.querySelector('button')).toBeInTheDocument()
-  })
-
-  it('記録済みの場合は「記録済み」がaction領域に表示される', () => {
-    const { container } = render(<WorkCard work={mockWork} onRecord={vi.fn()} isRecorded />)
-    const action = container.querySelector('[class*="action"]')
-    expect(action?.textContent).toBe('記録済み')
   })
 
   it('説明文は表示しない（ADR-0044: 検索カードはジャケット・ジャンル・タイトルのみ）', () => {

@@ -62,3 +62,11 @@
   gap: var(--spacing-sm);
   margin-top: var(--spacing-lg);
 }
+
+.alreadyRecordedNotice {
+  font-family: var(--font-body);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: 0 0 var(--spacing-md) 0;
+}

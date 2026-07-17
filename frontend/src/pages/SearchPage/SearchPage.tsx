@@ -42,6 +42,15 @@ function shouldShowEnglishHint(
   return gameCount <= 3
 }
 
+// 記録済み判定・記録APIで使う作品キー。手動登録作品は external_api_source/id が
+// null になるため、work.id ベースの別名前空間キーで衝突を避ける
+function workKeyOf(work: SearchResult, manualWorkId: number | null): string {
+  if (work.external_api_source && work.external_api_id) {
+    return `${work.external_api_source}:${work.external_api_id}`
+  }
+  return `manual:${manualWorkId ?? 'unknown'}`
+}
+
 export function SearchPage() {
   const [query, setQuery] = useState('')
   const [genre, setGenre] = useState<GenreFilter>('all')
@@ -137,7 +146,7 @@ export function SearchPage() {
         setManualWorkId(null)
       } else {
         // 検索結果作品: 既存のフロー
-        const workKey = `${modalWork.external_api_source}:${modalWork.external_api_id}`
+        const workKey = workKeyOf(modalWork, manualWorkId)
         setLoadingId(workKey)
         await recordsApi.createFromSearchResult(modalWork, data)
         captureEvent(ANALYTICS_EVENTS.RECORD_CREATED, {
@@ -152,7 +161,7 @@ export function SearchPage() {
         setError(err.message)
         // 409 Conflict = 既に記録済み → UIを「記録済み」に更新
         if (err.status === 409 && modalWork) {
-          const workKey = `${modalWork.external_api_source}:${modalWork.external_api_id}`
+          const workKey = workKeyOf(modalWork, manualWorkId)
           setRecordedIds((prev) => new Set(prev).add(workKey))
           setModalWork(null)
         }
@@ -270,14 +279,13 @@ export function SearchPage() {
             animate="visible"
           >
             {results.map((work) => {
-              const workKey = `${work.external_api_source}:${work.external_api_id}`
+              const workKey = workKeyOf(work, manualWorkId)
               return (
                 <motion.div key={workKey} variants={m.fadeInUp}>
                   <WorkCard
                     work={work}
                     onRecord={handleOpenModal}
                     isRecorded={recordedIds.has(workKey)}
-                    isLoading={loadingId === workKey}
                   />
                 </motion.div>
               )
@@ -312,6 +320,7 @@ export function SearchPage() {
           setManualWorkId(null)
         }}
         isLoading={loadingId !== null}
+        alreadyRecorded={modalWork ? recordedIds.has(workKeyOf(modalWork, manualWorkId)) : false}
       />
     </div>
   )

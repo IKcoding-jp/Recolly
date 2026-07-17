@@ -1,18 +1,15 @@
-/* WorkCard の縦型カードと同じ形・同じグリッド列数のスケルトン */
+/* WorkCard の縦型カードと同じ形・同じグリッド間隔のスケルトン（白背景カードで囲わない見た目に合わせる） */
 .container {
   margin-top: var(--spacing-lg);
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: var(--spacing-md);
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--spacing-sm);
 }
 
 .card {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
-  padding: var(--spacing-sm);
-  border: var(--border-width-thin) var(--border-style) var(--color-border-light);
-  border-radius: var(--radius-md);
 }
 
 .coverPlaceholder {
@@ -58,20 +55,6 @@
   width: 85%;
 }
 
-.buttonPlaceholder {
-  width: 72px;
-  height: 32px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(
-    90deg,
-    var(--color-border-light) 25%,
-    var(--color-skeleton-highlight) 50%,
-    var(--color-border-light) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -81,13 +64,13 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .container {
     grid-template-columns: repeat(4, 1fr);
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .container {
     grid-template-columns: repeat(3, 1fr);
   }
