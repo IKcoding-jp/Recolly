@@ -1,18 +1,15 @@
-/* WorkCard の縦型カードと同じ形・同じグリッド列数のスケルトン（ライブラリ画面のグリッドに合わせる） */
+/* WorkCard の縦型カードと同じ形・同じグリッド間隔のスケルトン（白背景カードで囲わない見た目に合わせる） */
 .container {
   margin-top: var(--spacing-lg);
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
 }
 
 .card {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
-  padding: var(--spacing-sm);
-  border: var(--border-width-thin) var(--border-style) var(--color-border-light);
-  border-radius: var(--radius-md);
 }
 
 .coverPlaceholder {

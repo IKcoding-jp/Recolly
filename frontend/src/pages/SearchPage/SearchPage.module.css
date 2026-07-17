@@ -71,12 +71,13 @@
   margin-top: var(--spacing-sm);
 }
 
-/* ジャケット主体の縦型カードを並べるグリッド（ADR-0044）。列数はライブラリ画面のグリッドに合わせる */
+/* ジャケット主体の縦型カードを並べるグリッド（ADR-0044）。列数はライブラリ画面のグリッドに合わせる。
+   間隔はライブラリより意図的に詰めて、ジャケットの一覧性を高める */
 .results {
   margin-top: var(--spacing-lg);
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
 }
 
 @media (max-width: 1024px) {
