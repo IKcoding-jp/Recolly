@@ -3,6 +3,9 @@
 module ExternalApis
   class GoogleBooksAdapter < BaseAdapter
     BASE_URL = 'https://www.googleapis.com'
+    # Google Booksが漫画に付与する分類タグ。漫画はAniList由来の
+    # 「漫画・ラノベ」ジャンルでシリーズ単位に管理するため本の検索から除外する
+    COMIC_CATEGORY = 'Comics & Graphic Novels'
 
     def media_types
       %w[book]
@@ -18,6 +21,7 @@ module ExternalApis
 
       items = response.body['items'] || []
       items.select { |item| japanese_or_unspecified?(item) }
+           .reject { |item| comic?(item) }
            .map { |item| normalize(item) }
     end
 
@@ -28,6 +32,13 @@ module ExternalApis
     def japanese_or_unspecified?(item)
       language = item.dig('volumeInfo', 'language')
       language.nil? || language == 'ja'
+    end
+
+    # categories に漫画分類が含まれるか。categories欠損の漫画は一部すり抜けるが、
+    # 普通の本を誤って除外しないこと（誤爆ゼロ）を優先する設計
+    def comic?(item)
+      categories = item.dig('volumeInfo', 'categories') || []
+      categories.include?(COMIC_CATEGORY)
     end
 
     def books_connection

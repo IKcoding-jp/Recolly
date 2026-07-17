@@ -111,6 +111,39 @@ RSpec.describe ExternalApis::GoogleBooksAdapter, type: :service do
       end
     end
 
+    describe '漫画の除外' do
+      # 漫画はAniList由来の「漫画・ラノベ」ジャンルでシリーズ単位に管理するため、
+      # Google Booksの単巻レコード（Comics & Graphic Novels）は本の検索から除外する
+      def build_item(id:, title:, categories: nil)
+        volume_info = { 'title' => title }
+        volume_info['categories'] = categories if categories
+        { 'id' => id, 'volumeInfo' => volume_info }
+      end
+
+      it 'categories に Comics & Graphic Novels を含む結果は除外する' do
+        stub_books_response([
+                              build_item(id: 'm1', title: '恋するワンピース 1',
+                                         categories: ['Comics & Graphic Novels']),
+                              build_item(id: 'b1', title: 'ワンピースの縫い方')
+                            ])
+        titles = adapter.search('ワンピース').map(&:title)
+        expect(titles).not_to include('恋するワンピース 1')
+        expect(titles).to include('ワンピースの縫い方')
+      end
+
+      it 'categories が漫画以外の結果は返す' do
+        stub_books_response([build_item(id: 'n1', title: 'ソードアート・オンライン1',
+                                        categories: ['Young Adult Fiction'])])
+        expect(adapter.search('ソードアート・オンライン').map(&:title))
+          .to include('ソードアート・オンライン1')
+      end
+
+      it 'categories が無い結果は除外しない' do
+        stub_books_response([build_item(id: 'b2', title: '分類なしの本')])
+        expect(adapter.search('分類なしの本').map(&:title)).to include('分類なしの本')
+      end
+    end
+
     describe 'ISBN抽出' do
       # テストごとに変わるのは industryIdentifiers のみなので、共通部分をヘルパー化
       def build_book_item(identifiers: nil)
