@@ -5,8 +5,8 @@
 class WorkSearchService
   CACHE_TTL = 12.hours
   # 実装変更時にインクリメントしてキャッシュを無効化する
-  # v10: ドラマ検索のシーズン展開導入（v9以前の履歴はgit参照）
-  CACHE_VERSION = 'v10'
+  # v11: 本検索の漫画除外とジャケット高解像度化（v10以前の履歴はgit参照）
+  CACHE_VERSION = 'v11'
   # ユーザーが最初に見るのは上位の結果だけなので、HTTP補完は上位に限定する
   ENRICHMENT_TOP_N = 20
 
