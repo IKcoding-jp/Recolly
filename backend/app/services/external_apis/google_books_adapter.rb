@@ -76,13 +76,20 @@ module ExternalApis
     # Google Books は thumbnail URL を http:// で返すことが多いが、
     # 本番は HTTPS 配信のため Mixed Content でブロックされる。https:// に置換した上で、
     # 低解像度画像にしか付かない edge=curl（ページめくれ装飾）を除去し、
-    # fife パラメータで高解像度画像を要求する（Google Booksの画像サーバーが対応）
+    # fife パラメータで高解像度画像を要求する（Google Booksの画像サーバーが対応）。
+    # edge=curl が唯一のクエリパラメータ（?edge=curl）の場合は前後に & が付かないため、
+    # 中間・先頭パラメータ用のgsubでは取りこぼす。末尾の?edge=curlを別途subで処理する
     def normalize_cover_image_url(url)
       return nil if url.nil?
 
-      cleaned = url.sub(%r{\Ahttp://}, 'https://').gsub(/&edge=curl|edge=curl&/, '')
+      cleaned = strip_edge_curl(url.sub(%r{\Ahttp://}, 'https://'))
       separator = cleaned.include?('?') ? '&' : '?'
       "#{cleaned}#{separator}#{COVER_IMAGE_SIZE_PARAM}"
+    end
+
+    # edge=curl パラメータをクエリ文字列中の位置に関わらず除去する
+    def strip_edge_curl(url)
+      url.gsub(/&edge=curl|edge=curl&/, '').sub(/\?edge=curl\z/, '')
     end
 
     # industryIdentifiersからISBNを抽出。ISBN-13を最優先、なければISBN-10

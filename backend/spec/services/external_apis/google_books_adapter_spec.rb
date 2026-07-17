@@ -233,6 +233,24 @@ RSpec.describe ExternalApis::GoogleBooksAdapter, type: :service do
         book = adapter.search('テスト本').first
         expect(book.cover_image_url).to be_nil
       end
+
+      it 'edge=curl が唯一のクエリパラメータでも除去する' do
+        stub_books_response([build_book_item(
+          thumbnail: 'http://books.google.com/books/content?edge=curl'
+        )])
+        book = adapter.search('テスト本').first
+        expect(book.cover_image_url)
+          .to eq('https://books.google.com/books/content?fife=w400')
+      end
+
+      it 'edge=curl が先頭のクエリパラメータでも除去する' do
+        stub_books_response([build_book_item(
+          thumbnail: 'http://books.google.com/books/content?edge=curl&id=abc123'
+        )])
+        book = adapter.search('テスト本').first
+        expect(book.cover_image_url)
+          .to eq('https://books.google.com/books/content?id=abc123&fife=w400')
+      end
     end
   end
 end
