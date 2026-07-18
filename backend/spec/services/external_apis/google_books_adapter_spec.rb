@@ -234,6 +234,12 @@ RSpec.describe ExternalApis::GoogleBooksAdapter, type: :service do
         expect(book.cover_image_url).to be_nil
       end
 
+      it 'thumbnail が空文字列の場合は nil を返す（ゴミURLを生成しない）' do
+        stub_books_response([build_book_item(thumbnail: '')])
+        book = adapter.search('テスト本').first
+        expect(book.cover_image_url).to be_nil
+      end
+
       it 'edge=curl が唯一のクエリパラメータでも除去する' do
         stub_books_response([build_book_item(
           thumbnail: 'http://books.google.com/books/content?edge=curl'

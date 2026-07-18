@@ -80,7 +80,7 @@ module ExternalApis
     # edge=curl が唯一のクエリパラメータ（?edge=curl）の場合は前後に & が付かないため、
     # 中間・先頭パラメータ用のgsubでは取りこぼす。末尾の?edge=curlを別途subで処理する
     def normalize_cover_image_url(url)
-      return nil if url.nil?
+      return nil if url.blank?
 
       cleaned = strip_edge_curl(url.sub(%r{\Ahttp://}, 'https://'))
       separator = cleaned.include?('?') ? '&' : '?'
