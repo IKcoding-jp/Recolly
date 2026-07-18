@@ -50,10 +50,15 @@
 - AniListアダプターは変更しない（`format: NOVEL` を引き続き含める。現状の動作）
 - 内部値 `media_type: 'manga'` は変更しない（DB・APIに影響なし）。UIラベルのみ変更
 
-### 2. 本の検索から漫画を除外する
+### 2. 本の検索から漫画・ラノベを除外する
 
-- `categories` に `Comics & Graphic Novels` を含む結果を除外
-- `categories` 欠損の漫画は一部すり抜けるが、普通の本を誤って消すリスクがほぼないことを優先
+- `categories` に `Comics & Graphic Novels`（漫画）または `Young Adult Fiction`（ラノベ）を
+  含む結果を除外
+- ラノベ除外は実装後の動作確認でユーザーが追加判断（2026-07-18）。
+  当初は「ラノベは本にも出続ける」を許容する設計だったが、実際の検索結果
+  （無職転生の小説版が8冊バラバラに表示）を見て除外に方針変更した
+- `categories` 欠損の漫画・ラノベは一部すり抜けるが、普通の本を誤って消すリスクが
+  ほぼないことを優先
 
 ### 3. 本のジャケットを高解像度化する
 
@@ -68,8 +73,8 @@
 
 **`backend/app/services/external_apis/google_books_adapter.rb`**
 
-1. `search` の絞り込みに漫画除外を追加:
-   `categories` に `Comics & Graphic Novels` を含むitemを除外する
+1. `search` の絞り込みに漫画・ラノベ除外を追加:
+   `categories` に `Comics & Graphic Novels` または `Young Adult Fiction` を含むitemを除外する
 2. `normalize_cover_image_url` を拡張:
    - `edge=curl` パラメータを削除
    - `fife=w400` パラメータを付与
@@ -98,17 +103,18 @@
 
 ## 許容するトレードオフ
 
-- **ラノベは「本」検索にも1巻ずつ出続ける**:
-  「Young Adult Fiction」は普通のYA小説も含むため、ラノベだけを確実に除外する手段がない。
-  本ジャンルで1冊ずつ記録したいユーザーには有用なため許容する
-- **categories欠損の漫画のすり抜け**: 誤爆ゼロを優先した設計上の割り切り
+- **ラノベ以外の一般向けYA小説も巻き添えで除外される**:
+  「Young Adult Fiction」タグはラノベ以外の少年少女向け小説にも付くため、
+  それらも本の検索から消える。ラノベの単巻ノイズ排除を優先してユーザーが許容した
+- **categories欠損の漫画・ラノベのすり抜け**: 誤爆側に倒さないことを優先した設計上の割り切り
+  （例: 「無職転生 3 特装版」はcategoriesがnullのため本検索に残る）
 - **fife=w400が元画像より大きい場合**: サーバー側で拡大されるため多少ぼやけるが、
   現状の128px固定より悪化することはない
 
 ## テスト方針（TDD）
 
 - `google_books_adapter_spec.rb`:
-  - `Comics & Graphic Novels` を含むitemが除外される
+  - `Comics & Graphic Novels` / `Young Adult Fiction` を含むitemが除外される
   - `categories` がnilのitemは除外されない
   - サムネイルURLに `fife=w400` が付与され `edge=curl` が除去される
   - URLがnilの場合にエラーにならない
