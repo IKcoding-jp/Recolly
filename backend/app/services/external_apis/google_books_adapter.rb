@@ -3,6 +3,13 @@
 module ExternalApis
   class GoogleBooksAdapter < BaseAdapter
     BASE_URL = 'https://www.googleapis.com'
+    # 本の検索から除外する分類タグ。漫画・ラノベはAniList由来の
+    # 「漫画・ラノベ」ジャンルでシリーズ単位に管理するため、
+    # Google Booksの単巻レコードは本の検索結果から除外する
+    EXCLUDED_CATEGORIES = ['Comics & Graphic Novels', 'Young Adult Fiction'].freeze
+    # 検索グリッドのカード幅200px前後 × 高精細ディスプレイ(2倍)を想定した画像幅。
+    # 素のthumbnailは128px幅で粗く、w800は1枚300KB超と過剰なためw400とする
+    COVER_IMAGE_SIZE_PARAM = 'fife=w400'
 
     def media_types
       %w[book]
@@ -18,6 +25,7 @@ module ExternalApis
 
       items = response.body['items'] || []
       items.select { |item| japanese_or_unspecified?(item) }
+           .reject { |item| excluded_category?(item) }
            .map { |item| normalize(item) }
     end
 
@@ -28,6 +36,13 @@ module ExternalApis
     def japanese_or_unspecified?(item)
       language = item.dig('volumeInfo', 'language')
       language.nil? || language == 'ja'
+    end
+
+    # categories に除外対象タグが含まれるか。categories欠損の漫画・ラノベは一部
+    # すり抜けるが、普通の本を誤って除外しないこと（誤爆ゼロ）を優先する設計
+    def excluded_category?(item)
+      categories = item.dig('volumeInfo', 'categories') || []
+      categories.intersect?(EXCLUDED_CATEGORIES)
     end
 
     def books_connection
@@ -60,10 +75,22 @@ module ExternalApis
     end
 
     # Google Books は thumbnail URL を http:// で返すことが多いが、
-    # 本番は HTTPS 配信のため Mixed Content でブロックされる。
-    # プロトコルのみ https:// に置換する（Google Books は同一パスを HTTPS でも配信している）
+    # 本番は HTTPS 配信のため Mixed Content でブロックされる。https:// に置換した上で、
+    # 低解像度画像にしか付かない edge=curl（ページめくれ装飾）を除去し、
+    # fife パラメータで高解像度画像を要求する（Google Booksの画像サーバーが対応）。
+    # edge=curl が唯一のクエリパラメータ（?edge=curl）の場合は前後に & が付かないため、
+    # 中間・先頭パラメータ用のgsubでは取りこぼす。末尾の?edge=curlを別途subで処理する
     def normalize_cover_image_url(url)
-      url&.sub(%r{\Ahttp://}, 'https://')
+      return nil if url.blank?
+
+      cleaned = strip_edge_curl(url.sub(%r{\Ahttp://}, 'https://'))
+      separator = cleaned.include?('?') ? '&' : '?'
+      "#{cleaned}#{separator}#{COVER_IMAGE_SIZE_PARAM}"
+    end
+
+    # edge=curl パラメータをクエリ文字列中の位置に関わらず除去する
+    def strip_edge_curl(url)
+      url.gsub(/&edge=curl|edge=curl&/, '').sub(/\?edge=curl\z/, '')
     end
 
     # industryIdentifiersからISBNを抽出。ISBN-13を最優先、なければISBN-10

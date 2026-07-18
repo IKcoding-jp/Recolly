@@ -335,8 +335,8 @@ RSpec.describe WorkSearchService, type: :service do
       expect(WorkSearchService::CACHE_TTL).to eq(12.hours)
     end
 
-    it 'キャッシュバージョンがv10である（シーズン展開導入で旧キャッシュを無効化）' do
-      expect(WorkSearchService::CACHE_VERSION).to eq('v10')
+    it 'キャッシュバージョンがv12である（本検索のラノベ除外で旧キャッシュを無効化）' do
+      expect(WorkSearchService::CACHE_VERSION).to eq('v12')
     end
 
     it '同じクエリの2回目はキャッシュから返す（APIを再呼び出ししない）' do

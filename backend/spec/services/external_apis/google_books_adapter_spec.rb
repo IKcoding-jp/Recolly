@@ -111,6 +111,43 @@ RSpec.describe ExternalApis::GoogleBooksAdapter, type: :service do
       end
     end
 
+    describe '漫画・ラノベの除外' do
+      # 漫画・ラノベはAniList由来の「漫画・ラノベ」ジャンルでシリーズ単位に管理するため、
+      # Google Booksの単巻レコード（Comics & Graphic Novels / Young Adult Fiction）は本の検索から除外する
+      def build_item(id:, title:, categories: nil)
+        volume_info = { 'title' => title }
+        volume_info['categories'] = categories if categories
+        { 'id' => id, 'volumeInfo' => volume_info }
+      end
+
+      it 'categories に Comics & Graphic Novels を含む結果は除外する' do
+        stub_books_response([
+                              build_item(id: 'm1', title: '恋するワンピース 1',
+                                         categories: ['Comics & Graphic Novels']),
+                              build_item(id: 'b1', title: 'ワンピースの縫い方')
+                            ])
+        titles = adapter.search('ワンピース').map(&:title)
+        expect(titles).not_to include('恋するワンピース 1')
+        expect(titles).to include('ワンピースの縫い方')
+      end
+
+      it 'categories に Young Adult Fiction（ラノベ）を含む結果は除外する' do
+        stub_books_response([
+                              build_item(id: 'ln1', title: 'ソードアート・オンライン1',
+                                         categories: ['Young Adult Fiction']),
+                              build_item(id: 'b1', title: '普通の小説', categories: ['Fiction'])
+                            ])
+        titles = adapter.search('ソードアート・オンライン').map(&:title)
+        expect(titles).not_to include('ソードアート・オンライン1')
+        expect(titles).to include('普通の小説')
+      end
+
+      it 'categories が無い結果は除外しない' do
+        stub_books_response([build_item(id: 'b2', title: '分類なしの本')])
+        expect(adapter.search('分類なしの本').map(&:title)).to include('分類なしの本')
+      end
+    end
+
     describe 'ISBN抽出' do
       # テストごとに変わるのは industryIdentifiers のみなので、共通部分をヘルパー化
       def build_book_item(identifiers: nil)
@@ -145,7 +182,8 @@ RSpec.describe ExternalApis::GoogleBooksAdapter, type: :service do
 
     describe 'カバー画像URLの正規化' do
       # Google Books API は thumbnail URL を http:// で返すことが多く、
-      # HTTPS ページで Mixed Content としてブロックされるため https:// に正規化する
+      # HTTPS ページで Mixed Content としてブロックされるため https:// に正規化する。
+      # また素のthumbnailは128px幅しかないため fife=w400 で400px幅を要求する
       def build_book_item(thumbnail:)
         {
           'id' => 'abc123',
@@ -161,15 +199,34 @@ RSpec.describe ExternalApis::GoogleBooksAdapter, type: :service do
           thumbnail: 'http://books.google.com/books/content?id=abc123&img=1'
         )])
         book = adapter.search('テスト本').first
-        expect(book.cover_image_url).to eq('https://books.google.com/books/content?id=abc123&img=1')
+        expect(book.cover_image_url)
+          .to eq('https://books.google.com/books/content?id=abc123&img=1&fife=w400')
       end
 
-      it '既に https:// の thumbnail URL はそのまま保持する（冪等性）' do
+      it '既に https:// の thumbnail URL はプロトコルを変えない' do
         stub_books_response([build_book_item(
           thumbnail: 'https://books.google.com/books/content?id=abc123'
         )])
         book = adapter.search('テスト本').first
-        expect(book.cover_image_url).to eq('https://books.google.com/books/content?id=abc123')
+        expect(book.cover_image_url)
+          .to eq('https://books.google.com/books/content?id=abc123&fife=w400')
+      end
+
+      it '低解像度画像用の edge=curl パラメータを除去する' do
+        stub_books_response([build_book_item(
+          thumbnail: 'http://books.google.com/books/content?id=abc123&zoom=1&edge=curl&source=gbs_api'
+        )])
+        book = adapter.search('テスト本').first
+        expect(book.cover_image_url)
+          .to eq('https://books.google.com/books/content?id=abc123&zoom=1&source=gbs_api&fife=w400')
+      end
+
+      it 'fife=w400 を付与して高解像度画像を要求する' do
+        stub_books_response([build_book_item(
+          thumbnail: 'http://books.google.com/books/content?id=abc123&zoom=1'
+        )])
+        book = adapter.search('テスト本').first
+        expect(book.cover_image_url).to include('fife=w400')
       end
 
       it 'thumbnail が nil の場合は nil のままエラーにしない' do
@@ -179,6 +236,30 @@ RSpec.describe ExternalApis::GoogleBooksAdapter, type: :service do
                             }])
         book = adapter.search('テスト本').first
         expect(book.cover_image_url).to be_nil
+      end
+
+      it 'thumbnail が空文字列の場合は nil を返す（ゴミURLを生成しない）' do
+        stub_books_response([build_book_item(thumbnail: '')])
+        book = adapter.search('テスト本').first
+        expect(book.cover_image_url).to be_nil
+      end
+
+      it 'edge=curl が唯一のクエリパラメータでも除去する' do
+        stub_books_response([build_book_item(
+          thumbnail: 'http://books.google.com/books/content?edge=curl'
+        )])
+        book = adapter.search('テスト本').first
+        expect(book.cover_image_url)
+          .to eq('https://books.google.com/books/content?fife=w400')
+      end
+
+      it 'edge=curl が先頭のクエリパラメータでも除去する' do
+        stub_books_response([build_book_item(
+          thumbnail: 'http://books.google.com/books/content?edge=curl&id=abc123'
+        )])
+        book = adapter.search('テスト本').first
+        expect(book.cover_image_url)
+          .to eq('https://books.google.com/books/content?id=abc123&fife=w400')
       end
     end
   end

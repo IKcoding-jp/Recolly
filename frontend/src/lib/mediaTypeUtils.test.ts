@@ -66,8 +66,8 @@ describe('getGenreLabel', () => {
   it('本は「本」を返す', () => {
     expect(getGenreLabel('book')).toBe('本')
   })
-  it('漫画は「漫画」を返す', () => {
-    expect(getGenreLabel('manga')).toBe('漫画')
+  it('漫画は「漫画・ラノベ」を返す', () => {
+    expect(getGenreLabel('manga')).toBe('漫画・ラノベ')
   })
   it('ゲームは「ゲーム」を返す', () => {
     expect(getGenreLabel('game')).toBe('ゲーム')
