@@ -12,37 +12,6 @@
   margin-bottom: var(--spacing-lg);
 }
 
-.genreFilters {
-  display: flex;
-  gap: var(--spacing-xs);
-  flex-wrap: wrap;
-}
-
-.filterButton {
-  padding: 8px 12px;
-  min-height: 36px;
-  display: inline-flex;
-  align-items: center;
-  border: none;
-  border-bottom: 2px solid transparent;
-  background: none;
-  font-family: var(--font-body);
-  font-size: var(--font-size-meta);
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.filterButton:hover {
-  color: var(--color-text);
-}
-
-.filterActive {
-  color: var(--color-text);
-  font-weight: var(--font-weight-bold);
-  border-bottom-color: var(--color-text);
-}
-
 .grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);

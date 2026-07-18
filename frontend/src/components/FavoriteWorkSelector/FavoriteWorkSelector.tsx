@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { MediaType, PublicRecord, WorkSummary } from '../../lib/types'
 import { request } from '../../lib/api'
-import { GENRE_FILTERS } from '../../pages/SearchPage/genreFilters'
+import { GenreFilterTabs } from '../ui/GenreFilterTabs/GenreFilterTabs'
+import { SearchInput } from '../ui/SearchInput/SearchInput'
 import styles from './FavoriteWorkSelector.module.css'
 
 type FavoriteWorkSelectorProps = {
@@ -66,29 +67,20 @@ export function FavoriteWorkSelector({
           </button>
         </div>
 
-        <input
-          type="text"
-          className={styles.searchInput}
-          placeholder="作品名で絞り込み..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+        <div className={styles.searchArea}>
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="作品名で絞り込み..."
+            aria-label="作品名で絞り込み"
+          />
+        </div>
 
         <div className={styles.genreFilters}>
-          {GENRE_FILTERS.map((filter) => (
-            <button
-              key={filter.value}
-              type="button"
-              className={`${styles.filterButton} ${
-                (mediaType ?? 'all') === filter.value ? styles.filterActive : ''
-              }`}
-              onClick={() =>
-                setMediaType(filter.value === 'all' ? null : (filter.value as MediaType))
-              }
-            >
-              {filter.label}
-            </button>
-          ))}
+          <GenreFilterTabs
+            value={mediaType ?? 'all'}
+            onChange={(value) => setMediaType(value === 'all' ? null : value)}
+          />
         </div>
 
         <div className={styles.workGrid}>

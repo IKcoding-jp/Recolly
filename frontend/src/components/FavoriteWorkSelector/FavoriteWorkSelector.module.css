@@ -17,7 +17,9 @@
   padding: var(--spacing-lg);
   max-width: 700px;
   width: 90%;
-  max-height: 80vh;
+  /* max-heightだと読み込み中に中身が減って縮み、ジャンル切替のたびに
+     モーダルサイズが変動して見づらいため高さを固定する */
+  height: 80vh;
   display: flex;
   flex-direction: column;
 }
@@ -51,63 +53,26 @@
   justify-content: center;
 }
 
-.searchInput {
-  width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: var(--border-width-thin) solid var(--color-border-light);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-body);
-  font-size: var(--font-size-label);
-  color: var(--color-text);
+.searchArea {
   margin-bottom: var(--spacing-sm);
-  box-sizing: border-box;
-}
-
-.searchInput:focus {
-  outline: none;
-  border-color: var(--color-text);
 }
 
 .genreFilters {
-  display: flex;
-  gap: var(--spacing-xs);
   margin-bottom: var(--spacing-md);
-  flex-wrap: wrap;
-}
-
-.filterButton {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  border: var(--border-width) solid var(--color-border-light);
-  border-radius: var(--radius-sm);
-  background: none;
-  font-family: var(--font-body);
-  font-size: var(--font-size-meta);
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.filterButton:hover {
-  border-color: var(--color-text);
-  color: var(--color-text);
-}
-
-.filterActive {
-  border-color: var(--color-text);
-  color: var(--color-text);
-  font-weight: var(--font-weight-bold);
 }
 
 .workGrid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  /* minmax(0, 1fr): 1frのみだと列の最小幅が画像の固有サイズになり、
+     高解像度ジャケットが列を押し広げてサイズが不揃いになるため */
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--spacing-sm);
   overflow-y: auto;
   flex: 1;
   min-height: 0;
+  /* モーダル高さ固定に伴い、行数が少ないときに行が縦に引き伸ばされて
+     無駄な間隔が生まれるのを防ぐ（上詰めにする） */
+  align-content: start;
 }
 
 .workCard {
@@ -169,10 +134,10 @@
   .modal {
     width: calc(100% - var(--spacing-lg) * 2);
     padding: var(--spacing-md);
-    max-height: 85vh;
+    height: 85vh;
   }
 
   .workGrid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

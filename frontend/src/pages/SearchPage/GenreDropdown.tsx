@@ -1,5 +1,5 @@
-import type { GenreFilter } from './genreFilters'
-import { GENRE_FILTERS } from './genreFilters'
+import type { GenreFilter } from '../../lib/genreFilters'
+import { GENRE_FILTERS } from '../../lib/genreFilters'
 import styles from './GenreDropdown.module.css'
 
 type GenreDropdownProps = {

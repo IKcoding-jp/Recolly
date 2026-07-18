@@ -1,5 +1,5 @@
 // ジャンルフィルタの型定義と定数
-import type { MediaType } from '../../lib/types'
+import type { MediaType } from './types'
 
 export type GenreFilter = MediaType | 'all'
 
