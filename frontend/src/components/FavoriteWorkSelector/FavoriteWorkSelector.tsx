@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { MediaType, PublicRecord, WorkSummary } from '../../lib/types'
 import { request } from '../../lib/api'
 import { GENRE_FILTERS } from '../../pages/SearchPage/genreFilters'
+import { SearchInput } from '../ui/SearchInput/SearchInput'
 import styles from './FavoriteWorkSelector.module.css'
 
 type FavoriteWorkSelectorProps = {
@@ -66,13 +67,14 @@ export function FavoriteWorkSelector({
           </button>
         </div>
 
-        <input
-          type="text"
-          className={styles.searchInput}
-          placeholder="作品名で絞り込み..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+        <div className={styles.searchArea}>
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="作品名で絞り込み..."
+            aria-label="作品名で絞り込み"
+          />
+        </div>
 
         <div className={styles.genreFilters}>
           {GENRE_FILTERS.map((filter) => (
