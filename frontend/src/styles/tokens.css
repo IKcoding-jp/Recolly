@@ -76,6 +76,7 @@
   --bottom-tab-height: 64px;
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
+  --spacing-sm-plus: 0.75rem; /* sm と md の中間。タブの横パディング等 */
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
@@ -115,6 +116,7 @@
   /* --- コンポーネント固有サイズ --- */
   --size-work-thumbnail-w: 50px;
   --size-work-thumbnail-h: 70px;
+  --size-filter-tab-height: 36px;
 
   /* --- レイアウト --- */
   --page-max-width: 900px;

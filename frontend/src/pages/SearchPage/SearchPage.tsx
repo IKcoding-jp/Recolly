@@ -21,8 +21,8 @@ import { captureEvent } from '../../lib/analytics/posthog'
 import { ANALYTICS_EVENTS } from '../../lib/analytics/events'
 import { updateMediaTypesCount } from '../../lib/analytics/userProperties'
 import { GenreDropdown } from './GenreDropdown'
-import { GENRE_FILTERS } from './genreFilters'
-import type { GenreFilter } from './genreFilters'
+import { GenreFilterTabs } from '../../components/ui/GenreFilterTabs/GenreFilterTabs'
+import type { GenreFilter } from '../../lib/genreFilters'
 import styles from './SearchPage.module.css'
 
 // 日本語文字（ひらがな・カタカナ・漢字）が含まれるか判定
@@ -229,18 +229,9 @@ export function SearchPage() {
           />
         </form>
 
-        {/* PC: ピルボタン */}
+        {/* PC: タブ表示 */}
         <div className={styles.filters}>
-          {GENRE_FILTERS.map((filter) => (
-            <button
-              key={filter.value}
-              className={`${styles.filterButton} ${genre === filter.value ? styles.filterActive : ''}`}
-              onClick={() => handleGenreChange(filter.value)}
-              type="button"
-            >
-              {filter.label}
-            </button>
-          ))}
+          <GenreFilterTabs value={genre} onChange={handleGenreChange} />
         </div>
 
         {/* モバイル: ドロップダウン */}

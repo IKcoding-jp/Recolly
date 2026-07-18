@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { GenreDropdown } from './GenreDropdown'
-import { GENRE_FILTERS } from './genreFilters'
+import { GENRE_FILTERS } from '../../lib/genreFilters'
 
 describe('GenreDropdown', () => {
   it('全ジャンルオプションが表示される', () => {

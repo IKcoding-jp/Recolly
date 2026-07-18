@@ -2,8 +2,7 @@ import { useDiscussions } from '../../hooks/useDiscussions'
 import type { DiscussionSort } from '../../hooks/useDiscussions'
 import { DiscussionCard } from '../../components/DiscussionCard/DiscussionCard'
 import { FormSelect } from '../../components/ui/FormSelect/FormSelect'
-import { GENRE_FILTERS } from '../SearchPage/genreFilters'
-import type { MediaType } from '../../lib/types'
+import { GenreFilterTabs } from '../../components/ui/GenreFilterTabs/GenreFilterTabs'
 import { Pagination } from '../../components/ui/Pagination/Pagination'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
 import styles from './CommunityPage.module.css'
@@ -36,20 +35,10 @@ export function CommunityPage() {
       <SectionTitle>コミュニティ</SectionTitle>
 
       <div className={styles.filters}>
-        <div className={styles.genreFilters}>
-          {GENRE_FILTERS.map((filter) => (
-            <button
-              key={filter.value}
-              type="button"
-              className={`${styles.filterButton} ${(mediaType ?? 'all') === filter.value ? styles.filterActive : ''}`}
-              onClick={() =>
-                setMediaType(filter.value === 'all' ? null : (filter.value as MediaType))
-              }
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
+        <GenreFilterTabs
+          value={mediaType ?? 'all'}
+          onChange={(value) => setMediaType(value === 'all' ? null : value)}
+        />
         <FormSelect
           size="sm"
           label="並び替え"

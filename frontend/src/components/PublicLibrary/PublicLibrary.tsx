@@ -1,9 +1,8 @@
 import { Link } from 'react-router-dom'
 import { useUserRecords } from '../../hooks/useUserRecords'
 import { getStatusLabel } from '../../lib/mediaTypeUtils'
-import type { MediaType } from '../../lib/types'
-import { GENRE_FILTERS } from '../../pages/SearchPage/genreFilters'
 import { FormSelect } from '../ui/FormSelect/FormSelect'
+import { GenreFilterTabs } from '../ui/GenreFilterTabs/GenreFilterTabs'
 import { Pagination } from '../ui/Pagination/Pagination'
 import { SectionTitle } from '../ui/SectionTitle/SectionTitle'
 import styles from './PublicLibrary.module.css'
@@ -32,20 +31,10 @@ export function PublicLibrary({ userId }: PublicLibraryProps) {
       <SectionTitle>公開ライブラリ</SectionTitle>
 
       <div className={styles.filters}>
-        <div className={styles.genreFilters}>
-          {GENRE_FILTERS.map((filter) => (
-            <button
-              key={filter.value}
-              type="button"
-              className={`${styles.filterButton} ${(mediaType ?? 'all') === filter.value ? styles.filterActive : ''}`}
-              onClick={() =>
-                setMediaType(filter.value === 'all' ? null : (filter.value as MediaType))
-              }
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
+        <GenreFilterTabs
+          value={mediaType ?? 'all'}
+          onChange={(value) => setMediaType(value === 'all' ? null : value)}
+        />
         <FormSelect
           size="sm"
           label="並び替え"
