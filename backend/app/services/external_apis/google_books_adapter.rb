@@ -3,9 +3,10 @@
 module ExternalApis
   class GoogleBooksAdapter < BaseAdapter
     BASE_URL = 'https://www.googleapis.com'
-    # Google Booksが漫画に付与する分類タグ。漫画はAniList由来の
-    # 「漫画・ラノベ」ジャンルでシリーズ単位に管理するため本の検索から除外する
-    COMIC_CATEGORY = 'Comics & Graphic Novels'
+    # 本の検索から除外する分類タグ。漫画・ラノベはAniList由来の
+    # 「漫画・ラノベ」ジャンルでシリーズ単位に管理するため、
+    # Google Booksの単巻レコードは本の検索結果から除外する
+    EXCLUDED_CATEGORIES = ['Comics & Graphic Novels', 'Young Adult Fiction'].freeze
     # 検索グリッドのカード幅200px前後 × 高精細ディスプレイ(2倍)を想定した画像幅。
     # 素のthumbnailは128px幅で粗く、w800は1枚300KB超と過剰なためw400とする
     COVER_IMAGE_SIZE_PARAM = 'fife=w400'
@@ -24,7 +25,7 @@ module ExternalApis
 
       items = response.body['items'] || []
       items.select { |item| japanese_or_unspecified?(item) }
-           .reject { |item| comic?(item) }
+           .reject { |item| excluded_category?(item) }
            .map { |item| normalize(item) }
     end
 
@@ -37,11 +38,11 @@ module ExternalApis
       language.nil? || language == 'ja'
     end
 
-    # categories に漫画分類が含まれるか。categories欠損の漫画は一部すり抜けるが、
-    # 普通の本を誤って除外しないこと（誤爆ゼロ）を優先する設計
-    def comic?(item)
+    # categories に除外対象タグが含まれるか。categories欠損の漫画・ラノベは一部
+    # すり抜けるが、普通の本を誤って除外しないこと（誤爆ゼロ）を優先する設計
+    def excluded_category?(item)
       categories = item.dig('volumeInfo', 'categories') || []
-      categories.include?(COMIC_CATEGORY)
+      categories.intersect?(EXCLUDED_CATEGORIES)
     end
 
     def books_connection

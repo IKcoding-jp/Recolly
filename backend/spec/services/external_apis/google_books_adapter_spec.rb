@@ -111,9 +111,9 @@ RSpec.describe ExternalApis::GoogleBooksAdapter, type: :service do
       end
     end
 
-    describe '漫画の除外' do
-      # 漫画はAniList由来の「漫画・ラノベ」ジャンルでシリーズ単位に管理するため、
-      # Google Booksの単巻レコード（Comics & Graphic Novels）は本の検索から除外する
+    describe '漫画・ラノベの除外' do
+      # 漫画・ラノベはAniList由来の「漫画・ラノベ」ジャンルでシリーズ単位に管理するため、
+      # Google Booksの単巻レコード（Comics & Graphic Novels / Young Adult Fiction）は本の検索から除外する
       def build_item(id:, title:, categories: nil)
         volume_info = { 'title' => title }
         volume_info['categories'] = categories if categories
@@ -131,11 +131,15 @@ RSpec.describe ExternalApis::GoogleBooksAdapter, type: :service do
         expect(titles).to include('ワンピースの縫い方')
       end
 
-      it 'categories が漫画以外の結果は返す' do
-        stub_books_response([build_item(id: 'n1', title: 'ソードアート・オンライン1',
-                                        categories: ['Young Adult Fiction'])])
-        expect(adapter.search('ソードアート・オンライン').map(&:title))
-          .to include('ソードアート・オンライン1')
+      it 'categories に Young Adult Fiction（ラノベ）を含む結果は除外する' do
+        stub_books_response([
+                              build_item(id: 'ln1', title: 'ソードアート・オンライン1',
+                                         categories: ['Young Adult Fiction']),
+                              build_item(id: 'b1', title: '普通の小説', categories: ['Fiction'])
+                            ])
+        titles = adapter.search('ソードアート・オンライン').map(&:title)
+        expect(titles).not_to include('ソードアート・オンライン1')
+        expect(titles).to include('普通の小説')
       end
 
       it 'categories が無い結果は除外しない' do
