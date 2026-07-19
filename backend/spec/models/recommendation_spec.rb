@@ -39,17 +39,6 @@ RSpec.describe Recommendation, type: :model do
       recommendation = described_class.create!(user: user)
       expect(recommendation.preference_scores).to eq([])
     end
-
-    it 'recommended_worksにハッシュの配列を保存できる' do
-      works = [
-        { 'title' => '作品A', 'media_type' => 'anime', 'reason' => '理由A' },
-        { 'title' => '作品B', 'media_type' => 'movie', 'reason' => '理由B' }
-      ]
-      recommendation = described_class.create!(user: user, recommended_works: works)
-      recommendation.reload
-      expect(recommendation.recommended_works.length).to eq(2)
-      expect(recommendation.recommended_works.first['title']).to eq('作品A')
-    end
   end
 
   private
@@ -61,8 +50,6 @@ RSpec.describe Recommendation, type: :model do
       preference_scores: [{ label: 'キャラクター重視', score: 9.2 }],
       genre_stats: [{ media_type: 'anime', count: 10, avg_rating: 8.0 }],
       top_tags: [{ name: '名作', count: 5 }],
-      recommended_works: [{ title: 'テスト作品', media_type: 'anime', reason: 'テスト理由' }],
-      challenge_works: [],
       record_count: 10,
       analyzed_at: Time.current
     )

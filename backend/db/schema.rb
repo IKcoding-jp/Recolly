@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_09_044939) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_19_024136) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -80,12 +80,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_044939) do
     t.text "analysis_summary"
     t.datetime "analyzed_at"
     t.datetime "created_at", null: false
-    t.jsonb "cross_media_works", default: []
     t.integer "media_type", null: false
-    t.jsonb "preference_scores", default: []
     t.integer "record_count", default: 0
     t.jsonb "same_media_works", default: []
-    t.jsonb "top_tags", default: []
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["user_id", "media_type"], name: "index_media_preference_profiles_on_user_id_and_media_type", unique: true
@@ -95,11 +92,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_044939) do
   create_table "recommendations", force: :cascade do |t|
     t.text "analysis_summary"
     t.datetime "analyzed_at"
-    t.jsonb "challenge_works", default: []
     t.datetime "created_at", null: false
     t.jsonb "genre_stats", default: []
     t.jsonb "preference_scores", default: []
-    t.jsonb "recommended_works", default: []
     t.integer "record_count", default: 0
     t.jsonb "top_tags", default: []
     t.datetime "updated_at", null: false
