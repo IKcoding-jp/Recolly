@@ -5,8 +5,8 @@
 class WorkSearchService
   CACHE_TTL = 12.hours
   # 実装変更時にインクリメントしてキャッシュを無効化する
-  # v12: 本検索のラノベ（Young Adult Fiction）除外を追加（v11以前の履歴はgit参照）
-  CACHE_VERSION = 'v12'
+  # v13: AniList metadataにformatを追加（v12以前の履歴はgit参照）
+  CACHE_VERSION = 'v13'
   # ユーザーが最初に見るのは上位の結果だけなので、HTTP補完は上位に限定する
   ENRICHMENT_TOP_N = 20
 

@@ -98,6 +98,7 @@ module ExternalApis
       {
         genres: item['genres'],
         status: item['status'],
+        format: item['format'],
         season_year: item['seasonYear'],
         popularity: normalize_popularity(item['popularity']),
         title_english: item.dig('title', 'english'),
