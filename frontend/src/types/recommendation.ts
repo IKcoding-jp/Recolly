@@ -34,8 +34,6 @@ export interface RecommendationAnalysis {
 
 export interface RecommendationData {
   analysis: RecommendationAnalysis | null
-  recommended_works: RecommendedWork[]
-  challenge_works: RecommendedWork[]
   analyzed_at: string | null
   record_count: number
   required_count?: number

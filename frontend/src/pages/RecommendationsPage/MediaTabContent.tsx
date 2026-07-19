@@ -1,5 +1,3 @@
-import { Link } from 'react-router-dom'
-import { Button } from '../../components/ui/Button/Button'
 import { getMediaTypeLabel } from '../../lib/mediaTypeUtils'
 import type { MediaPreferenceProfile } from '../../types/mediaPreferenceProfile'
 import type { RecommendedWork } from '../../types/recommendation'
@@ -18,48 +16,6 @@ export function MediaTabContent({ profile, onRecord, recordedIds, recordingId }:
   const mediaLabel = getMediaTypeLabel(profile.media_type)
   const workKey = (work: RecommendedWork) => `${work.external_api_source}:${work.external_api_id}`
 
-  if (profile.status === 'no_records') {
-    return (
-      <div className={styles.mediaEmptyState}>
-        <p className={styles.mediaEmptyDesc}>
-          まだ{mediaLabel}の記録がありません。記録を追加するとAI分析が使えるようになります。
-        </p>
-        <Link to="/search">
-          <Button variant="secondary" size="sm">
-            {mediaLabel}を検索して記録する
-          </Button>
-        </Link>
-      </div>
-    )
-  }
-
-  if (profile.status === 'insufficient_records') {
-    const remaining = profile.required_count - profile.record_count
-    return (
-      <div className={styles.mediaProgressCard}>
-        <div className={styles.progressTitle}>
-          あと{remaining}件記録すると{mediaLabel}のAI分析が使えます
-        </div>
-        <div className={styles.progressBarContainer}>
-          <div className={styles.progressBarBg}>
-            <div
-              className={styles.progressBarFill}
-              style={{ width: `${(profile.record_count / profile.required_count) * 100}%` }}
-            />
-          </div>
-          <span className={styles.progressCount}>
-            {profile.record_count} / {profile.required_count}
-          </span>
-        </div>
-        <Link to="/search">
-          <Button variant="secondary" size="sm">
-            {mediaLabel}を検索して記録する
-          </Button>
-        </Link>
-      </div>
-    )
-  }
-
   if (profile.status === 'generating') {
     return (
       <div className={styles.loadingOverlay}>
@@ -72,6 +28,9 @@ export function MediaTabContent({ profile, onRecord, recordedIds, recordingId }:
     )
   }
 
+  // insufficient_records / no_records は全体側の表示で扱うため、タブでは何も出さない
+  if (profile.status !== 'ready') return null
+
   return (
     <>
       <MediaAnalysisSummaryCard profile={profile} />
@@ -81,23 +40,6 @@ export function MediaTabContent({ profile, onRecord, recordedIds, recordingId }:
           <h2 className={styles.mediaSectionTitle}>{mediaLabel}のおすすめ</h2>
           <div className={styles.recList}>
             {profile.same_media_works.map((work, index) => (
-              <RecommendedWorkCard
-                key={workKey(work)}
-                work={work}
-                onRecord={(w) => onRecord(w, index + 1)}
-                isLoading={recordingId === workKey(work)}
-                isRecorded={recordedIds.has(workKey(work))}
-              />
-            ))}
-          </div>
-        </>
-      )}
-
-      {profile.cross_media_works.length > 0 && (
-        <>
-          <h2 className={styles.mediaSectionTitle}>{mediaLabel}好きにおすすめの他メディア</h2>
-          <div className={styles.recList}>
-            {profile.cross_media_works.map((work, index) => (
               <RecommendedWorkCard
                 key={workKey(work)}
                 work={work}
