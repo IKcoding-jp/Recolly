@@ -1,13 +1,10 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom'
-import { AnimatePresence } from 'motion/react'
-import { useRegisterSW } from 'virtual:pwa-register/react'
 import { AuthProvider } from './contexts/AuthContext'
 import { useAuth } from './contexts/useAuth'
 import { ProtectedRoute } from './components/ProtectedRoute/ProtectedRoute'
 import { NavBar } from './components/ui/NavBar/NavBar'
 import { BottomTabBar } from './components/ui/BottomTabBar/BottomTabBar'
-import { UpdatePrompt } from './components/ui/UpdatePrompt/UpdatePrompt'
 import { PageviewTracker } from './components/PageviewTracker/PageviewTracker'
 import { Footer } from './components/ui/Footer/Footer'
 import appStyles from './App.module.css'
@@ -150,23 +147,10 @@ function OptionalAuthLayout({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  const {
-    needRefresh: [needRefresh, setNeedRefresh],
-    updateServiceWorker,
-  } = useRegisterSW()
-
   return (
     <BrowserRouter>
       <AuthProvider>
         <PageviewTracker />
-        <AnimatePresence>
-          {needRefresh && (
-            <UpdatePrompt
-              onRefresh={() => void updateServiceWorker(true)}
-              onClose={() => setNeedRefresh(false)}
-            />
-          )}
-        </AnimatePresence>
         <Suspense fallback={<div className={appStyles.loading}>読み込み中...</div>}>
           <Routes>
             <Route path="/" element={<RootRoute />} />
