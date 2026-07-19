@@ -8,7 +8,8 @@ class PreferenceAnalyzer
   # プロンプト肥大を防ぐため、除外指示に載せる記録済みタイトル数の上限
   MAX_RECORDED_TITLES = 200
   MODEL = 'claude-sonnet-5'.freeze
-  MAX_TOKENS = 8192
+  # thinkingと本文（テキスト）の合計トークン上限のため余裕を持たせる。非ストリーミングはこの水準まで安全
+  MAX_TOKENS = 16_000
 
   def initialize(user)
     @user = user
@@ -146,9 +147,9 @@ class PreferenceAnalyzer
   end
 
   def parse_response(response, data)
-    text = response.content[0].text.strip
-    # LLMが```json...```で囲む場合があるので除去
-    text = text.sub(/\A```json\s*\n?/, '').sub(/\n?```\s*\z/, '')
+    text = extract_text(response)
+    return nil if text.nil?
+
     parsed = JSON.parse(text)
 
     {
@@ -161,5 +162,14 @@ class PreferenceAnalyzer
   rescue JSON::ParserError => e
     Rails.logger.error("[PreferenceAnalyzer] JSON解析エラー: #{e.message}")
     nil
+  end
+
+  # adaptive thinkingで応答先頭にthinkingブロックが入るため、textブロックを明示的に探す
+  def extract_text(response)
+    text_block = response.content.find { |block| block.type.to_s == 'text' }
+    return nil if text_block.nil?
+
+    # LLMが```json...```で囲む場合があるので除去
+    text_block.text.strip.sub(/\A```json\s*\n?/, '').sub(/\n?```\s*\z/, '')
   end
 end

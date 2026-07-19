@@ -127,7 +127,7 @@ RSpec.describe PreferenceAnalyzer do
     end
 
     it 'Claude APIを呼び出して分析結果を返す' do
-      text_block = double('TextBlock', text: mock_api_response.to_json) # rubocop:disable RSpec/VerifiedDoubles
+      text_block = double('TextBlock', type: :text, text: mock_api_response.to_json) # rubocop:disable RSpec/VerifiedDoubles
       message = double('Message', content: [text_block]) # rubocop:disable RSpec/VerifiedDoubles
       messages_resource = double('Messages') # rubocop:disable RSpec/VerifiedDoubles
       client_double = double('Anthropic::Client', messages: messages_resource) # rubocop:disable RSpec/VerifiedDoubles
@@ -140,8 +140,8 @@ RSpec.describe PreferenceAnalyzer do
       expect(result[:media_recommendations]['anime']['works']).not_to be_empty
     end
 
-    it 'claude-sonnet-5を使用する' do
-      text_block = double('TextBlock', text: mock_api_response.to_json) # rubocop:disable RSpec/VerifiedDoubles
+    it 'claude-sonnet-5をmax_tokens 16000で使用する' do
+      text_block = double('TextBlock', type: :text, text: mock_api_response.to_json) # rubocop:disable RSpec/VerifiedDoubles
       message = double('Message', content: [text_block]) # rubocop:disable RSpec/VerifiedDoubles
       messages_resource = double('Messages') # rubocop:disable RSpec/VerifiedDoubles
       client_double = double('Anthropic::Client', messages: messages_resource) # rubocop:disable RSpec/VerifiedDoubles
@@ -150,13 +150,13 @@ RSpec.describe PreferenceAnalyzer do
 
       described_class.new(user).analyze
       expect(messages_resource).to have_received(:create)
-        .with(hash_including(model: 'claude-sonnet-5'))
+        .with(hash_including(model: 'claude-sonnet-5', max_tokens: 16_000))
     end
 
     # rubocop:disable RSpec/ExampleLength -- 再試行の検証には1回目失敗・2回目成功のダブルが両方必要
     it 'JSON解析に失敗したら1回だけ再試行する' do
-      bad_block = double('TextBlock', text: '不正なJSON') # rubocop:disable RSpec/VerifiedDoubles
-      good_block = double('TextBlock', text: mock_api_response.to_json) # rubocop:disable RSpec/VerifiedDoubles
+      bad_block = double('TextBlock', type: :text, text: '不正なJSON') # rubocop:disable RSpec/VerifiedDoubles
+      good_block = double('TextBlock', type: :text, text: mock_api_response.to_json) # rubocop:disable RSpec/VerifiedDoubles
       bad_message = double('Message', content: [bad_block]) # rubocop:disable RSpec/VerifiedDoubles
       good_message = double('Message', content: [good_block]) # rubocop:disable RSpec/VerifiedDoubles
       messages_resource = double('Messages') # rubocop:disable RSpec/VerifiedDoubles
@@ -180,8 +180,33 @@ RSpec.describe PreferenceAnalyzer do
     end
 
     it 'Claude APIのJSON解析に失敗したらnilを返す' do
-      text_block = double('TextBlock', text: '不正なJSON') # rubocop:disable RSpec/VerifiedDoubles
+      text_block = double('TextBlock', type: :text, text: '不正なJSON') # rubocop:disable RSpec/VerifiedDoubles
       message = double('Message', content: [text_block]) # rubocop:disable RSpec/VerifiedDoubles
+      messages_resource = double('Messages') # rubocop:disable RSpec/VerifiedDoubles
+      client_double = double('Anthropic::Client', messages: messages_resource) # rubocop:disable RSpec/VerifiedDoubles
+      allow(Anthropic::Client).to receive(:new).and_return(client_double)
+      allow(messages_resource).to receive(:create).and_return(message)
+
+      result = described_class.new(user).analyze
+      expect(result).to be_nil
+    end
+
+    it 'contentの先頭にthinkingブロックがあってもtextブロックを解析する' do
+      thinking_block = double('ThinkingBlock', type: :thinking) # rubocop:disable RSpec/VerifiedDoubles
+      text_block = double('TextBlock', type: :text, text: mock_api_response.to_json) # rubocop:disable RSpec/VerifiedDoubles
+      message = double('Message', content: [thinking_block, text_block]) # rubocop:disable RSpec/VerifiedDoubles
+      messages_resource = double('Messages') # rubocop:disable RSpec/VerifiedDoubles
+      client_double = double('Anthropic::Client', messages: messages_resource) # rubocop:disable RSpec/VerifiedDoubles
+      allow(Anthropic::Client).to receive(:new).and_return(client_double)
+      allow(messages_resource).to receive(:create).and_return(message)
+
+      result = described_class.new(user).analyze
+      expect(result[:summary]).to eq('テスト分析サマリー')
+    end
+
+    it 'textブロックが無い場合はnilを返す' do
+      thinking_block = double('ThinkingBlock', type: :thinking) # rubocop:disable RSpec/VerifiedDoubles
+      message = double('Message', content: [thinking_block]) # rubocop:disable RSpec/VerifiedDoubles
       messages_resource = double('Messages') # rubocop:disable RSpec/VerifiedDoubles
       client_double = double('Anthropic::Client', messages: messages_resource) # rubocop:disable RSpec/VerifiedDoubles
       allow(Anthropic::Client).to receive(:new).and_return(client_double)
