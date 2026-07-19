@@ -1412,9 +1412,9 @@ module Api
         }
       end
 
+      # group(:media_type)のキーはRailsがenum文字列（'anime'等）にキャスト済みのため変換不要
       def media_record_counts
         current_user.records.joins(:work).group('works.media_type').count
-                    .transform_keys { |key| Work.media_types.key(key) }
       end
     end
   end
