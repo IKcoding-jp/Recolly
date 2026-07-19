@@ -22,7 +22,7 @@ import styles from './RecommendationsPage.module.css'
 
 export function RecommendationsPage() {
   const { data, status, isLoading, isRefreshing, error, refresh } = useRecommendations()
-  const { profiles, getProfileByMediaType, refetch: refetchProfiles } = useMediaProfiles()
+  const { getProfileByMediaType, refetch: refetchProfiles } = useMediaProfiles()
   const [activeTab, setActiveTab] = useState<TabId>('overall')
   const [modalWork, setModalWork] = useState<RecommendedWork | null>(null)
   const [recordingId, setRecordingId] = useState<string | null>(null)
@@ -210,7 +210,7 @@ export function RecommendationsPage() {
 
           {/* タブバー */}
           <motion.div variants={m.fadeInUp}>
-            <MediaTabBar profiles={profiles} activeTab={activeTab} onTabChange={setActiveTab} />
+            <MediaTabBar activeTab={activeTab} onTabChange={setActiveTab} />
           </motion.div>
 
           {/* タブコンテンツ */}
