@@ -48,5 +48,22 @@ RSpec.describe PreferencePromptBuilder do
       prompt = described_class.new(data.merge(recorded_titles: [])).build
       expect(prompt).not_to include('記録済みの全作品')
     end
+
+    it 'reasonの構成指示（2〜3文・根拠から接続まで）を含む' do
+      prompt = described_class.new(data).build
+      expect(prompt).to include('reasonは2〜3文')
+      expect(prompt).to include('どんな好みを読み取ったか')
+    end
+
+    it 'メディアをまたぐ橋渡し推薦の指示を含む' do
+      prompt = described_class.new(data).build
+      expect(prompt).to include('橋渡し')
+      expect(prompt).to include('2件以上は他メディア')
+    end
+
+    it 'trendに他メディアの好みを踏まえる指示を含む' do
+      prompt = described_class.new(data).build
+      expect(prompt).to include('trendは2文程度')
+    end
   end
 end
