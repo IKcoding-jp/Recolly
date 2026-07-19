@@ -3,15 +3,6 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// vite-plugin-pwa の仮想モジュールはテスト環境で利用できないためモック
-vi.mock('virtual:pwa-register/react', () => ({
-  useRegisterSW: () => ({
-    needRefresh: [false, vi.fn()],
-    offlineReady: [false, vi.fn()],
-    updateServiceWorker: vi.fn(),
-  }),
-}))
-
 // LandingPage をモック（LP 内部の重いツリーをテストの範囲外にする）
 vi.mock('./pages/LandingPage/LandingPage', () => ({
   LandingPage: () => <div data-testid="landing-page-mock">LP</div>,
