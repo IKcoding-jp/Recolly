@@ -22,8 +22,11 @@ type Props = {
 }
 
 export function MediaTabBar({ profiles, activeTab, onTabChange }: Props) {
-  const getRecordCount = (mediaType: string) =>
-    profiles.find((p) => p.media_type === mediaType)?.record_count ?? 0
+  // バッジは記録数ではなく「このタブで提案されているおすすめの件数」を示す
+  const getRecommendationCount = (mediaType: string) => {
+    const profile = profiles.find((p) => p.media_type === mediaType)
+    return profile?.status === 'ready' ? profile.same_media_works.length : 0
+  }
 
   const getActiveClass = (tabId: string) => {
     if (tabId !== activeTab) return ''
@@ -50,7 +53,9 @@ export function MediaTabBar({ profiles, activeTab, onTabChange }: Props) {
         >
           {label}
           {id !== 'overall' && (
-            <span className={`${styles.tabBadge} ${getBadgeClass(id)}`}>{getRecordCount(id)}</span>
+            <span className={`${styles.tabBadge} ${getBadgeClass(id)}`}>
+              {getRecommendationCount(id)}
+            </span>
           )}
         </button>
       ))}

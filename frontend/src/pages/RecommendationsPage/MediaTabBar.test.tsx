@@ -3,13 +3,25 @@ import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi } from 'vitest'
 import { MediaTabBar } from './MediaTabBar'
 import type { MediaPreferenceProfile } from '../../types/mediaPreferenceProfile'
+import type { RecommendedWork } from '../../types/recommendation'
+
+const makeWork = (id: number): RecommendedWork => ({
+  title: `作品${id}`,
+  media_type: 'anime',
+  description: '',
+  cover_url: null,
+  reason: '',
+  external_api_id: String(id),
+  external_api_source: 'anilist',
+  metadata: {},
+})
 
 const mockProfiles: MediaPreferenceProfile[] = [
   {
     media_type: 'anime',
     status: 'ready',
     analysis_summary: '',
-    same_media_works: [],
+    same_media_works: [makeWork(1), makeWork(2), makeWork(3), makeWork(4), makeWork(5)],
     record_count: 24,
     analyzed_at: '',
   },
@@ -32,9 +44,16 @@ describe('MediaTabBar', () => {
     expect(screen.getByRole('tab', { name: /ゲーム/ })).toBeInTheDocument()
   })
 
-  it('アニメタブに記録数バッジ（24）が表示される', () => {
+  it('アニメタブにおすすめ数（5）のバッジが表示され、記録数（24）は表示されない', () => {
     render(<MediaTabBar profiles={mockProfiles} activeTab="overall" onTabChange={vi.fn()} />)
-    expect(screen.getByText('24')).toBeInTheDocument()
+    expect(screen.getByText('5')).toBeInTheDocument()
+    expect(screen.queryByText('24')).not.toBeInTheDocument()
+  })
+
+  it('ready以外のタブのバッジは0になる', () => {
+    render(<MediaTabBar profiles={mockProfiles} activeTab="overall" onTabChange={vi.fn()} />)
+    // movie（insufficient_records・記録1件）もおすすめが無いため0
+    expect(screen.queryByText('1')).not.toBeInTheDocument()
   })
 
   it('タブをクリックするとonTabChangeが呼ばれる', async () => {
