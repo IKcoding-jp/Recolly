@@ -25,6 +25,4 @@ export interface MediaPreferenceProfilePending {
 }
 
 export type MediaPreferenceProfile =
-  | MediaPreferenceProfileReady
-  | MediaPreferenceProfileGenerating
-  | MediaPreferenceProfilePending
+  MediaPreferenceProfileReady | MediaPreferenceProfileGenerating | MediaPreferenceProfilePending
