@@ -18,7 +18,18 @@ module Api
         return pending_profiles('insufficient_records', counts) if total < PreferenceAnalyzer::MINIMUM_RECORDS
 
         profiles = current_user.media_preference_profiles.index_by(&:media_type)
+        enqueue_refresh_if_incomplete(profiles)
         Work.media_types.keys.map { |media_type| profile_entry(media_type, profiles[media_type], counts) }
+      end
+
+      # ループ内でRecommendationRefreshJob.enqueue_onceを呼ぶと、キャッシュによる
+      # 重複排除が効かない環境（LocalCacheミドルウェアの外や:null_store等）で
+      # 1リクエスト中に最大6回多重エンキューされてしまう。プロファイルが1つでも
+      # 未生成なら、レスポンス組み立てとは切り離して1リクエストにつき1回だけ呼ぶ
+      def enqueue_refresh_if_incomplete(profiles)
+        return unless Work.media_types.keys.any? { |media_type| profiles[media_type].nil? }
+
+        RecommendationRefreshJob.enqueue_once(current_user.id)
       end
 
       def pending_profiles(status, counts)
@@ -28,11 +39,7 @@ module Api
       end
 
       def profile_entry(media_type, profile, counts)
-        if profile.nil?
-          # 未生成のまま放置されないよう、閲覧をトリガーに分析を自動起動する
-          RecommendationRefreshJob.enqueue_once(current_user.id)
-          return { media_type:, status: 'generating', record_count: counts[media_type] || 0 }
-        end
+        return { media_type:, status: 'generating', record_count: counts[media_type] || 0 } if profile.nil?
 
         {
           media_type:,

@@ -10,6 +10,17 @@ RSpec.describe 'Api::V1::MediaPreferenceProfiles', type: :request do
     end
   end
 
+  # テスト環境の:null_storeはRails標準のLocalCacheミドルウェアにリクエスト単位で
+  # メモ化されるため、1リクエスト内の重複排除ミスを検知できない。実際のキャッシュ
+  # ストアに差し替えて検証したいテストで使う
+  def with_memory_store
+    original_cache = Rails.cache
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+    yield
+  ensure
+    Rails.cache = original_cache
+  end
+
   describe 'GET /api/v1/media_preference_profiles' do
     it '未認証なら401を返す' do
       get '/api/v1/media_preference_profiles', as: :json
@@ -54,12 +65,24 @@ RSpec.describe 'Api::V1::MediaPreferenceProfiles', type: :request do
       end
 
       it 'generatingを返しジョブを自動起動する' do
-        expect do
-          get '/api/v1/media_preference_profiles', as: :json
-        end.to have_enqueued_job(RecommendationRefreshJob).with(user.id)
+        with_memory_store do
+          expect do
+            get '/api/v1/media_preference_profiles', as: :json
+          end.to have_enqueued_job(RecommendationRefreshJob).with(user.id).exactly(:once)
+        end
 
         json = response.parsed_body
         expect(json.pluck('status').uniq).to eq(['generating'])
+      end
+
+      it 'build_profiles内でRecommendationRefreshJob.enqueue_onceを高々1回しか呼ばない' do
+        # キャッシュ実装に依存せず「ループ内から毎回呼んでいないか」を直接検証する。
+        # ミドルウェアやキャッシュストアの挙動に左右されない構造上のガード
+        allow(RecommendationRefreshJob).to receive(:enqueue_once)
+
+        get '/api/v1/media_preference_profiles', as: :json
+
+        expect(RecommendationRefreshJob).to have_received(:enqueue_once).with(user.id).once
       end
     end
 
