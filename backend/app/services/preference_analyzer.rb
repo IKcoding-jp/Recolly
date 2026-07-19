@@ -5,6 +5,10 @@ class PreferenceAnalyzer
   MAX_DROPPED = 5
   MAX_REVIEW_EXCERPTS = 20
   MAX_EXCERPT_LENGTH = 100
+  # プロンプト肥大を防ぐため、除外指示に載せる記録済みタイトル数の上限
+  MAX_RECORDED_TITLES = 200
+  MODEL = 'claude-sonnet-5'.freeze
+  MAX_TOKENS = 8192
 
   def initialize(user)
     @user = user
@@ -18,7 +22,8 @@ class PreferenceAnalyzer
       dropped: dropped_works,
       tag_stats: tag_stats,
       review_excerpts: review_excerpts,
-      favorites: favorite_works
+      favorites: favorite_works,
+      recorded_titles: recorded_titles
     }
   end
 
@@ -26,8 +31,10 @@ class PreferenceAnalyzer
     return nil if @records.count < MINIMUM_RECORDS
 
     data = collect_data
-    response = call_claude_api(data)
-    parse_response(response, data)
+    # 一括出力はJSONが大きく崩れやすいため、パース失敗時に1回だけ再生成を試みる
+    # rubocop:disable Lint/BinaryOperatorWithIdenticalOperands -- 見た目は同一だが呼び出すたびにAPIへ再リクエストする意図的なリトライ
+    parse_response(call_claude_api(data), data) || parse_response(call_claude_api(data), data)
+    # rubocop:enable Lint/BinaryOperatorWithIdenticalOperands
   end
 
   private
@@ -115,6 +122,10 @@ class PreferenceAnalyzer
                 end
   end
 
+  def recorded_titles
+    @records.limit(MAX_RECORDED_TITLES).map { |r| "#{r.work.title} (#{r.work.media_type})" }
+  end
+
   def work_summary(record)
     {
       title: record.work.title,
@@ -128,8 +139,8 @@ class PreferenceAnalyzer
     client = Anthropic::Client.new(api_key: ENV.fetch('ANTHROPIC_API_KEY'))
     prompt = PreferencePromptBuilder.new(data).build
     client.messages.create(
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4096,
+      model: MODEL,
+      max_tokens: MAX_TOKENS,
       messages: [{ role: 'user', content: prompt }]
     )
   end
@@ -142,8 +153,8 @@ class PreferenceAnalyzer
 
     {
       summary: parsed['summary'],
-      preference_scores: parsed['preference_scores'],
-      search_keywords: parsed['search_keywords'],
+      preference_scores: parsed['preference_scores'] || [],
+      media_recommendations: parsed['media_recommendations'] || {},
       genre_stats: data[:genre_stats],
       top_tags: data[:tag_stats]
     }
