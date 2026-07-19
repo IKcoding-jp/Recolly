@@ -604,11 +604,6 @@
   line-height: var(--line-height-normal);
 }
 
-/* チャレンジセクション */
-.challengeTitle {
-  color: var(--color-game);
-}
-
 /* レスポンシブ */
 @media (max-width: 768px) {
   .container {
