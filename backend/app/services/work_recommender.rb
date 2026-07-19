@@ -1,46 +1,49 @@
-# 好み分析結果をもとに外部APIで作品を検索し、おすすめリストを生成する
+# 好み分析の提案キーワードを外部API検索で実在確認し、採用作品リストを作る
 class WorkRecommender
-  MAX_RECOMMENDED = 7
-  MAX_CHALLENGE = 3
+  MAX_ADOPTED = 5
+  # 本編ではない派生作品（特別篇・OVA等）はおすすめに採用しない
+  EXCLUDED_ANILIST_FORMATS = %w[SPECIAL OVA MUSIC TV_SHORT].freeze
 
-  def initialize(user, analysis_result)
+  def initialize(user)
     @user = user
-    @analysis_result = analysis_result
     @search_service = WorkSearchService.new
     @recorded_external_ids = fetch_recorded_external_ids
   end
 
-  def recommend
-    keywords = @analysis_result[:search_keywords] || {}
-    recommended = search_works(keywords['recommended'] || [], MAX_RECOMMENDED)
-    challenge = search_works(keywords['challenge'] || [], MAX_CHALLENGE)
-
-    { recommended_works: recommended, challenge_works: challenge }
-  end
-
-  private
-
-  # 各キーワードから1作品のみ取得（理由の重複を防ぐ）
-  def search_works(keywords, max_count)
+  # keywords: [{ 'query' => 作品タイトル, 'reason' => 理由 }, ...]
+  # 提案順に実在確認し、採用数がmax_countに達したら打ち切る
+  def recommend(media_type, keywords, max_count: MAX_ADOPTED)
     results = []
     keywords.each do |keyword|
       break if results.length >= max_count
 
-      work = find_best_match(keyword, results)
+      work = best_candidate(keyword['query'], media_type, results)
       next if work.nil?
 
-      reason = keyword['reason'] || ''
-      results << build_work_data(work, reason)
+      results << build_work_data(work, keyword['reason'] || '')
     end
     results
   end
 
-  def find_best_match(keyword, existing_results)
-    found = @search_service.search(keyword['query'], media_type: keyword['media_type'])
+  private
 
-    found.find do |work|
-      !already_recorded?(work) && existing_results.none? { |r| r[:title] == work.title }
-    end
+  # 検索最上位（本編想定）が既記録なら派生作品へ繰り下げず、その提案自体を見送る
+  # （繰り下げると本編を記録済みのユーザーほどOVA・特別篇がおすすめされてしまうため）
+  def best_candidate(query, media_type, existing_results)
+    return nil if query.blank?
+
+    candidates = @search_service.search(query, media_type: media_type)
+                                .reject { |work| excluded_format?(work) }
+    best = candidates.first
+    return nil if best.nil? || already_recorded?(best)
+    return nil if existing_results.any? { |r| r[:title] == best.title }
+
+    best
+  end
+
+  def excluded_format?(work)
+    work.external_api_source == 'anilist' &&
+      EXCLUDED_ANILIST_FORMATS.include?(work.metadata[:format])
   end
 
   def build_work_data(work, reason)

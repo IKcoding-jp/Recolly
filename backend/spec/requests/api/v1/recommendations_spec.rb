@@ -50,20 +50,19 @@ RSpec.describe 'Api::V1::Recommendations', type: :request do
         Recommendation.create!(
           user: user,
           analysis_summary: '保存済み分析',
-          recommended_works: [{ 'title' => '作品A' }],
-          challenge_works: [],
           record_count: 10,
           analyzed_at: Time.current
         )
       end
 
-      it '保存済み結果を返す' do
+      it '保存済み結果を返す' do # rubocop:disable RSpec/MultipleExpectations
         get '/api/v1/recommendations', as: :json
         expect(response).to have_http_status(:ok)
         json = response.parsed_body
         expect(json['status']).to eq('ready')
         expect(json['recommendation']['analysis']['summary']).to eq('保存済み分析')
-        expect(json['recommendation']['recommended_works'].first['title']).to eq('作品A')
+        expect(json['recommendation']).not_to have_key('recommended_works')
+        expect(json['recommendation']).not_to have_key('challenge_works')
       end
     end
 
@@ -106,10 +105,17 @@ RSpec.describe 'Api::V1::Recommendations', type: :request do
         expect(json['status']).to eq('processing')
       end
 
-      it 'MediaProfileRefreshJobもエンキューすること' do
-        expect do
+      it 'フラグが立っている間は再エンキューしない' do
+        original_cache = Rails.cache
+        Rails.cache = ActiveSupport::Cache::MemoryStore.new
+        begin
           post '/api/v1/recommendations/refresh', as: :json
-        end.to have_enqueued_job(MediaProfileRefreshJob).with(user.id)
+          expect do
+            post '/api/v1/recommendations/refresh', as: :json
+          end.not_to have_enqueued_job(RecommendationRefreshJob)
+        ensure
+          Rails.cache = original_cache
+        end
       end
     end
   end

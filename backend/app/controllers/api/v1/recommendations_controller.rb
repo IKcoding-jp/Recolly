@@ -16,8 +16,7 @@ module Api
       end
 
       def refresh
-        RecommendationRefreshJob.perform_later(current_user.id)
-        MediaProfileRefreshJob.perform_later(current_user.id)
+        RecommendationRefreshJob.enqueue_once(current_user.id)
         render json: { message: '分析を開始しました', status: 'processing' }, status: :accepted
       end
 
@@ -27,8 +26,7 @@ module Api
         recommendation = RecommendationService.new(current_user).fetch
 
         if recommendation.nil?
-          RecommendationRefreshJob.perform_later(current_user.id)
-          MediaProfileRefreshJob.perform_later(current_user.id)
+          RecommendationRefreshJob.enqueue_once(current_user.id)
           return render json: { recommendation: nil, status: 'generating' }
         end
 
@@ -39,8 +37,6 @@ module Api
         {
           recommendation: {
             analysis: nil,
-            recommended_works: [],
-            challenge_works: [],
             genre_stats: genre_stats_for_user,
             record_count: records_count,
             required_count: PreferenceAnalyzer::MINIMUM_RECORDS
@@ -57,8 +53,6 @@ module Api
             genre_stats: rec.genre_stats,
             top_tags: rec.top_tags
           },
-          recommended_works: rec.recommended_works,
-          challenge_works: rec.challenge_works,
           analyzed_at: rec.analyzed_at&.iso8601,
           record_count: rec.record_count
         }

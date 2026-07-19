@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import { Link } from 'react-router-dom'
 import { SectionTitle } from '../../components/ui/SectionTitle/SectionTitle'
@@ -15,7 +15,6 @@ import { updateMediaTypesCount } from '../../lib/analytics/userProperties'
 import type { MediaType, RecordStatus } from '../../lib/types'
 import type { RecommendedWork } from '../../types/recommendation'
 import { AnalysisSummaryCard } from './AnalysisSummaryCard'
-import { RecommendedWorkCard } from './RecommendedWorkCard'
 import { MediaTabBar } from './MediaTabBar'
 import type { TabId } from './MediaTabBar'
 import { MediaTabContent } from './MediaTabContent'
@@ -23,12 +22,17 @@ import styles from './RecommendationsPage.module.css'
 
 export function RecommendationsPage() {
   const { data, status, isLoading, isRefreshing, error, refresh } = useRecommendations()
-  const { profiles, getProfileByMediaType } = useMediaProfiles()
+  const { getProfileByMediaType, refetch: refetchProfiles } = useMediaProfiles()
   const [activeTab, setActiveTab] = useState<TabId>('overall')
   const [modalWork, setModalWork] = useState<RecommendedWork | null>(null)
   const [recordingId, setRecordingId] = useState<string | null>(null)
   const [recordedIds, setRecordedIds] = useState<Set<string>>(new Set())
   const m = useRecollyMotion()
+
+  // 分析完了（generating→ready）時にメディア別プロファイルも最新化する
+  useEffect(() => {
+    if (status === 'ready') void refetchProfiles()
+  }, [status, refetchProfiles])
 
   const handleOpenModal = (work: RecommendedWork, position: number) => {
     captureEvent(ANALYTICS_EVENTS.RECOMMENDATION_CLICKED, {
@@ -206,7 +210,7 @@ export function RecommendationsPage() {
 
           {/* タブバー */}
           <motion.div variants={m.fadeInUp}>
-            <MediaTabBar profiles={profiles} activeTab={activeTab} onTabChange={setActiveTab} />
+            <MediaTabBar activeTab={activeTab} onTabChange={setActiveTab} />
           </motion.div>
 
           {/* タブコンテンツ */}
@@ -214,52 +218,6 @@ export function RecommendationsPage() {
             <motion.div variants={m.fadeInUp}>
               {/* 好み分析サマリー */}
               {data.analysis && <AnalysisSummaryCard analysis={data.analysis} />}
-
-              {/* あなたへのおすすめ */}
-              {data.recommended_works.length > 0 && (
-                <>
-                  <SectionTitle>あなたへのおすすめ</SectionTitle>
-                  <div className={styles.recList}>
-                    {data.recommended_works.map((work, index) => (
-                      <RecommendedWorkCard
-                        key={`${work.external_api_source}:${work.external_api_id}`}
-                        work={work}
-                        onRecord={(w) => handleOpenModal(w, index + 1)}
-                        isLoading={
-                          recordingId === `${work.external_api_source}:${work.external_api_id}`
-                        }
-                        isRecorded={recordedIds.has(
-                          `${work.external_api_source}:${work.external_api_id}`,
-                        )}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {/* いつもと違うジャンルに挑戦 */}
-              {data.challenge_works.length > 0 && (
-                <>
-                  <SectionTitle className={styles.challengeTitle}>
-                    いつもと違うジャンルに挑戦
-                  </SectionTitle>
-                  <div className={styles.recList}>
-                    {data.challenge_works.map((work, index) => (
-                      <RecommendedWorkCard
-                        key={`${work.external_api_source}:${work.external_api_id}`}
-                        work={work}
-                        onRecord={(w) => handleOpenModal(w, index + 1)}
-                        isLoading={
-                          recordingId === `${work.external_api_source}:${work.external_api_id}`
-                        }
-                        isRecorded={recordedIds.has(
-                          `${work.external_api_source}:${work.external_api_id}`,
-                        )}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
             </motion.div>
           ) : activeProfile ? (
             <motion.div variants={m.fadeInUp}>

@@ -1,5 +1,18 @@
-# Claude APIに送る好み分析プロンプトを組み立てる
+# Claude APIに送る一括好み分析プロンプトを組み立てる
+# 総合分析と全6メディア分のおすすめを1回の呼び出しで出力させる（一括生成方式）
 class PreferencePromptBuilder
+  MEDIA_TYPE_JA = {
+    'anime' => 'アニメ',
+    'movie' => '映画',
+    'drama' => 'ドラマ',
+    'book' => '本',
+    'manga' => '漫画・ラノベ',
+    'game' => 'ゲーム'
+  }.freeze
+
+  # 検索での実在確認で落ちる分の保険として、採用数（5件）より多めに提案させる
+  PROPOSALS_PER_MEDIA = 8
+
   def initialize(data)
     @data = data
   end
@@ -15,7 +28,8 @@ class PreferencePromptBuilder
       dropped: :dropped_section,
       tag_stats: :tags_section,
       review_excerpts: :reviews_section,
-      favorites: :favorites_section
+      favorites: :favorites_section,
+      recorded_titles: :recorded_titles_section
     }
     extras = optional.filter_map { |key, method| send(method) if @data[key].any? }
     [base_section, *extras, output_instructions]
@@ -24,8 +38,7 @@ class PreferencePromptBuilder
   def base_section
     genre_lines = @data[:genre_stats].map { |s| "#{s[:media_type]}: #{s[:count]}件, 平均#{s[:avg_rating]}点" }
     top_lines = @data[:top_rated].map do |w|
-      genres = w[:genres].join(', ')
-      "#{w[:title]} (#{w[:media_type]}, #{w[:rating]}点, ジャンル: #{genres})"
+      "#{w[:title]} (#{w[:media_type]}, #{w[:rating]}点, ジャンル: #{w[:genres].join(', ')})"
     end
 
     <<~PROMPT
@@ -72,11 +85,23 @@ class PreferencePromptBuilder
     SECTION
   end
 
+  def recorded_titles_section
+    <<~SECTION
+      ■ 記録済みの全作品（おすすめから除外すること）:
+      #{@data[:recorded_titles].join(' / ')}
+    SECTION
+  end
+
   def output_instructions
-    "#{json_format_instruction}\n#{genre_distribution_rules}"
+    "#{json_format_instruction}\n#{rules}"
   end
 
   def json_format_instruction
+    media_entries = MEDIA_TYPE_JA.map do |key, ja|
+      %(    "#{key}": { "trend": "#{ja}での傾向・推薦方針（2文程度）", ) +
+        %("works": [{ "query": "実在する#{ja}作品タイトル1つ", "reason": "おすすめ理由（2〜3文）" }] })
+    end.join(",\n")
+
     <<~INSTRUCTIONS
       以下をJSON形式で出力してください。
 
@@ -85,31 +110,25 @@ class PreferencePromptBuilder
         "preference_scores": [
           { "label": "嗜好の軸名", "score": 1.0〜10.0 }
         ],
-        "search_keywords": {
-          "recommended": [
-            { "media_type": "ジャンル名", "query": "具体的な作品タイトル1つ", "reason": "この作品をおすすめする具体的な理由" }
-          ],
-          "challenge": [
-            { "media_type": "ジャンル名", "query": "具体的な作品タイトル1つ", "reason": "このジャンルに挑戦する理由" }
-          ]
+        "media_recommendations": {
+      #{media_entries}
         }
       }
     INSTRUCTIONS
   end
 
-  def genre_distribution_rules
-    genre_list = @data[:genre_stats].pluck(:media_type).join(', ')
-
+  def rules
     <<~RULES
       重要なルール:
       - preference_scoresは5項目
-      - search_keywordsのrecommendedは7件、challengeは3件
-      - queryは「具体的な作品タイトル」を1つだけ指定すること（実在する作品名）
-      - reasonは各作品ごとに異なる内容にすること。ユーザーの具体的な作品名・評価を引用する
-      - ユーザーの記録ジャンル: #{genre_list}
-      - recommendedはジャンル（#{genre_list}）に分散させること。同じジャンルばかりにしない
-      - anime/mangaの記録が多いユーザーにはanime/mangaを中心におすすめすること
-      - challengeの3件は、ユーザーの記録が少ないジャンルから選ぶこと
+      - media_recommendationsは全6メディア（#{MEDIA_TYPE_JA.keys.join(', ')}）を必ず含める
+      - 各メディアのworksは#{PROPOSALS_PER_MEDIA}件。queryは実在する作品タイトルを1つだけ指定すること
+      - 記録が無いメディアも、他メディアの記録から好みを推定して提案すること（trendにその推定根拠を書く）
+      - 記録済み作品と、その派生作品（OVA・特別篇・劇場版総集編・CM・スピンオフ短編）は提案しないこと
+      - reasonは2〜3文（80〜120字程度）で、①どの記録作品（作品名・メディア・評価や感想）からどんな好みを読み取ったか ②その好みがおすすめ作品のどんな要素と繋がるのか、の順で書くこと。読んだユーザーが「だから自分に合うのか」と納得できる具体性にすること
+      - そのメディア自身に記録がある場合でも、各メディアのworksのうち2件以上は他メディアの記録を根拠にし、「アニメで◯◯を評価したあなたなら、映画では△△」のようにメディアをまたぐ橋渡しを明示すること（ジャンル横断の発見がこのサービスの価値）
+      - trendは2文程度。そのメディアの記録に加え、他メディアの記録から読み取れる好みも踏まえること
+      - reasonは各作品ごとに異なる内容にすること。同じ記録作品ばかりを根拠にせず、引用元を分散させること
       - JSONのみ出力し、それ以外のテキストは含めないでください
     RULES
   end

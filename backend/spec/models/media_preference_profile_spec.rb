@@ -18,14 +18,6 @@ RSpec.describe MediaPreferenceProfile, type: :model do
   end
 
   describe 'jsonbカラム' do
-    it 'preference_scoresを読み書きできること' do
-      scores = [{ 'label' => '感情的な深さ', 'score' => 9.1 }]
-      profile = described_class.create!(
-        user: user, media_type: :anime, preference_scores: scores, record_count: 5
-      )
-      expect(profile.reload.preference_scores).to eq(scores)
-    end
-
     it 'same_media_worksを読み書きできること' do
       works = [{ 'title' => '葬送のフリーレン', 'media_type' => 'anime' }]
       profile = described_class.create!(

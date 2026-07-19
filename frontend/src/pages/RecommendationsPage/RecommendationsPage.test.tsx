@@ -8,20 +8,43 @@ import { recordsApi } from '../../lib/recordsApi'
 
 vi.mock('../../lib/recommendationsApi')
 vi.mock('../../lib/recordsApi')
+
+// アニメタブのready状態モック。record系クリックの検証は総合タブから作品リストが消えたため
+// このタブ経由（MediaTabContent → RecommendedWorkCard）で行う
+const animeReadyProfile = {
+  media_type: 'anime',
+  status: 'ready',
+  analysis_summary: 'アニメ分析',
+  same_media_works: [
+    {
+      title: '葬送のフリーレン',
+      media_type: 'anime',
+      description: 'テスト説明',
+      cover_url: null,
+      reason: 'テスト理由',
+      external_api_id: '154587',
+      external_api_source: 'anilist',
+      metadata: {},
+    },
+    {
+      title: '理由なし本',
+      media_type: 'book',
+      description: '',
+      cover_url: null,
+      reason: '',
+      external_api_id: '999',
+      external_api_source: 'google_books',
+      metadata: {},
+    },
+  ],
+  record_count: 24,
+  analyzed_at: '',
+}
+
 vi.mock('../../hooks/useMediaProfiles', () => ({
   useMediaProfiles: () => ({
     profiles: [
-      {
-        media_type: 'anime',
-        status: 'ready',
-        analysis_summary: 'アニメ分析',
-        preference_scores: [],
-        top_tags: [],
-        same_media_works: [],
-        cross_media_works: [],
-        record_count: 24,
-        analyzed_at: '',
-      },
+      animeReadyProfile,
       { media_type: 'movie', status: 'no_records', record_count: 0 },
       { media_type: 'drama', status: 'no_records', record_count: 0 },
       { media_type: 'book', status: 'no_records', record_count: 0 },
@@ -32,17 +55,7 @@ vi.mock('../../hooks/useMediaProfiles', () => ({
     error: null,
     getProfileByMediaType: (mt: string) =>
       mt === 'anime'
-        ? {
-            media_type: 'anime',
-            status: 'ready',
-            analysis_summary: 'アニメ分析',
-            preference_scores: [],
-            top_tags: [],
-            same_media_works: [],
-            cross_media_works: [],
-            record_count: 24,
-            analyzed_at: '',
-          }
+        ? animeReadyProfile
         : { media_type: mt, status: 'no_records', record_count: 0 },
     refetch: vi.fn(),
   }),
@@ -72,56 +85,44 @@ const mockReadyResponse = {
       genre_stats: [{ media_type: 'anime', count: 24, avg_rating: 8.2 }],
       top_tags: [{ name: '名作', count: 12 }],
     },
-    recommended_works: [
-      {
-        title: '葬送のフリーレン',
-        media_type: 'anime',
-        description: 'テスト説明',
-        cover_url: null,
-        reason: 'テスト理由',
-        external_api_id: '154587',
-        external_api_source: 'anilist',
-        metadata: {},
-      },
-    ],
-    challenge_works: [
-      {
-        title: 'コンビニ人間',
-        media_type: 'book',
-        description: 'テスト説明',
-        cover_url: null,
-        reason: 'チャレンジ理由',
-        external_api_id: '123',
-        external_api_source: 'google_books',
-        metadata: {},
-      },
-    ],
     analyzed_at: '2026-04-05T14:30:00+09:00',
     record_count: 70,
   },
   status: 'ready' as const,
 }
 
+const renderPage = () =>
+  render(
+    <MemoryRouter>
+      <RecommendationsPage />
+    </MemoryRouter>,
+  )
+
 describe('RecommendationsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('正常時: 分析サマリーとおすすめ作品を表示する', async () => {
+  it('正常時: 分析サマリーを表示する', async () => {
     vi.mocked(recommendationsApi.get).mockResolvedValue(mockReadyResponse)
 
-    render(
-      <MemoryRouter>
-        <RecommendationsPage />
-      </MemoryRouter>,
-    )
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getByText('テスト分析サマリー')).toBeInTheDocument()
     })
-    expect(screen.getByText('葬送のフリーレン')).toBeInTheDocument()
-    expect(screen.getByText('テスト理由')).toBeInTheDocument()
-    expect(screen.getByText('コンビニ人間')).toBeInTheDocument()
+  })
+
+  it('総合タブに作品リストを表示しない（分析ダッシュボードのみ）', async () => {
+    vi.mocked(recommendationsApi.get).mockResolvedValue(mockReadyResponse)
+
+    renderPage()
+
+    // ページ内に「好み」を含むテキストが複数（見出し・サブタイトル等）あるため、
+    // 分析サマリーラベルで一意に特定する
+    expect(await screen.findByText('あなたの好み傾向')).toBeInTheDocument()
+    expect(screen.queryByText('あなたへのおすすめ')).not.toBeInTheDocument()
+    expect(screen.queryByText('いつもと違うジャンルに挑戦')).not.toBeInTheDocument()
   })
 
   it('記録0件: 空状態を表示する', async () => {
@@ -130,11 +131,7 @@ describe('RecommendationsPage', () => {
       status: 'no_records',
     })
 
-    render(
-      <MemoryRouter>
-        <RecommendationsPage />
-      </MemoryRouter>,
-    )
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getByText('作品を記録しておすすめを受け取ろう')).toBeInTheDocument()
@@ -145,8 +142,6 @@ describe('RecommendationsPage', () => {
     vi.mocked(recommendationsApi.get).mockResolvedValue({
       recommendation: {
         analysis: null,
-        recommended_works: [],
-        challenge_works: [],
         genre_stats: [{ media_type: 'anime', count: 2, avg_rating: 8.0 }],
         record_count: 2,
         required_count: 5,
@@ -155,11 +150,7 @@ describe('RecommendationsPage', () => {
       status: 'insufficient_records',
     })
 
-    render(
-      <MemoryRouter>
-        <RecommendationsPage />
-      </MemoryRouter>,
-    )
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getByText(/あと3件/)).toBeInTheDocument()
@@ -169,11 +160,7 @@ describe('RecommendationsPage', () => {
   it('エラー時: エラーメッセージを表示する', async () => {
     vi.mocked(recommendationsApi.get).mockRejectedValue(new Error('Network error'))
 
-    render(
-      <MemoryRouter>
-        <RecommendationsPage />
-      </MemoryRouter>,
-    )
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getByText('おすすめの取得に失敗しました')).toBeInTheDocument()
@@ -185,11 +172,7 @@ describe('RecommendationsPage', () => {
 
     const user = userEvent.setup()
 
-    render(
-      <MemoryRouter>
-        <RecommendationsPage />
-      </MemoryRouter>,
-    )
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getByText('テスト分析サマリー')).toBeInTheDocument()
@@ -210,11 +193,7 @@ describe('RecommendationsPage', () => {
 
     const user = userEvent.setup()
 
-    render(
-      <MemoryRouter>
-        <RecommendationsPage />
-      </MemoryRouter>,
-    )
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getByText('分析を更新')).toBeInTheDocument()
@@ -224,22 +203,23 @@ describe('RecommendationsPage', () => {
     expect(recommendationsApi.refresh).toHaveBeenCalled()
   })
 
-  it('おすすめ作品の「記録する」クリックで recommendation_clicked が発火する', async () => {
+  it('メディアタブのおすすめ作品「記録する」クリックで recommendation_clicked が発火する', async () => {
     vi.mocked(recommendationsApi.get).mockResolvedValue(mockReadyResponse)
 
     const user = userEvent.setup()
 
-    render(
-      <MemoryRouter>
-        <RecommendationsPage />
-      </MemoryRouter>,
-    )
+    renderPage()
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /アニメ/ })).toBeInTheDocument()
+    })
+    await user.click(screen.getByRole('tab', { name: /アニメ/ }))
 
     await waitFor(() => {
       expect(screen.getByText('葬送のフリーレン')).toBeInTheDocument()
     })
 
-    // recommended_works[0] = 葬送のフリーレン (anime, reason あり)
+    // same_media_works[0] = 葬送のフリーレン (anime, reason あり)
     const recordButtons = screen.getAllByRole('button', { name: '記録する' })
     await user.click(recordButtons[0])
 
@@ -250,50 +230,34 @@ describe('RecommendationsPage', () => {
     })
   })
 
-  it('チャレンジ作品クリックで position が 1 始まり・has_reason が理由有無に対応する', async () => {
-    vi.mocked(recommendationsApi.get).mockResolvedValue({
-      ...mockReadyResponse,
-      recommendation: {
-        ...mockReadyResponse.recommendation,
-        recommended_works: [],
-        challenge_works: [
-          {
-            title: '理由なし本',
-            media_type: 'book',
-            description: null,
-            cover_url: null,
-            reason: null,
-            external_api_id: '999',
-            external_api_source: 'google_books',
-            metadata: {},
-          },
-        ],
-      },
-    })
+  it('理由なしの作品クリックでは has_reason が false になる', async () => {
+    vi.mocked(recommendationsApi.get).mockResolvedValue(mockReadyResponse)
 
     const user = userEvent.setup()
 
-    render(
-      <MemoryRouter>
-        <RecommendationsPage />
-      </MemoryRouter>,
-    )
+    renderPage()
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /アニメ/ })).toBeInTheDocument()
+    })
+    await user.click(screen.getByRole('tab', { name: /アニメ/ }))
 
     await waitFor(() => {
       expect(screen.getByText('理由なし本')).toBeInTheDocument()
     })
 
+    // same_media_works[1] = 理由なし本 (book, reason なし)
     const recordButtons = screen.getAllByRole('button', { name: '記録する' })
-    await user.click(recordButtons[0])
+    await user.click(recordButtons[1])
 
     expect(captureEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.RECOMMENDATION_CLICKED, {
       media_type: 'book',
-      position: 1,
+      position: 2,
       has_reason: false,
     })
   })
 
-  it('レコメンドから記録を作成したら record_created を media_type 付きで発火する', async () => {
+  it('メディアタブから記録を作成したら record_created を media_type 付きで発火する', async () => {
     vi.mocked(recommendationsApi.get).mockResolvedValue(mockReadyResponse)
     vi.mocked(recordsApi.createFromSearchResult).mockResolvedValue({
       record: {
@@ -328,13 +292,14 @@ describe('RecommendationsPage', () => {
 
     const user = userEvent.setup()
 
-    render(
-      <MemoryRouter>
-        <RecommendationsPage />
-      </MemoryRouter>,
-    )
+    renderPage()
 
-    // mockReadyResponse の葬送のフリーレン (media_type: anime) のカードが表示される
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /アニメ/ })).toBeInTheDocument()
+    })
+    await user.click(screen.getByRole('tab', { name: /アニメ/ }))
+
+    // animeReadyProfile.same_media_works[0] = 葬送のフリーレン (media_type: anime)
     await waitFor(() => {
       expect(screen.getByText('葬送のフリーレン')).toBeInTheDocument()
     })
@@ -364,11 +329,7 @@ describe('RecommendationsPage', () => {
   it('タブバーが表示される（readyステータス時）', async () => {
     vi.mocked(recommendationsApi.get).mockResolvedValue(mockReadyResponse)
 
-    render(
-      <MemoryRouter>
-        <RecommendationsPage />
-      </MemoryRouter>,
-    )
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getByRole('tab', { name: /全体/ })).toBeInTheDocument()
@@ -380,11 +341,7 @@ describe('RecommendationsPage', () => {
     vi.mocked(recommendationsApi.get).mockResolvedValue(mockReadyResponse)
     const user = userEvent.setup()
 
-    render(
-      <MemoryRouter>
-        <RecommendationsPage />
-      </MemoryRouter>,
-    )
+    renderPage()
 
     await waitFor(() => {
       expect(screen.getByRole('tab', { name: /アニメ/ })).toBeInTheDocument()

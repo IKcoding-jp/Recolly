@@ -604,11 +604,6 @@
   line-height: var(--line-height-normal);
 }
 
-/* チャレンジセクション */
-.challengeTitle {
-  color: var(--color-game);
-}
-
 /* レスポンシブ */
 @media (max-width: 768px) {
   .container {
@@ -755,47 +750,6 @@
 .tabActiveGame {
   border-bottom-color: var(--color-game);
   color: var(--color-game);
-}
-
-.tabBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  background: var(--color-border-light);
-  border-radius: var(--radius-full);
-  font-size: 10px;
-  color: var(--color-text-muted);
-}
-
-.tabBadgeActive {
-  color: var(--color-bg-white);
-}
-
-.tabBadgeAnime {
-  background: var(--color-anime);
-}
-
-.tabBadgeMovie {
-  background: var(--color-movie);
-}
-
-.tabBadgeDrama {
-  background: var(--color-drama);
-}
-
-.tabBadgeBook {
-  background: var(--color-book);
-}
-
-.tabBadgeManga {
-  background: var(--color-manga);
-}
-
-.tabBadgeGame {
-  background: var(--color-game);
 }
 
 /* タブコンテンツ: 記録不足・記録なし状態 */

@@ -100,6 +100,12 @@ RSpec.describe ExternalApis::AniListAdapter, type: :service do
       # 500,000 / 100,000 = 5.0 → min(5.0, 1.0) = 1.0
       expect(anime.metadata[:popularity]).to eq(1.0)
     end
+
+    it 'format をmetadataに含める' do
+      results = adapter.search('進撃の巨人')
+      anime = results.find { |r| r.media_type == 'anime' }
+      expect(anime.metadata[:format]).to eq('TV')
+    end
   end
 
   describe 'アニメ映画の分類' do

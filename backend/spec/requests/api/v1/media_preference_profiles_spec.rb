@@ -3,92 +3,118 @@ require 'rails_helper'
 RSpec.describe 'Api::V1::MediaPreferenceProfiles', type: :request do
   let(:user) { User.create!(username: 'testuser', email: 'test@example.com', password: 'password123') }
 
+  def create_records(count, media_type: 'anime')
+    count.times do |i|
+      work = Work.create!(title: "#{media_type}作品#{i}", media_type: media_type)
+      user.records.create!(work: work, status: :completed, rating: 8)
+    end
+  end
+
+  # テスト環境の:null_storeはRails標準のLocalCacheミドルウェアにリクエスト単位で
+  # メモ化されるため、1リクエスト内の重複排除ミスを検知できない。実際のキャッシュ
+  # ストアに差し替えて検証したいテストで使う
+  def with_memory_store
+    original_cache = Rails.cache
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+    yield
+  ensure
+    Rails.cache = original_cache
+  end
+
   describe 'GET /api/v1/media_preference_profiles' do
     it '未認証なら401を返す' do
       get '/api/v1/media_preference_profiles', as: :json
       expect(response).to have_http_status(:unauthorized)
     end
 
-    context '認証済み — 記録がない場合' do
+    context '記録が0件の場合' do
       before { sign_in user }
 
-      it '6メディア全てno_recordsで返すこと' do
+      it '全メディアがno_recordsになる' do
         get '/api/v1/media_preference_profiles', as: :json
         json = response.parsed_body
         expect(json.length).to eq(6)
-        expect(json.all? { |p| p['status'] == 'no_records' }).to be true
-      end
-
-      it 'media_typeの順序がanime/movie/drama/book/manga/gameであること' do
-        get '/api/v1/media_preference_profiles', as: :json
-        json = response.parsed_body
-        expect(json.pluck('media_type')).to eq(%w[anime movie drama book manga game])
+        expect(json.pluck('status').uniq).to eq(['no_records'])
       end
     end
 
-    context '認証済み — アニメ記録が2件（不足）の場合' do
+    context '全体の記録が1〜4件の場合' do
       before do
         sign_in user
-        2.times do |i|
-          work = Work.create!(title: "アニメ#{i}", media_type: :anime)
-          user.records.create!(work: work, status: :completed, rating: 8)
-        end
+        create_records(3)
       end
 
-      it 'アニメがinsufficient_recordsで返ること' do
+      it '全メディアがinsufficient_recordsになる' do
+        get '/api/v1/media_preference_profiles', as: :json
+        json = response.parsed_body
+        expect(json.pluck('status').uniq).to eq(['insufficient_records'])
+      end
+
+      it 'メディアごとの記録数を返す' do
         get '/api/v1/media_preference_profiles', as: :json
         json = response.parsed_body
         anime = json.find { |p| p['media_type'] == 'anime' }
-        expect(anime['status']).to eq('insufficient_records')
-        expect(anime['record_count']).to eq(2)
-        expect(anime['required_count']).to eq(3)
+        expect(anime['record_count']).to eq(3)
       end
     end
 
-    context '認証済み — アニメのプロファイルがDBにある場合' do
+    context '全体の記録が5件以上でプロファイル未生成の場合' do
       before do
         sign_in user
-        5.times do |i|
-          work = Work.create!(title: "アニメ#{i}", media_type: :anime)
-          user.records.create!(work: work, status: :completed, rating: 8)
-        end
-        MediaPreferenceProfile.create!(
-          user: user,
-          media_type: :anime,
-          analysis_summary: 'テスト分析',
-          preference_scores: [{ 'label' => '感情', 'score' => 9.0 }],
-          same_media_works: [{ 'title' => '葬送のフリーレン' }],
-          cross_media_works: [],
-          top_tags: [],
-          record_count: 5,
-          analyzed_at: Time.current
-        )
+        create_records(5)
       end
 
-      it 'アニメがreadyで分析結果を返すこと' do
-        get '/api/v1/media_preference_profiles', as: :json
+      it 'generatingを返しジョブを自動起動する' do
+        with_memory_store do
+          expect do
+            get '/api/v1/media_preference_profiles', as: :json
+          end.to have_enqueued_job(RecommendationRefreshJob).with(user.id).exactly(:once)
+        end
+
         json = response.parsed_body
-        anime = json.find { |p| p['media_type'] == 'anime' }
-        expect(anime['status']).to eq('ready')
-        expect(anime['analysis_summary']).to eq('テスト分析')
-        expect(anime['same_media_works'].first['title']).to eq('葬送のフリーレン')
+        expect(json.pluck('status').uniq).to eq(['generating'])
+      end
+
+      it 'build_profiles内でRecommendationRefreshJob.enqueue_onceを高々1回しか呼ばない' do
+        # キャッシュ実装に依存せず「ループ内から毎回呼んでいないか」を直接検証する。
+        # ミドルウェアやキャッシュストアの挙動に左右されない構造上のガード
+        allow(RecommendationRefreshJob).to receive(:enqueue_once)
+
+        get '/api/v1/media_preference_profiles', as: :json
+
+        expect(RecommendationRefreshJob).to have_received(:enqueue_once).with(user.id).once
       end
     end
 
-    context '認証済み — アニメ記録は3件以上だがプロファイルなし' do
+    context 'プロファイル生成済みの場合' do
       before do
         sign_in user
-        3.times do |i|
-          work = Work.create!(title: "アニメ#{i}", media_type: :anime)
-          user.records.create!(work: work, status: :completed, rating: 8)
+        create_records(5)
+        Work.media_types.each_key do |media_type|
+          MediaPreferenceProfile.create!(
+            user: user,
+            media_type: media_type,
+            analysis_summary: "#{media_type}の傾向",
+            same_media_works: [{ 'title' => "#{media_type}のおすすめ" }],
+            analyzed_at: Time.current
+          )
         end
       end
 
-      it 'アニメがgeneratingを返すこと' do
+      it '記録0件のメディアもreadyでおすすめを返す' do
         get '/api/v1/media_preference_profiles', as: :json
         json = response.parsed_body
-        anime = json.find { |p| p['media_type'] == 'anime' }
-        expect(anime['status']).to eq('generating')
+        movie = json.find { |p| p['media_type'] == 'movie' }
+        expect(movie['status']).to eq('ready')
+        expect(movie['record_count']).to eq(0)
+        expect(movie['same_media_works'].first['title']).to eq('movieのおすすめ')
+        expect(movie['analysis_summary']).to eq('movieの傾向')
+      end
+
+      it 'ジョブを起動しない' do
+        expect do
+          get '/api/v1/media_preference_profiles', as: :json
+        end.not_to have_enqueued_job(RecommendationRefreshJob)
       end
     end
   end
