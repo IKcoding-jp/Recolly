@@ -5,7 +5,8 @@ class ApplicationController < ActionController::API
 
   protect_from_forgery with: :null_session
 
-  # 既存APIはCSRFトークンを送信しないため、デフォルトで検証をスキップ
+  # 既存APIはRailsのCSRFトークンを送信しないため、トークン検証はスキップする。
+  # 代わりにカスタムヘッダ必須方式でCSRF対策を行う（診断M-2 / ADR-0052）。
   skip_forgery_protection
 
   # deviseがrespond_toを使うため、APIモードに手動追加
@@ -13,9 +14,26 @@ class ApplicationController < ActionController::API
 
   respond_to :json
 
+  # CSRF対策のカスタムヘッダ（診断M-2）。ブラウザは非セーフリストヘッダを
+  # クロスオリジンで付ける際にpreflightを要求し、CORS未許可オリジンは弾かれる。
+  # フォーム送信は任意ヘッダを付けられないため、状態変更のCSRFが成立しない。
+  CSRF_PROTECTION_HEADER = 'X-Requested-With'
+
+  before_action :verify_csrf_protection_header!
+
   rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
 
   private
+
+  # 状態変更リクエスト（GET/HEAD/OPTIONS以外）にカスタムヘッダを必須化する。
+  # 正当なフロントは共通のfetchラッパーで常に付与する。
+  def verify_csrf_protection_header!
+    return unless Rails.application.config.x.csrf_header_protection
+    return if request.get? || request.head? || request.options?
+    return if request.headers[CSRF_PROTECTION_HEADER].present?
+
+    render_error(code: 'invalid_request', message: '不正なリクエストです', status: :forbidden)
+  end
 
   def record_not_found
     render json: { error: 'リソースが見つかりません' }, status: :not_found
