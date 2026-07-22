@@ -157,6 +157,23 @@ describe('request', () => {
     await expect(request<never>('/test')).rejects.toThrow('ログインが必要です')
   })
 
+  it('全リクエストにCSRF対策のカスタムヘッダ(X-Requested-With)を付与する', async () => {
+    mockFetch.mockResolvedValueOnce({
+      status: 200,
+      ok: true,
+      json: () => Promise.resolve({}),
+    })
+
+    await request('/test', { method: 'POST' })
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/v1/test',
+      expect.objectContaining({
+        headers: expect.objectContaining({ 'X-Requested-With': 'XMLHttpRequest' }),
+      }),
+    )
+  })
+
   it('fetch 自体が失敗（TypeError）したらネットワークエラーとして扱う', async () => {
     mockFetch.mockRejectedValueOnce(new TypeError('Failed to fetch'))
 
