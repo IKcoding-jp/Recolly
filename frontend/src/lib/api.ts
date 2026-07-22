@@ -12,6 +12,9 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
+        // CSRF対策のカスタムヘッダ（診断M-2）。バックエンドが状態変更リクエストに必須化。
+        // 非セーフリストヘッダのためクロスオリジンはpreflightでCORSに弾かれる。
+        'X-Requested-With': 'XMLHttpRequest',
         ...options.headers,
       },
     })
