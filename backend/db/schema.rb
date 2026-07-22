@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_19_024136) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_22_104734) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -72,8 +72,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_19_024136) do
     t.string "imageable_type", null: false
     t.string "s3_key", null: false
     t.datetime "updated_at", null: false
+    t.bigint "user_id"
     t.index ["imageable_type", "imageable_id"], name: "index_images_on_imageable"
     t.index ["s3_key"], name: "index_images_on_s3_key", unique: true
+    t.index ["user_id"], name: "index_images_on_user_id"
   end
 
   create_table "media_preference_profiles", force: :cascade do |t|
@@ -188,6 +190,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_19_024136) do
   add_foreign_key "episode_reviews", "records"
   add_foreign_key "favorite_works", "users"
   add_foreign_key "favorite_works", "works"
+  add_foreign_key "images", "users"
   add_foreign_key "media_preference_profiles", "users"
   add_foreign_key "recommendations", "users"
   add_foreign_key "record_tags", "records"

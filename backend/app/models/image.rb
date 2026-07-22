@@ -4,6 +4,9 @@ class Image < ApplicationRecord
   # ポリモーフィック関連: Work, User, EpisodeReview等と紐づく
   belongs_to :imageable, polymorphic: true
 
+  # 投稿者（アップロードした本人）。既存画像は投稿者不明のため optional（診断M-3）
+  belongs_to :user, optional: true
+
   ALLOWED_CONTENT_TYPES = %w[image/jpeg image/png image/gif image/webp].freeze
   ALLOWED_IMAGEABLE_TYPES = %w[Work].freeze
   MAX_FILE_SIZE = 10 * 1024 * 1024 # 10MB
