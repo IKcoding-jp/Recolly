@@ -36,6 +36,8 @@ module Api
         return unless authorize_imageable!
 
         image = Image.new(image_params)
+        # 投稿者を本人に固定する（paramsからは受け取らずなりすましを防ぐ、診断M-3）
+        image.user = current_user
 
         if image.save
           render json: { image: image_json(image) }, status: :created
@@ -61,34 +63,49 @@ module Api
 
       private
 
-      # create用の認可: imageableが有効なリソースか確認
-      # 手動登録フローではWork作成直後（Record作成前）に呼ばれるため、存在確認のみ
+      # create用の認可（診断M-3）。許可するのは以下のいずれか:
+      #   1. その作品を記録済みのユーザー（記録者は表紙画像を提供できる）
+      #   2. まだ誰も記録・画像を持たない新規作品（＝手動登録直後の最初の1枚）
+      # これにより「未記録ユーザーが人気作品の表紙を上書きする」経路を塞ぐ。
       def authorize_imageable! # rubocop:disable Naming/PredicateMethod
         imageable_type = image_params[:imageable_type]
-        imageable_id = image_params[:imageable_id]
 
         unless Image::ALLOWED_IMAGEABLE_TYPES.include?(imageable_type)
           render json: { error: '無効なリソースタイプです' }, status: :unprocessable_content
           return false
         end
 
-        unless imageable_type.constantize.exists?(id: imageable_id)
+        work = Work.find_by(id: image_params[:imageable_id])
+        if work.nil?
           render json: { error: '指定されたリソースが見つかりません' }, status: :not_found
           return false
         end
 
-        true
-      end
+        return true if allowed_to_attach_image?(work)
 
-      # destroy用の認可: imageableに対する操作権限があるか確認
-      # Work: 現在のユーザーがその作品のRecordを持っている場合のみ操作可能
-      def authorize_image!(image) # rubocop:disable Naming/PredicateMethod
-        case image.imageable_type
-        when 'Work'
-          return true if current_user.records.exists?(work_id: image.imageable_id)
-        end
         render json: { error: '権限がありません' }, status: :forbidden
         false
+      end
+
+      def allowed_to_attach_image?(work)
+        return true if current_user.records.exists?(work_id: work.id)
+
+        work.records.none? && work.images.none?
+      end
+
+      # destroy用の認可（診断M-3）: 投稿者本人のみ削除可。
+      # 旧データ（投稿者不明）は後方互換として従来ルール（作品の記録所有者）を維持する。
+      def authorize_image!(image) # rubocop:disable Naming/PredicateMethod
+        return true if image.user_id == current_user.id
+        return true if image.user_id.nil? && legacy_deletable?(image)
+
+        render json: { error: '権限がありません' }, status: :forbidden
+        false
+      end
+
+      def legacy_deletable?(image)
+        image.imageable_type == 'Work' &&
+          current_user.records.exists?(work_id: image.imageable_id)
       end
 
       def presign_params

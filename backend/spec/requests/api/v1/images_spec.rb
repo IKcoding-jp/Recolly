@@ -100,6 +100,33 @@ RSpec.describe 'Api::V1::Images', type: :request do
         post '/api/v1/images', params: params, as: :json
         expect(response).to have_http_status(:not_found)
       end
+
+      it '投稿者(user_id)が現在のユーザーに設定される' do
+        post '/api/v1/images', params: image_params, as: :json
+        expect(Image.last.user_id).to eq(user.id)
+      end
+
+      it '他ユーザーが記録済みの作品に、未記録ユーザーは追加できない（403）' do
+        other = User.create!(username: 'other', email: 'other@example.com', password: 'password123')
+        other.records.create!(work: work, status: :watching)
+        post '/api/v1/images', params: image_params, as: :json
+        expect(response).to have_http_status(:forbidden)
+      end
+
+      it '既に画像がある作品に、未記録ユーザーは追加できない（403）' do
+        Image.create!(imageable: work, s3_key: 'uploads/images/existing.jpg',
+                      file_name: 'c.jpg', content_type: 'image/jpeg', file_size: 1000)
+        post '/api/v1/images', params: image_params, as: :json
+        expect(response).to have_http_status(:forbidden)
+      end
+
+      it '自分が記録済みの作品には追加できる（201）' do
+        user.records.create!(work: work, status: :watching)
+        Image.create!(imageable: work, s3_key: 'uploads/images/existing.jpg',
+                      file_name: 'c.jpg', content_type: 'image/jpeg', file_size: 1000)
+        post '/api/v1/images', params: image_params, as: :json
+        expect(response).to have_http_status(:created)
+      end
     end
 
     context '未認証' do
@@ -153,6 +180,42 @@ RSpec.describe 'Api::V1::Images', type: :request do
 
       it '権限がないため403を返す' do
         delete "/api/v1/images/#{image.id}", as: :json
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context '投稿者本人による削除' do
+      let!(:owned_image) do
+        Image.create!(imageable: work, user: user, s3_key: 'uploads/images/owned.jpg',
+                      file_name: 'c.jpg', content_type: 'image/jpeg', file_size: 1000)
+      end
+
+      before do
+        sign_in user
+        allow(S3DeleteService).to receive(:call)
+      end
+
+      it '記録が無くても投稿者本人は削除できる（204）' do
+        delete "/api/v1/images/#{owned_image.id}", as: :json
+        expect(response).to have_http_status(:no_content)
+      end
+    end
+
+    context '投稿者でない第三者による削除' do
+      let!(:owned_image) do
+        owner = User.create!(username: 'owner', email: 'owner@example.com', password: 'password123')
+        Image.create!(imageable: work, user: owner, s3_key: 'uploads/images/owned2.jpg',
+                      file_name: 'c.jpg', content_type: 'image/jpeg', file_size: 1000)
+      end
+
+      before do
+        sign_in user
+        user.records.create!(work: work, status: :watching)
+        allow(S3DeleteService).to receive(:call)
+      end
+
+      it '記録を持っていても投稿者でなければ削除できない（403）' do
+        delete "/api/v1/images/#{owned_image.id}", as: :json
         expect(response).to have_http_status(:forbidden)
       end
     end
