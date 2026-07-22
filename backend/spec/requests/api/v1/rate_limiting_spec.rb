@@ -47,6 +47,24 @@ RSpec.describe 'Api::V1 レート制限', type: :request do
     end
   end
 
+  describe 'CloudFront配下の実クライアントIP判定' do
+    # SGでCloudFront以外の到達を遮断済みのため、CloudFrontが末尾に付与するXFFが信頼できる。
+    # 先頭の自称IPは無視し、末尾の実IP単位で独立して制限する。
+    it 'X-Forwarded-For末尾のIP単位で制限し、別IPは独立してカウントする' do
+      attempt = lambda do |xff, email|
+        post user_session_path, params: { user: { email:, password: 'wrongpass' } },
+                                headers: { 'X-Forwarded-For' => xff }, as: :json
+      end
+
+      6.times { attempt.call('spoofed, 203.0.113.10', 'test@example.com') }
+      expect(response).to have_http_status(:too_many_requests)
+
+      # 末尾IPが異なれば別カウント（先頭の自称IPが同じでも影響しない）
+      attempt.call('spoofed, 203.0.113.99', 'other@example.com')
+      expect(response).not_to have_http_status(:too_many_requests)
+    end
+  end
+
   describe 'POST /api/v1/password（パスワードリセット送信）' do
     it '同一IPからの連続リクエストが上限（5回）を超えると429を返す' do
       5.times do

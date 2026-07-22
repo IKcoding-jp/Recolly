@@ -47,9 +47,11 @@ bcryptのストレッチ（`config.stretches = 12`）はオフラインのハッ
 ## 決定
 A案（rack-attack）を採用する。
 
-カウンタの保存先は環境で切り替える。
-- 本番・開発: Redis（`REDIS_URL`）
-- テスト: MemoryStore（Redis非依存・テスト間で独立）。かつ既定で無効化し、
+カウンタの保存先は `Rails.cache` に委ねる（環境ごとの実体に追従）。
+- 本番: solid_cache（PostgreSQL, ADR-0008）。本番にRedisは無いためRedis直指定は不可
+  （Redis直指定だと接続失敗でフェイルオープンし、制限が静かに無効化される）
+- 開発: Redis（`REDIS_URL`）
+- テスト: MemoryStore（Rails.cacheはnull_storeで計数できないため）。かつ既定で無効化し、
   レート制限を検証するspecだけが明示的に有効化する（他specへの副作用を避けるため）
 
 制限対象と初期しきい値（いずれも超過分は429 + JSON `too_many_requests` を返す）:
@@ -72,5 +74,6 @@ A案（rack-attack）を採用する。
 - `Gemfile` に `rack-attack` を追加。`config/initializers/rack_attack.rb` で throttle を定義。
 - 正当なユーザーが短時間に連続失敗すると429になり得る。しきい値は運用を見て調整する
   （初期値は保守的に5回。ロックアウトではなく時間経過で自動解除される）。
-- CloudFront経由のリクエストではクライアントIPが `X-Forwarded-For` 由来になるため、
-  実IPで制限が効くようRailsの信頼プロキシ設定（`req.ip`）を前提とする。
+- 本番はCloudFront→EC2構成で、trusted_proxies未設定だと `req.ip` がCloudFrontのエッジIPを
+  返す。SG（security_groups.tf）でCloudFront以外の到達を遮断済みのため、CloudFrontが末尾に
+  付与する `X-Forwarded-For` の実クライアントIPを採用する（`Rack::Attack.client_ip`）。

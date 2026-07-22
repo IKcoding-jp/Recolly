@@ -14,13 +14,28 @@ class Rack::Attack
   PASSWORD_PATH = '/api/v1/password'
   SIGNUP_PATH = '/api/v1/signup'
 
-  # カウンタの保存先。本番/開発はRedis、テストはメモリ（Redis非依存・テスト間で独立）
+  # カウンタの保存先。本番/開発はアプリのキャッシュ（本番=solid_cache / 開発=Redis）を使う。
+  # 本番にRedisは無い（ADR-0008でsolid_cache採用）ため、Redis直指定だと接続失敗で
+  # フェイルオープンし制限が効かない。Rails.cacheに委ねることで環境ごとの実体に追従する。
+  # テストはメモリ（Rails.cacheはnull_storeで計数できないため。専用specも独自Storeに差し替える）。
   cache.store =
     if Rails.env.test?
       ActiveSupport::Cache::MemoryStore.new
     else
-      ActiveSupport::Cache::RedisCacheStore.new(url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/0'))
+      Rails.cache
     end
+
+  # 実クライアントIPを返す。本番はCloudFront→EC2構成で、SG（security_groups.tf）により
+  # CloudFront以外のオリジン到達を遮断しているため、CloudFrontが末尾に付与する
+  # X-Forwarded-Forの接続元IPが信頼できる（クライアント自称のXFFは先頭側に積まれる）。
+  # trusted_proxies未設定だとreq.ipはCloudFrontのエッジIPを返すため、ここで実IPを取り出す。
+  # CloudFrontが無い開発/テストではreq.ip（REMOTE_ADDR）にフォールバックする。
+  def self.client_ip(req)
+    forwarded = req.get_header('HTTP_X_FORWARDED_FOR')
+    return req.ip if forwarded.blank?
+
+    forwarded.split(',').map(&:strip).reject(&:empty?).last || req.ip
+  end
 
   # JSONボディ {"user":{"email":...}} からメールアドレスを取り出す。
   # rack-attackのreq.paramsはJSONボディを解釈しないため、ボディを読んで巻き戻す。
@@ -37,7 +52,7 @@ class Rack::Attack
 
   # ログイン: IP単位
   throttle('login/ip', limit: AUTH_ATTEMPT_LIMIT, period: LOGIN_PERIOD) do |req|
-    req.ip if req.path == LOGIN_PATH && req.post?
+    Rack::Attack.client_ip(req) if req.path == LOGIN_PATH && req.post?
   end
 
   # ログイン: メール単位（同一アカウントへの総当たりを別IPからされても捕捉）
@@ -47,7 +62,7 @@ class Rack::Attack
 
   # パスワードリセット送信: IP単位
   throttle('password_reset/ip', limit: AUTH_ATTEMPT_LIMIT, period: RESET_PERIOD) do |req|
-    req.ip if req.path == PASSWORD_PATH && req.post?
+    Rack::Attack.client_ip(req) if req.path == PASSWORD_PATH && req.post?
   end
 
   # パスワードリセット送信: メール単位（特定アドレスへのメール爆撃を捕捉）
@@ -57,7 +72,7 @@ class Rack::Attack
 
   # 新規登録: IP単位
   throttle('signup/ip', limit: AUTH_ATTEMPT_LIMIT, period: SIGNUP_PERIOD) do |req|
-    req.ip if req.path == SIGNUP_PATH && req.post?
+    Rack::Attack.client_ip(req) if req.path == SIGNUP_PATH && req.post?
   end
 
   # 429レスポンスはアプリ共通のエラー形式（{error, code, message}）に揃える
