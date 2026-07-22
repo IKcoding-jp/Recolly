@@ -8,6 +8,56 @@ resource "aws_cloudfront_origin_access_control" "s3" {
   signing_protocol                  = "sigv4"
 }
 
+# セキュリティレスポンスヘッダ（診断L-3）。SPA(HTML)とAPIの両方に付与する。
+# HSTS/nosniff/X-Frame-Options/Referrer-Policy は無停止で効く安全なヘッダのため強制適用。
+# CSP は誤設定で本番SPAが壊れるリスクがあるため Report-Only（挙動を変えず違反のみ報告）で
+# 導入し、ブラウザで違反を観測してから "Content-Security-Policy" へ昇格して強制する。
+resource "aws_cloudfront_response_headers_policy" "security" {
+  name = "${var.project_name}-security-headers"
+
+  security_headers_config {
+    content_type_options {
+      override = true
+    }
+
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+
+    strict_transport_security {
+      access_control_max_age_sec = 63072000 # 2年（HTTPS強制済みのため長期でよい）
+      include_subdomains         = true
+      preload                    = false # preloadリスト登録は不可逆なため見送り
+      override                   = true
+    }
+  }
+
+  custom_headers_config {
+    items {
+      header   = "Content-Security-Policy-Report-Only"
+      override = true
+      value = join("; ", [
+        "default-src 'self'",
+        "base-uri 'self'",
+        "object-src 'none'",
+        "frame-ancestors 'none'",
+        "script-src 'self' https://accounts.google.com https://us-assets.i.posthog.com",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src 'self' https://fonts.gstatic.com",
+        "img-src 'self' data: https://*.amazonaws.com",
+        "connect-src 'self' https://us.i.posthog.com https://us-assets.i.posthog.com https://*.amazonaws.com https://accounts.google.com",
+        "frame-src https://accounts.google.com"
+      ])
+    }
+  }
+}
+
 resource "aws_cloudfront_distribution" "main" {
   enabled             = true
   default_root_object = "index.html"
@@ -35,10 +85,11 @@ resource "aws_cloudfront_distribution" "main" {
 
   # デフォルト: S3からフロントエンドを配信
   default_cache_behavior {
-    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "s3-frontend"
-    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods            = ["GET", "HEAD", "OPTIONS"]
+    cached_methods             = ["GET", "HEAD"]
+    target_origin_id           = "s3-frontend"
+    viewer_protocol_policy     = "redirect-to-https"
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
 
     forwarded_values {
       query_string = false
@@ -57,11 +108,12 @@ resource "aws_cloudfront_distribution" "main" {
 
   # /api/* はEC2に転送
   ordered_cache_behavior {
-    path_pattern           = "/api/*"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "ec2-api"
-    viewer_protocol_policy = "redirect-to-https"
+    path_pattern               = "/api/*"
+    allowed_methods            = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods             = ["GET", "HEAD"]
+    target_origin_id           = "ec2-api"
+    viewer_protocol_policy     = "redirect-to-https"
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
 
     # APIはキャッシュしない
     forwarded_values {
