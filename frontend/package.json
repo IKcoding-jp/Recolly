@@ -18,7 +18,7 @@
   "dependencies": {
     "motion": "^12.42.2",
     "posthog-js": "^1.398.2",
-    "react": "^19.2.7",
+    "react": "^19.2.8",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.13.1"
   },
