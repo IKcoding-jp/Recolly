@@ -20,7 +20,7 @@
     "posthog-js": "^1.398.2",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-router-dom": "^7.13.1"
+    "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
