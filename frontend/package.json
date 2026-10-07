@@ -17,9 +17,9 @@
   },
   "dependencies": {
     "motion": "^12.42.2",
-    "posthog-js": "^1.398.2",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
+    "posthog-js": "^1.438.2",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "react-router-dom": "^7.13.1"
   },
   "devDependencies": {
@@ -37,7 +37,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.7.0",
-    "jsdom": "^29.0.1",
+    "jsdom": "^29.1.1",
     "prettier": "^3.9.4",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.62.1",
