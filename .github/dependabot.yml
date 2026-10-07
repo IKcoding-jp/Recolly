@@ -1,16 +1,37 @@
 version: 2
 updates:
+  # minor・patch更新と脆弱性修正をそれぞれ1本のPRにまとめる。
+  # メジャー更新は破壊的変更を含むため、従来どおり個別のPRで出す。
   - package-ecosystem: "bundler"
     directory: "/backend"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    groups:
+      minor-and-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
 
   - package-ecosystem: "npm"
-    directory: "/frontend"
+    directories:
+      - "/frontend"
+      - "/scripts/posthog"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    groups:
+      minor-and-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    groups:
+      actions:
+        patterns: ["*"]
