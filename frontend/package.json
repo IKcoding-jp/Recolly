@@ -16,7 +16,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "motion": "^12.42.2",
+    "motion": "^14.0.0",
     "posthog-js": "^1.438.2",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
