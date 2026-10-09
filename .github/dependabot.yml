@@ -20,6 +20,11 @@ updates:
       - "/scripts/posthog"
     schedule:
       interval: "monthly"
+    # 7.1 で「effect内の同期setState」検出が厳しくなり既存コードがエラーになる。
+    # コード側を直すまで 7.0.x に固定する（frontend/package.json も同じ）
+    ignore:
+      - dependency-name: "eslint-plugin-react-hooks"
+        versions: [">=7.1.0"]
     groups:
       minor-and-patch:
         applies-to: version-updates

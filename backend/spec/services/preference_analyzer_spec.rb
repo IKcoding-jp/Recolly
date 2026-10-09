@@ -153,7 +153,7 @@ RSpec.describe PreferenceAnalyzer do
         .with(hash_including(model: 'claude-sonnet-5', max_tokens: 16_000))
     end
 
-    # rubocop:disable RSpec/ExampleLength -- 再試行の検証には1回目失敗・2回目成功のダブルが両方必要
+    # rubocop:disable-next RSpec/ExampleLength -- 再試行の検証には1回目失敗・2回目成功のダブルが両方必要
     it 'JSON解析に失敗したら1回だけ再試行する' do
       bad_block = double('TextBlock', type: :text, text: '不正なJSON') # rubocop:disable RSpec/VerifiedDoubles
       good_block = double('TextBlock', type: :text, text: mock_api_response.to_json) # rubocop:disable RSpec/VerifiedDoubles
@@ -168,7 +168,6 @@ RSpec.describe PreferenceAnalyzer do
       expect(result[:summary]).to eq('テスト分析サマリー')
       expect(messages_resource).to have_received(:create).twice
     end
-    # rubocop:enable RSpec/ExampleLength
 
     it '記録が5件未満だとnilを返す' do
       user2 = User.create!(username: 'user2', email: 'user2@example.com', password: 'password123')

@@ -33,9 +33,8 @@ class PreferenceAnalyzer
 
     data = collect_data
     # 一括出力はJSONが大きく崩れやすいため、パース失敗時に1回だけ再生成を試みる
-    # rubocop:disable Lint/BinaryOperatorWithIdenticalOperands -- 見た目は同一だが呼び出すたびにAPIへ再リクエストする意図的なリトライ
+    # rubocop:disable-next Lint/BinaryOperatorWithIdenticalOperands -- 見た目は同一だが呼び出すたびにAPIへ再リクエストする意図的なリトライ
     parse_response(call_claude_api(data), data) || parse_response(call_claude_api(data), data)
-    # rubocop:enable Lint/BinaryOperatorWithIdenticalOperands
   end
 
   private
